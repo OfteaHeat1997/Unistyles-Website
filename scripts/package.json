@@ -1,0 +1,8 @@
+{
+  "name": "unistyles-scripts",
+  "type": "module",
+  "dependencies": {
+    "csv-parse": "^5.5.0",
+    "pg": "^8.11.0"
+  }
+}

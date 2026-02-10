@@ -1,12 +1,27 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, NavLink } from 'react-router-dom'
+import { cartStore } from '../stores/cartStore'
+import CartSidebar from './CartSidebar'
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const [cartCount] = useState(0)
+  const [cartOpen, setCartOpen] = useState(false)
+  const [cartCount, setCartCount] = useState(cartStore.getItemCount())
+
+  useEffect(() => {
+    const unsubscribe = cartStore.subscribe(() => {
+      setCartCount(cartStore.getItemCount())
+    })
+    return unsubscribe
+  }, [])
 
   const toggleMenu = () => {
     setMenuOpen(!menuOpen)
+  }
+
+  const toggleCart = (e) => {
+    e.preventDefault()
+    setCartOpen(!cartOpen)
   }
 
   return (
@@ -75,14 +90,17 @@ function Header() {
 
           <div className="nav-icons">
             <a href="#" title="Search"><i className="fas fa-search"></i></a>
-            <a href="#" title="Account"><i className="fas fa-user"></i></a>
-            <a href="#" className="cart-icon" title="Cart">
+            <Link to="/login" title="Account"><i className="fas fa-user"></i></Link>
+            <a href="#" className="cart-icon" title="Cart" onClick={toggleCart}>
               <i className="fas fa-shopping-bag"></i>
               <span className="cart-badge">{cartCount}</span>
             </a>
           </div>
         </div>
       </header>
+
+      {/* Cart Sidebar */}
+      <CartSidebar isOpen={cartOpen} onClose={() => setCartOpen(false)} />
     </>
   )
 }

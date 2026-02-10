@@ -5,6 +5,9 @@ import Category from './pages/Category'
 import Product from './pages/Product'
 import About from './pages/About'
 import Contact from './pages/Contact'
+import Checkout from './pages/Checkout'
+import Login from './pages/Login'
+import Register from './pages/Register'
 import NotFound from './pages/NotFound'
 
 function App() {
@@ -24,6 +27,9 @@ function App() {
         <Route path="product/:id" element={<Product />} />
         <Route path="about" element={<About />} />
         <Route path="contact" element={<Contact />} />
+        <Route path="checkout" element={<Checkout />} />
+        <Route path="login" element={<Login />} />
+        <Route path="register" element={<Register />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
