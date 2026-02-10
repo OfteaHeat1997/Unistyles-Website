@@ -1,0 +1,140 @@
+version: '3.8'
+
+services:
+  # ===========================================
+  # FRONTEND - React App (Nginx)
+  # ===========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: unistyles-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - unistyles-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  # ===========================================
+  # NGINX - Reverse Proxy & SSL (Production)
+  # ===========================================
+  nginx:
+    image: nginx:alpine
+    container_name: unistyles-nginx
+    ports:
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    networks:
+      - unistyles-network
+    profiles:
+      - production
+
+  # ===========================================
+  # BACKEND - Node.js API Server
+  # ===========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: unistyles-backend
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://unistyles:${DB_PASSWORD}@postgres:5432/unistyles_db
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=1h
+      - WHATSAPP_NUMBER=${WHATSAPP_NUMBER}
+      - SENTOO_API_KEY=${SENTOO_API_KEY}
+      - SENTOO_MERCHANT_ID=${SENTOO_MERCHANT_ID}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - unistyles-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ===========================================
+  # POSTGRES - Main Database
+  # ===========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: unistyles-postgres
+    environment:
+      - POSTGRES_USER=unistyles
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=unistyles_db
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    restart: unless-stopped
+    networks:
+      - unistyles-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U unistyles -d unistyles_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================
+  # REDIS - Session & Cache Storage
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    container_name: unistyles-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - unistyles-network
+
+  # ===========================================
+  # ADMINER - Database Management (Dev Only)
+  # ===========================================
+  adminer:
+    image: adminer
+    container_name: unistyles-adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - unistyles-network
+    profiles:
+      - dev
+
+# ===========================================
+# NETWORKS
+# ===========================================
+networks:
+  unistyles-network:
+    driver: bridge
+
+# ===========================================
+# VOLUMES
+# ===========================================
+volumes:
+  postgres-data:
+  redis-data:
