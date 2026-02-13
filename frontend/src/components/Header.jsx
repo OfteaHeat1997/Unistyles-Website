@@ -129,8 +129,8 @@ function Header() {
                     <div className="mega-col">
                       <h4>Fragrances</h4>
                       <ul>
-                        <li><Link to="/colonias">Women's Perfume</Link></li>
-                        <li><Link to="/colonias">Men's Cologne</Link></li>
+                        <li><Link to="/perfume">Women's Perfume</Link></li>
+                        <li><Link to="/perfume">Men's Cologne</Link></li>
                       </ul>
                     </div>
                     <div className="mega-col">
@@ -145,10 +145,10 @@ function Header() {
                     <div className="mega-col">
                       <h4>Brands</h4>
                       <ul>
-                        <li><Link to="/colonias?brand=lbel">L'BEL</Link></li>
-                        <li><Link to="/colonias?brand=esika">ESIKA</Link></li>
-                        <li><Link to="/colonias?brand=yanbal">YANBAL</Link></li>
-                        <li><Link to="/colonias?brand=cyzone">CYZONE</Link></li>
+                        <li><Link to="/perfume?brand=lbel">L'BEL</Link></li>
+                        <li><Link to="/perfume?brand=esika">ESIKA</Link></li>
+                        <li><Link to="/perfume?brand=yanbal">YANBAL</Link></li>
+                        <li><Link to="/perfume?brand=cyzone">CYZONE</Link></li>
                       </ul>
                     </div>
                   </div>
@@ -242,7 +242,7 @@ function Header() {
 
             <div className="mobile-group">
               <span className="mobile-group-title">Beauty</span>
-              <Link to="/colonias" onClick={() => setMenuOpen(false)}>Fragrances</Link>
+              <Link to="/perfume" onClick={() => setMenuOpen(false)}>Fragrances</Link>
               <Link to="/cremas" onClick={() => setMenuOpen(false)}>Skincare</Link>
               <Link to="/bloqueador" onClick={() => setMenuOpen(false)}>Sunscreen</Link>
               <Link to="/limpieza-facial" onClick={() => setMenuOpen(false)}>Facial Care</Link>

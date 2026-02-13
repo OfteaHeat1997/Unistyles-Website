@@ -87,8 +87,8 @@ export const products = {
     ]
   },
 
-  colonias: {
-    title: 'Fragrances',
+  perfume: {
+    title: 'Perfumes',
     description: 'Discover our collection of authentic Colombian fragrances from top brands like L\'Bel, Esika, Cyzone, and Yanbal. Premium perfumes delivered locally in Curacao.',
     breadcrumb: 'Beauty',
     filterType: 'category',

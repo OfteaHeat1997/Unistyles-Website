@@ -25,7 +25,7 @@ function Footer() {
           </ul>
           <h4 style={{marginTop: '20px'}}>Beauty</h4>
           <ul>
-            <li><Link to="/colonias">Fragrances</Link></li>
+            <li><Link to="/perfume">Perfumes</Link></li>
             <li><Link to="/cremas">Skincare</Link></li>
             <li><Link to="/accesorios">Accessories</Link></li>
           </ul>

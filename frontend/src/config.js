@@ -72,7 +72,7 @@ export const CATEGORIES = [
   { slug: 'bras', name: 'BH / Bras', count: 77, image: '/images/cat-bras.jpg' },
   { slug: 'panties', name: 'Pantys', count: 72, image: '/images/cat-panties.jpg' },
   { slug: 'shapewear', name: 'Fajas / Shapewear', count: 15, image: '/images/LEONISA_HIGH_WAIST_SHAPER_BEIGE.jpg' },
-  { slug: 'colonias', name: 'Colonias', count: 71, image: '/images/cat-fragrances.jpg' },
+  { slug: 'perfume', name: 'Perfumes', count: 146, image: '/images/cat-perfume.jpg' },
   { slug: 'cremas', name: 'Cremas', count: 49, image: '/images/cat-beauty.jpg' },
   { slug: 'bloqueador', name: 'Bloqueador', count: 11, image: '/images/cat-bloqueador.jpg' },
   { slug: 'desodorantes', name: 'Desodorantes', count: 25, image: '/images/cat-desodorantes.jpg' },
@@ -84,7 +84,7 @@ export const CATEGORIES = [
 export const BRANDS = [
   { id: 'leonisa', name: 'LEONISA', category: 'Lingerie', tagline: "Colombia's #1 lingerie brand since 1956", link: '/bras' },
   { id: 'lbel', name: "L'BEL", category: 'Skincare', tagline: 'Science & technology for your skin', link: '/cremas' },
-  { id: 'esika', name: 'esika', category: 'Beauty', tagline: 'Confidence is beauty', link: '/colonias' },
-  { id: 'cyzone', name: 'CYZONE', category: 'Fragrances', tagline: 'Trendy beauty for everyone', link: '/colonias' },
+  { id: 'esika', name: 'esika', category: 'Beauty', tagline: 'Confidence is beauty', link: '/perfume' },
+  { id: 'cyzone', name: 'CYZONE', category: 'Fragrances', tagline: 'Trendy beauty for everyone', link: '/perfume' },
   { id: 'yanbal', name: 'YANBAL', category: 'Beauty', tagline: 'Premium beauty since 1967', link: '/cremas' }
 ]

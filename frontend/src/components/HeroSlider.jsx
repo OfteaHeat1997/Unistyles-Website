@@ -46,7 +46,7 @@ const defaultSlides = [
 const sideMenuItems = [
   { label: 'Showroom', link: '/bras' },
   { label: 'Collections', link: '/shapewear' },
-  { label: 'Beauty', link: '/colonias' },
+  { label: 'Perfumes', link: '/perfume' },
   { label: 'Contact', link: '/contact' }
 ]
 

@@ -6,7 +6,7 @@ import QuickViewModal from '../components/QuickViewModal'
 // Map breadcrumb names to their first category link
 const breadcrumbLinks = {
   'Lingerie': '/bras',
-  'Beauty': '/colonias',
+  'Beauty': '/perfume',
   'Accessories': '/accesorios'
 }
 

@@ -4,7 +4,7 @@
 export const BUSINESS = {
   name: 'UNISTYLES',
   tagline: 'Belleza Colombiana en Curacao',
-  description: 'Tu destino de belleza colombiana. Brasiers, fajas, colonias y productos de cuidado personal.',
+  description: 'Tu destino de belleza colombiana. Brasiers, fajas, perfumes y productos de cuidado personal.',
 
   // Contact Information
   email: 'info@unistylescuracao.com',
@@ -54,11 +54,11 @@ export const CATEGORIES = [
     image: '/images/categories/shapewear.jpg'
   },
   {
-    id: 'colonias',
-    name: 'Colonias',
-    slug: 'colonias',
-    description: 'Fragancias colombianas',
-    image: '/images/categories/colonias.jpg'
+    id: 'perfume',
+    name: 'Perfumes',
+    slug: 'perfume',
+    description: 'Colombian perfumes and fragrances',
+    image: '/images/categories/perfume.jpg'
   },
   {
     id: 'cremas',

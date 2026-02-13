@@ -22,7 +22,7 @@ function App() {
         <Route path="bras" element={<Category category="bras" />} />
         <Route path="panties" element={<Category category="panties" />} />
         <Route path="shapewear" element={<Category category="shapewear" />} />
-        <Route path="colonias" element={<Category category="colonias" />} />
+        <Route path="perfume" element={<Category category="perfume" />} />
         <Route path="cremas" element={<Category category="cremas" />} />
         <Route path="bloqueador" element={<Category category="bloqueador" />} />
         <Route path="desodorantes" element={<Category category="desodorantes" />} />

@@ -9,7 +9,7 @@ const categoryConfig = {
   shapewear: { image: '/images/LEONISA_HIGH_WAIST_SHAPER_BEIGE.jpg', label: 'Shapewear' },
   bras: { image: '/images/cat-bras.jpg', label: 'Bras' },
   panties: { image: '/images/cat-panties.jpg', label: 'Panties' },
-  colonias: { image: '/images/DORSAY.jpg', label: 'Fragrances' },
+  perfume: { image: '/images/cat-perfume.jpg', label: 'Perfumes' },
   cremas: { image: '/images/cat-skincare.jpg', label: 'Creams' },
   bloqueador: { image: '/images/Total Block 140g.png', label: 'Sunscreen' },
   desodorantes: { image: '/images/Desodorante yambal CCORI ROSE.jpeg', label: 'Deodorants' },
@@ -32,7 +32,7 @@ const brandConfig = {
   'Esika': {
     category: 'Beauty & Fragrances',
     logo: '/images/brand-esika.png',
-    link: '/colonias'
+    link: '/perfume'
   },
   'Yanbal': {
     category: 'Beauty & Suncare',
@@ -42,7 +42,7 @@ const brandConfig = {
   'Cyzone': {
     category: 'Trendy Fragrances',
     logo: '/images/brand-cyzone.png',
-    link: '/colonias'
+    link: '/perfume'
   }
 }
 
