@@ -10,6 +10,34 @@ const { generateToken, generateRefreshToken, authenticate } = require('../middle
 const { asyncHandler } = require('../middleware/errorHandler');
 const db = require('../utils/db');
 
+// Sync user to Strapi Customer collection
+async function syncUserToStrapi(user) {
+    try {
+        const strapiUrl = process.env.STRAPI_URL || 'http://strapi:1337';
+        const response = await fetch(`${strapiUrl}/api/customers`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                data: {
+                    email: user.email,
+                    firstName: user.first_name,
+                    lastName: user.last_name,
+                    phone: user.phone || '',
+                    role: user.role || 'customer',
+                    postgresId: user.id
+                }
+            })
+        });
+        if (!response.ok) {
+            console.error('Failed to sync user to Strapi:', await response.text());
+        }
+    } catch (err) {
+        console.error('Error syncing user to Strapi:', err.message);
+    }
+}
+
 // ===========================================
 // POST /api/auth/register
 // ===========================================
@@ -51,6 +79,11 @@ router.post('/register',
         );
 
         const user = result.rows[0];
+        user.role = 'customer';
+
+        // Sync user to Strapi (non-blocking)
+        syncUserToStrapi(user).catch(err => console.error('Strapi sync error:', err));
+
         const token = generateToken(user);
         const refreshToken = generateRefreshToken(user);
 
@@ -60,7 +93,8 @@ router.post('/register',
                 id: user.id,
                 email: user.email,
                 firstName: user.first_name,
-                lastName: user.last_name
+                lastName: user.last_name,
+                role: 'customer'
             },
             token,
             refreshToken
@@ -112,7 +146,7 @@ router.post('/login',
                 email: user.email,
                 firstName: user.first_name,
                 lastName: user.last_name,
-                isAdmin: user.is_admin
+                role: user.role || 'customer'
             },
             token,
             refreshToken
@@ -161,7 +195,7 @@ router.post('/refresh', asyncHandler(async (req, res) => {
 // ===========================================
 router.get('/me', authenticate, asyncHandler(async (req, res) => {
     const result = await db.query(
-        'SELECT id, email, first_name, last_name, phone, is_admin, created_at FROM users WHERE id = $1',
+        'SELECT id, email, first_name, last_name, phone, role, created_at FROM users WHERE id = $1',
         [req.user.id]
     );
 
@@ -171,13 +205,15 @@ router.get('/me', authenticate, asyncHandler(async (req, res) => {
 
     const user = result.rows[0];
     res.json({
-        id: user.id,
-        email: user.email,
-        firstName: user.first_name,
-        lastName: user.last_name,
-        phone: user.phone,
-        isAdmin: user.is_admin,
-        createdAt: user.created_at
+        user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            phone: user.phone,
+            role: user.role || 'customer',
+            createdAt: user.created_at
+        }
     });
 }));
 

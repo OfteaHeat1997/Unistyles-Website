@@ -1,0 +1,55 @@
+{
+  "collectionName": "components_homepage_hero_slides",
+  "info": {
+    "displayName": "Hero Slide",
+    "description": "Hero carousel slide"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "titleLine2": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "string"
+    },
+    "legacyImage": {
+      "type": "string"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": ["images"]
+    },
+    "mobileImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "buttonText": {
+      "type": "string"
+    },
+    "buttonLink": {
+      "type": "string"
+    },
+    "textColor": {
+      "type": "enumeration",
+      "enum": ["white", "black", "primary"],
+      "default": "white"
+    },
+    "textPosition": {
+      "type": "enumeration",
+      "enum": ["left", "center", "right"],
+      "default": "center"
+    },
+    "sortOrder": {
+      "type": "integer",
+      "default": 0
+    }
+  }
+}

@@ -18,6 +18,7 @@ const cartRoutes = require('./routes/cart');
 const orderRoutes = require('./routes/orders');
 const paymentRoutes = require('./routes/payments');
 const userRoutes = require('./routes/users');
+const adminRoutes = require('./routes/admin');
 
 // Import middleware
 const { errorHandler } = require('./middleware/errorHandler');
@@ -26,6 +27,9 @@ const { authenticate } = require('./middleware/auth');
 // Initialize Express
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Trust proxy (for nginx reverse proxy)
+app.set('trust proxy', 1);
 
 // ===========================================
 // SECURITY MIDDLEWARE
@@ -49,10 +53,10 @@ app.use(helmet({
 app.use(cors({
     origin: process.env.NODE_ENV === 'production'
         ? ['https://unistylescuracao.com', 'https://www.unistylescuracao.com']
-        : ['http://localhost:3000', 'http://localhost:5173'],
+        : ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:5173'],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Cart-Id'],
 }));
 
 // Rate limiting
@@ -110,6 +114,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/users', authenticate, userRoutes);
+app.use('/api/admin', adminRoutes);
 
 // ===========================================
 // 404 HANDLER

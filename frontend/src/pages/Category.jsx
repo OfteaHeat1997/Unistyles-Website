@@ -1,89 +1,620 @@
-import { useEffect, useState } from 'react'
-import ProductCard from '../components/ProductCard'
+import { Link } from 'react-router-dom'
+import { useState, useMemo } from 'react'
+import { useProductsByCategory, useCategory } from '../hooks/useProducts'
+import QuickViewModal from '../components/QuickViewModal'
 
-// Sample products data (will come from API later)
-const allProducts = {
-  bras: [
-    { id: 1, name: 'Leonisa Lace Bralette', ref: '011911', price: 125, image: '/images/bra1.jpg', badge: 'New' },
-    { id: 2, name: 'Leonisa Contour Push-Up', ref: '011968', price: 115, image: '/images/bra2.jpg' },
-    { id: 3, name: 'Leonisa Strapless Lace', ref: '71318', price: 135, image: '/images/bra3.jpg' },
-    { id: 4, name: 'Leonisa Full Coverage', ref: '011843', price: 105, image: '/images/bra4.jpg', badge: 'Bestseller' }
-  ],
-  panties: [
-    { id: 5, name: 'Leonisa High-Waist Brief', ref: '012345', price: 45, image: '/images/panty1.jpg' },
-    { id: 6, name: 'Leonisa Seamless Thong', ref: '012346', price: 35, image: '/images/panty2.jpg' }
-  ],
-  shapewear: [
-    { id: 7, name: 'Leonisa Firm Compression', ref: '012347', price: 175, image: '/images/shapewear1.jpg', badge: 'Popular' }
-  ],
-  colonias: [
-    { id: 8, name: 'Esika Ainnara EDP', ref: '012348', price: 95, image: '/images/cologne1.jpg', badge: 'New' }
-  ],
-  cremas: [
-    { id: 9, name: "L'Bel Essential Cream", ref: '012349', price: 85, image: '/images/cream1.jpg' }
-  ],
-  bloqueador: [
-    { id: 10, name: 'Sunblock SPF 50+', ref: '012350', price: 55, image: '/images/sunblock1.jpg' }
-  ],
-  desodorantes: [
-    { id: 11, name: 'Roll-On Fresh', ref: '012351', price: 25, image: '/images/deodorant1.jpg' }
-  ],
-  'limpieza-facial': [
-    { id: 12, name: 'Facial Cleanser', ref: '012352', price: 45, image: '/images/cleanser1.jpg' }
-  ],
-  accesorios: [
-    { id: 13, name: 'Gold Earrings', ref: '012353', price: 65, image: '/images/accessory1.jpg' }
-  ]
+// Map breadcrumb names to their first category link
+const breadcrumbLinks = {
+  'Lingerie': '/bras',
+  'Beauty': '/colonias',
+  'Accessories': '/accesorios'
 }
 
-const categoryInfo = {
-  bras: { title: 'BH / Bras', description: 'Premium Colombian bras for every occasion' },
-  panties: { title: 'Pantys', description: 'Comfortable and elegant panties' },
-  shapewear: { title: 'Fajas / Shapewear', description: 'Colombian shapewear for the perfect silhouette' },
-  colonias: { title: 'Colonias', description: 'Authentic Colombian fragrances' },
-  cremas: { title: 'Cremas', description: 'Skincare products for radiant skin' },
-  bloqueador: { title: 'Bloqueador', description: 'Sun protection for Caribbean sun' },
-  desodorantes: { title: 'Desodorantes', description: 'Stay fresh all day' },
-  'limpieza-facial': { title: 'Limpieza Facial', description: 'Facial cleansing products' },
-  accesorios: { title: 'Accesorios / Joyas', description: 'Beautiful accessories and jewelry' }
-}
+// Color options for filter (with hex values for swatches)
+const colorOptions = [
+  { name: 'Black', hex: '#000000' },
+  { name: 'White', hex: '#FFFFFF' },
+  { name: 'Beige', hex: '#E8D4B8' },
+  { name: 'Pink', hex: '#F5C6D6' },
+  { name: 'Red', hex: '#C41E3A' },
+  { name: 'Blue', hex: '#4A90D9' }
+]
+
+// Size options for bras
+const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+const cupSizeOptions = ['A', 'B', 'C', 'D', 'DD', 'E']
+
+// Style options for bras
+const styleOptions = ['Push-Up', 'Wireless', 'Sports', 'Strapless', 'Full Coverage', 'Balconette']
 
 function Category({ category }) {
-  const [products, setProducts] = useState([])
-  const info = categoryInfo[category] || { title: 'Products', description: '' }
+  const [activeFilter, setActiveFilter] = useState('All')
+  const [sortBy, setSortBy] = useState('bestselling')
+  const [quickViewProduct, setQuickViewProduct] = useState(null)
+  const [wishlist, setWishlist] = useState([])
+  const [selectedColors, setSelectedColors] = useState([])
+  const [selectedSizes, setSelectedSizes] = useState([])
+  const [quickAddProduct, setQuickAddProduct] = useState(null)
+  const [visibleCount, setVisibleCount] = useState(9)
 
-  useEffect(() => {
-    // Simulate API call - will be replaced with real API
-    setProducts(allProducts[category] || [])
-  }, [category])
+  // Fetch category and products from Strapi (with fallback to local data)
+  const { data: categoryData, isLoading: categoryLoading } = useCategory(category)
+  const { data: productsData, isLoading: productsLoading } = useProductsByCategory(category)
+
+  // Build data structure similar to old format for compatibility
+  const data = useMemo(() => {
+    if (!categoryData) {
+      return { title: 'Products', description: '', breadcrumb: '', products: [], filters: ['All'], filterType: 'category' }
+    }
+    return {
+      title: categoryData.name,
+      description: categoryData.description,
+      breadcrumb: categoryData.breadcrumb,
+      filterType: categoryData.filterType,
+      filters: categoryData.filters || ['All'],
+      products: productsData?.products || []
+    }
+  }, [categoryData, productsData])
+
+  // Toggle wishlist
+  const toggleWishlist = (e, productId) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setWishlist(prev =>
+      prev.includes(productId)
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    )
+  }
+
+  // Toggle color filter
+  const toggleColor = (colorName) => {
+    setSelectedColors(prev =>
+      prev.includes(colorName)
+        ? prev.filter(c => c !== colorName)
+        : [...prev, colorName]
+    )
+  }
+
+  // Toggle size filter
+  const toggleSize = (size) => {
+    setSelectedSizes(prev =>
+      prev.includes(size)
+        ? prev.filter(s => s !== size)
+        : [...prev, size]
+    )
+  }
+
+  // Filter and sort products
+  const filteredProducts = useMemo(() => {
+    let products = data.products
+
+    // Apply filter
+    if (activeFilter !== 'All') {
+      products = products.filter(p => {
+        if (data.filterType === 'size') return p.size?.includes(activeFilter)
+        if (data.filterType === 'style') return p.style === activeFilter
+        if (data.filterType === 'category') return p.category === activeFilter
+        return true
+      })
+    }
+
+    // Apply color filter
+    if (selectedColors.length > 0) {
+      products = products.filter(p =>
+        selectedColors.some(c => p.color?.toLowerCase().includes(c.toLowerCase()))
+      )
+    }
+
+    // Apply sort
+    const sorted = [...products]
+    switch (sortBy) {
+      case 'price-low':
+        sorted.sort((a, b) => parseFloat(a.price) - parseFloat(b.price))
+        break
+      case 'price-high':
+        sorted.sort((a, b) => parseFloat(b.price) - parseFloat(a.price))
+        break
+      case 'newest':
+        sorted.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+        break
+      case 'bestselling':
+      default:
+        sorted.sort((a, b) => (b.badge === 'Bestseller' ? 1 : 0) - (a.badge === 'Bestseller' ? 1 : 0))
+        break
+    }
+
+    return sorted
+  }, [data.products, data.filterType, activeFilter, sortBy, selectedColors])
+
+  // Visible products (for load more)
+  const visibleProducts = filteredProducts.slice(0, visibleCount)
+  const hasMore = visibleCount < filteredProducts.length
+
+  const isLoading = categoryLoading || productsLoading
+
+  // Generate star rating
+  const renderStars = (rating = 4.5) => {
+    const stars = []
+    const fullStars = Math.floor(rating)
+    const hasHalf = rating % 1 >= 0.5
+
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        stars.push(<i key={i} className="fas fa-star"></i>)
+      } else if (i === fullStars && hasHalf) {
+        stars.push(<i key={i} className="fas fa-star-half-alt"></i>)
+      } else {
+        stars.push(<i key={i} className="far fa-star"></i>)
+      }
+    }
+    return stars
+  }
+
+  // Get mock color variants for product
+  const getProductColors = (product) => {
+    // Return mock colors based on product
+    const colors = [
+      { name: 'Black', hex: '#000000' },
+      { name: 'Beige', hex: '#E8D4B8' }
+    ]
+    if (product.color?.toLowerCase().includes('pink')) {
+      colors.push({ name: 'Pink', hex: '#F5C6D6' })
+    }
+    if (product.color?.toLowerCase().includes('white')) {
+      colors.unshift({ name: 'White', hex: '#FFFFFF' })
+    }
+    return colors.slice(0, 4)
+  }
 
   return (
     <>
-      {/* Category Header */}
-      <section className="hero" style={{ minHeight: '250px', padding: '40px 0' }}>
-        <div className="hero-content" style={{ gridTemplateColumns: '1fr', textAlign: 'center' }}>
-          <div className="hero-text" style={{ textAlign: 'center' }}>
-            <h1 style={{ fontSize: '42px' }}>{info.title}</h1>
-            <p style={{ maxWidth: '600px', margin: '0 auto' }}>{info.description}</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Products Grid */}
-      <section className="new-arrivals">
-        <div className="products-grid">
-          {products.length > 0 ? (
-            products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))
+      {/* Breadcrumb */}
+      <nav className="breadcrumb">
+        <div className="breadcrumb-content">
+          <Link to="/">Home</Link>
+          <span>/</span>
+          {breadcrumbLinks[data.breadcrumb] ? (
+            <Link to={breadcrumbLinks[data.breadcrumb]}>{data.breadcrumb}</Link>
           ) : (
-            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px' }}>
-              <h3>Coming Soon</h3>
-              <p>Products in this category are being added. Check back soon!</p>
+            <span>{data.breadcrumb}</span>
+          )}
+          <span>/</span>
+          <span style={{ color: 'var(--charcoal)' }}>{data.title}</span>
+        </div>
+      </nav>
+
+      {/* Bra Fit Quiz Banner */}
+      <div className="fit-quiz-banner">
+        <div className="fit-quiz-content">
+          <div className="fit-quiz-icon">
+            <i className="fas fa-ruler"></i>
+          </div>
+          <div className="fit-quiz-text">
+            <h4>Find Your Perfect Fit</h4>
+            <p>Take our quick quiz to discover your ideal bra size and style</p>
+          </div>
+          <button className="fit-quiz-btn">Take the Quiz</button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="page-container">
+        {/* Sidebar Filters */}
+        <aside className="sidebar">
+          <div className="sidebar-header">
+            <h3>Filter By</h3>
+            <button className="clear-filters" onClick={() => {
+              setSelectedColors([])
+              setSelectedSizes([])
+              setActiveFilter('All')
+            }}>Clear All</button>
+          </div>
+
+          {/* Category Filter */}
+          <div className="filter-group">
+            <h4>Category</h4>
+            <div className="filter-options">
+              <div className="filter-option">
+                <input type="checkbox" id="cat-current" defaultChecked />
+                <label htmlFor="cat-current">{data.title}</label>
+                <span className="count">({data.products.length})</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Size Filter */}
+          <div className="filter-group">
+            <h4>Size</h4>
+            <div className="size-filter-grid">
+              {sizeOptions.map(size => (
+                <button
+                  key={size}
+                  className={`size-filter-btn ${selectedSizes.includes(size) ? 'active' : ''}`}
+                  onClick={() => toggleSize(size)}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Cup Size Filter */}
+          <div className="filter-group">
+            <h4>Cup Size</h4>
+            <div className="size-filter-grid">
+              {cupSizeOptions.map(cup => (
+                <button
+                  key={cup}
+                  className={`size-filter-btn ${selectedSizes.includes(cup) ? 'active' : ''}`}
+                  onClick={() => toggleSize(cup)}
+                >
+                  {cup}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Style Filter */}
+          <div className="filter-group">
+            <h4>Style</h4>
+            <div className="filter-options">
+              {styleOptions.map(style => (
+                <div className="filter-option" key={style}>
+                  <input type="checkbox" id={`style-${style}`} />
+                  <label htmlFor={`style-${style}`}>{style}</label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Color Filter with Swatches */}
+          <div className="filter-group">
+            <h4>Color</h4>
+            <div className="color-swatch-filter">
+              {colorOptions.map(color => (
+                <button
+                  key={color.name}
+                  className={`color-swatch-btn ${selectedColors.includes(color.name) ? 'active' : ''}`}
+                  style={{ backgroundColor: color.hex }}
+                  onClick={() => toggleColor(color.name)}
+                  title={color.name}
+                >
+                  {selectedColors.includes(color.name) && (
+                    <i className="fas fa-check"></i>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Brand Filter */}
+          <div className="filter-group">
+            <h4>Brand</h4>
+            <div className="filter-options">
+              {[...new Set(data.products.map(p => typeof p.brand === 'object' ? p.brand?.name : p.brand).filter(Boolean))].map(brandName => (
+                <div className="filter-option" key={brandName}>
+                  <input type="checkbox" id={`brand-${brandName}`} defaultChecked />
+                  <label htmlFor={`brand-${brandName}`}>{brandName}</label>
+                  <span className="count">({data.products.filter(p => (typeof p.brand === 'object' ? p.brand?.name : p.brand) === brandName).length})</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Price Filter */}
+          <div className="filter-group">
+            <h4>Price</h4>
+            <div className="price-range">
+              <div className="price-inputs">
+                <input type="text" defaultValue="XCG 50" placeholder="Min" />
+                <span>-</span>
+                <input type="text" defaultValue="XCG 200" placeholder="Max" />
+              </div>
+              <div className="price-slider">
+                <div className="price-slider-fill"></div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <main className="main-content">
+          {/* Results Header */}
+          <div className="results-header">
+            <div className="results-count">
+              <span className="count-number">{filteredProducts.length}</span> products found
+            </div>
+            <div className="view-sort-controls">
+              <div className="view-toggle">
+                <button className="view-btn active" title="Grid View">
+                  <i className="fas fa-th"></i>
+                </button>
+                <button className="view-btn" title="List View">
+                  <i className="fas fa-list"></i>
+                </button>
+              </div>
+              <div className="sort-dropdown">
+                <label htmlFor="sort">Sort By:</label>
+                <select id="sort" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                  <option value="bestselling">Best Selling</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                  <option value="newest">Newest</option>
+                  <option value="rating">Top Rated</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Filter Tabs */}
+          <div className="filter-tabs">
+            <div className="size-tabs">
+              {data.filters?.map(filter => (
+                <button
+                  key={filter}
+                  className={`size-tab ${activeFilter === filter ? 'active' : ''}`}
+                  onClick={() => setActiveFilter(filter)}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Products Grid */}
+          <div className="products-grid">
+            {visibleProducts.map((product) => {
+              const hasDiscount = product.compareAtPrice && parseFloat(product.compareAtPrice) > parseFloat(product.price)
+              const discountPercent = hasDiscount
+                ? Math.round((1 - parseFloat(product.price) / parseFloat(product.compareAtPrice)) * 100)
+                : 0
+              const productColors = getProductColors(product)
+              const isWishlisted = wishlist.includes(product.id)
+
+              return (
+                <div className="product-card-wrapper" key={product.id}>
+                  <Link to={`/product/${product.id}`} className="product-card">
+                    <div className="product-image">
+                      <img src={product.image} alt={product.name} />
+
+                      {/* Badges */}
+                      <div className="badge-stack">
+                        {product.badge === 'New' && (
+                          <span className="product-badge new">New</span>
+                        )}
+                        {product.badge === 'Bestseller' && (
+                          <span className="product-badge bestseller">Bestseller</span>
+                        )}
+                        {hasDiscount && (
+                          <span className="product-badge sale">-{discountPercent}%</span>
+                        )}
+                      </div>
+
+                      {/* Wishlist Heart */}
+                      <button
+                        className={`wishlist-btn ${isWishlisted ? 'active' : ''}`}
+                        onClick={(e) => toggleWishlist(e, product.id)}
+                        aria-label="Add to wishlist"
+                      >
+                        <i className={isWishlisted ? 'fas fa-heart' : 'far fa-heart'}></i>
+                      </button>
+
+                      {/* Quick Actions */}
+                      <div className="product-actions-overlay">
+                        <button
+                          className="quick-view-btn"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            setQuickViewProduct(product)
+                          }}
+                        >
+                          <i className="fas fa-eye"></i> Quick View
+                        </button>
+                        <button
+                          className="quick-add-btn"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            setQuickAddProduct(product)
+                          }}
+                        >
+                          <i className="fas fa-plus"></i> Quick Add
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="product-info">
+                      {/* Color Swatches */}
+                      <div className="product-color-swatches">
+                        {productColors.map(color => (
+                          <span
+                            key={color.name}
+                            className="color-dot"
+                            style={{ backgroundColor: color.hex }}
+                            title={color.name}
+                          ></span>
+                        ))}
+                        {productColors.length > 3 && (
+                          <span className="more-colors">+{productColors.length - 3}</span>
+                        )}
+                      </div>
+
+                      {/* Brand */}
+                      {product.brand && (
+                        <p className="product-brand">
+                          {typeof product.brand === 'object' ? product.brand.name : product.brand}
+                        </p>
+                      )}
+
+                      {/* Product Name */}
+                      <h3 className="product-name">{product.name}</h3>
+
+                      {/* Star Rating */}
+                      <div className="product-rating">
+                        <div className="stars">
+                          {renderStars(4.5)}
+                        </div>
+                        <span className="rating-count">(24)</span>
+                      </div>
+
+                      {/* Price */}
+                      <div className="product-price-row">
+                        {hasDiscount && (
+                          <span className="price-original">XCG {product.compareAtPrice}</span>
+                        )}
+                        <span className={`product-price ${hasDiscount ? 'sale' : ''}`}>
+                          XCG {product.price}
+                        </span>
+                      </div>
+
+                      {/* Size Availability */}
+                      <div className="size-availability">
+                        <span className="available">S</span>
+                        <span className="available">M</span>
+                        <span className="available">L</span>
+                        <span className="unavailable">XL</span>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Load More */}
+          {hasMore && (
+            <div className="load-more-container">
+              <button
+                className="load-more-btn"
+                onClick={() => setVisibleCount(prev => prev + 9)}
+              >
+                Load More Products
+                <span className="load-more-count">
+                  ({filteredProducts.length - visibleCount} remaining)
+                </span>
+              </button>
             </div>
           )}
+
+          {/* Results Summary */}
+          <div className="results-summary">
+            Showing {visibleProducts.length} of {filteredProducts.length} products
+          </div>
+
+          {/* Best Sellers Section */}
+          <div className="best-sellers">
+            <div className="best-sellers-header">
+              <span>Guaranteed Authentic</span>
+              <h2>Premium Colombian Quality</h2>
+              <p>Every bra is crafted with premium materials and designed for the perfect fit. 60-day easy returns.</p>
+            </div>
+            <div className="guarantee-badges">
+              <div className="guarantee-badge">
+                <i className="fas fa-certificate"></i>
+                <span>100% Authentic</span>
+              </div>
+              <div className="guarantee-badge">
+                <i className="fas fa-exchange-alt"></i>
+                <span>Easy Returns</span>
+              </div>
+              <div className="guarantee-badge">
+                <i className="fas fa-heart"></i>
+                <span>Perfect Fit Guarantee</span>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      {/* Quick Add Modal */}
+      {quickAddProduct && (
+        <div className="quick-add-modal-overlay" onClick={() => setQuickAddProduct(null)}>
+          <div className="quick-add-modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setQuickAddProduct(null)}>
+              <i className="fas fa-times"></i>
+            </button>
+            <div className="quick-add-content">
+              <img src={quickAddProduct.image} alt={quickAddProduct.name} />
+              <div className="quick-add-details">
+                <h3>{quickAddProduct.name}</h3>
+                <p className="quick-add-price">XCG {quickAddProduct.price}</p>
+                <div className="quick-add-sizes">
+                  <label>Select Size:</label>
+                  <div className="size-buttons">
+                    {sizeOptions.map(size => (
+                      <button key={size} className="size-btn">{size}</button>
+                    ))}
+                  </div>
+                </div>
+                <button className="add-to-cart-btn">
+                  <i className="fas fa-shopping-bag"></i> Add to Cart
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
+      )}
+
+      {/* Bottom Features */}
+      <div className="bottom-features">
+        <div className="bottom-features-content">
+          <div className="bottom-feature">
+            <div className="bottom-feature-icon">
+              <i className="fas fa-truck"></i>
+            </div>
+            <div className="bottom-feature-text">
+              <h4>Free Home Delivery</h4>
+              <p>Orders over XCG 80</p>
+            </div>
+          </div>
+          <div className="bottom-feature">
+            <div className="bottom-feature-icon">
+              <i className="fas fa-undo"></i>
+            </div>
+            <div className="bottom-feature-text">
+              <h4>60-Day Returns</h4>
+              <p>Easy return policy</p>
+            </div>
+          </div>
+          <div className="bottom-feature">
+            <div className="bottom-feature-icon">
+              <i className="fas fa-shield-alt"></i>
+            </div>
+            <div className="bottom-feature-text">
+              <h4>Secure Checkout</h4>
+              <p>100% protected</p>
+            </div>
+          </div>
+          <div className="bottom-feature">
+            <div className="bottom-feature-icon">
+              <i className="fas fa-headset"></i>
+            </div>
+            <div className="bottom-feature-text">
+              <h4>WhatsApp Support</h4>
+              <p>Personal assistance</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Newsletter */}
+      <section className="newsletter">
+        <h3>Get 10% Off Your First Order</h3>
+        <p>Subscribe for exclusive offers, new arrivals, and styling tips</p>
+        <form className="newsletter-form" onSubmit={(e) => e.preventDefault()}>
+          <input type="email" placeholder="Your email address" />
+          <button type="submit">Subscribe</button>
+        </form>
       </section>
+
+      {/* Quick View Modal */}
+      <QuickViewModal
+        product={quickViewProduct}
+        isOpen={!!quickViewProduct}
+        onClose={() => setQuickViewProduct(null)}
+      />
     </>
   )
 }

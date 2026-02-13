@@ -11,13 +11,10 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm install --omit=dev
 
 # Copy source
 COPY . .
-
-# Generate Prisma client
-RUN npx prisma generate
 
 # ===========================================
 # Production image

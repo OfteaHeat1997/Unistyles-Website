@@ -56,9 +56,9 @@ router.post('/add', optionalAuth, asyncHandler(async (req, res) => {
         return res.status(400).json({ error: 'Product ID required' });
     }
 
-    // Verify product exists
+    // Verify product exists (using Strapi schema)
     const product = await db.query(
-        'SELECT id, name, price, stock, images FROM products WHERE id = $1 AND is_active = true',
+        'SELECT id, name, price, in_stock, legacy_image FROM products WHERE id = $1 AND published_at IS NOT NULL',
         [productId]
     );
 
@@ -290,6 +290,94 @@ router.delete('/clear', optionalAuth, asyncHandler(async (req, res) => {
 }));
 
 // ===========================================
+// POST /api/cart/merge
+// Merge guest cart into user cart after login
+// ===========================================
+router.post('/merge', asyncHandler(async (req, res) => {
+    const { guestCartId } = req.body;
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    // Verify token and get user
+    const token = authHeader.split(' ')[1];
+    const jwt = require('jsonwebtoken');
+    let userId;
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        userId = decoded.userId;
+    } catch (err) {
+        return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    if (!guestCartId) {
+        return res.status(400).json({ error: 'Guest cart ID required' });
+    }
+
+    // Get guest cart from Redis
+    const guestCart = await redis.get(`cart:${guestCartId}`);
+    const guestItems = guestCart ? JSON.parse(guestCart) : [];
+
+    if (guestItems.length === 0) {
+        return res.json({
+            message: 'No items to merge',
+            items: [],
+            itemCount: 0,
+            subtotal: 0
+        });
+    }
+
+    // Get user's current cart
+    const result = await db.query(
+        'SELECT items FROM carts WHERE user_id = $1',
+        [userId]
+    );
+    let userItems = result.rows[0]?.items || [];
+
+    // Merge guest items into user cart
+    guestItems.forEach(guestItem => {
+        const existingIndex = userItems.findIndex(item =>
+            item.productId === guestItem.productId &&
+            item.variantId === guestItem.variantId &&
+            item.size === guestItem.size &&
+            item.color === guestItem.color
+        );
+
+        if (existingIndex > -1) {
+            // Add quantities if item already exists
+            userItems[existingIndex].quantity += guestItem.quantity;
+        } else {
+            // Add new item
+            userItems.push(guestItem);
+        }
+    });
+
+    // Save merged cart to database
+    await db.query(`
+        INSERT INTO carts (user_id, items)
+        VALUES ($1, $2)
+        ON CONFLICT (user_id)
+        DO UPDATE SET items = $2, updated_at = NOW()
+    `, [userId, JSON.stringify(userItems)]);
+
+    // Delete guest cart from Redis
+    await redis.del(`cart:${guestCartId}`);
+
+    // Enrich and return merged cart
+    const enrichedItems = await enrichCartItems(userItems);
+
+    res.json({
+        message: 'Cart merged successfully',
+        items: enrichedItems,
+        itemCount: enrichedItems.reduce((sum, item) => sum + item.quantity, 0),
+        subtotal: enrichedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+    });
+}));
+
+// ===========================================
 // Helper function to enrich cart items
 // ===========================================
 async function enrichCartItems(cartItems) {
@@ -299,9 +387,9 @@ async function enrichCartItems(cartItems) {
 
     const productIds = [...new Set(cartItems.map(item => item.productId))];
     const products = await db.query(`
-        SELECT id, sku, name, slug, price, images, stock
+        SELECT id, ref, name, slug, price, legacy_image, in_stock
         FROM products
-        WHERE id = ANY($1) AND is_active = true
+        WHERE id = ANY($1) AND published_at IS NOT NULL
     `, [productIds]);
 
     const productMap = {};
@@ -316,15 +404,15 @@ async function enrichCartItems(cartItems) {
             return {
                 productId: item.productId,
                 variantId: item.variantId,
-                sku: product.sku,
+                ref: product.ref,
                 name: product.name,
                 slug: product.slug,
                 price: parseFloat(product.price),
                 quantity: item.quantity,
                 size: item.size,
                 color: item.color,
-                image: product.images?.[0] || null,
-                stock: product.stock,
+                image: product.legacy_image || null,
+                inStock: product.in_stock,
                 subtotal: parseFloat(product.price) * item.quantity
             };
         });

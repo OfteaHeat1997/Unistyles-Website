@@ -63,7 +63,7 @@ function CartSidebar({ isOpen, onClose }) {
         {/* Header */}
         <div style={{
           padding: '20px',
-          borderBottom: '1px solid #eee',
+          borderBottom: '1px solid var(--border-light)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center'
@@ -89,7 +89,7 @@ function CartSidebar({ isOpen, onClose }) {
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
           {cart.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-              <i className="fas fa-shopping-bag" style={{ fontSize: '48px', color: '#ddd', marginBottom: '20px' }}></i>
+              <i className="fas fa-shopping-bag" style={{ fontSize: '48px', color: 'var(--border)', marginBottom: '20px' }}></i>
               <p style={{ color: 'var(--charcoal)', marginBottom: '20px' }}>Your cart is empty</p>
               <button onClick={onClose} className="btn-shop" style={{ padding: '12px 30px' }}>
                 Continue Shopping
@@ -104,7 +104,7 @@ function CartSidebar({ isOpen, onClose }) {
                   gap: '15px',
                   paddingBottom: '15px',
                   marginBottom: '15px',
-                  borderBottom: '1px solid #eee'
+                  borderBottom: '1px solid var(--border-light)'
                 }}
               >
                 {/* Image */}
@@ -127,7 +127,7 @@ function CartSidebar({ isOpen, onClose }) {
                     </p>
                   )}
                   <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--charcoal)' }}>
-                    Fl. {item.price}
+                    XCG {item.price}
                   </p>
 
                   {/* Quantity Controls */}
@@ -137,7 +137,7 @@ function CartSidebar({ isOpen, onClose }) {
                       style={{
                         width: '28px',
                         height: '28px',
-                        border: '1px solid #ddd',
+                        border: '1px solid var(--border)',
                         background: 'white',
                         cursor: 'pointer',
                         borderRadius: '4px'
@@ -153,7 +153,7 @@ function CartSidebar({ isOpen, onClose }) {
                       style={{
                         width: '28px',
                         height: '28px',
-                        border: '1px solid #ddd',
+                        border: '1px solid var(--border)',
                         background: 'white',
                         cursor: 'pointer',
                         borderRadius: '4px'
@@ -167,7 +167,7 @@ function CartSidebar({ isOpen, onClose }) {
                         marginLeft: 'auto',
                         background: 'none',
                         border: 'none',
-                        color: '#999',
+                        color: 'var(--text-tertiary)',
                         cursor: 'pointer',
                         fontSize: '14px'
                       }}
@@ -183,10 +183,10 @@ function CartSidebar({ isOpen, onClose }) {
 
         {/* Footer */}
         {cart.length > 0 && (
-          <div style={{ padding: '20px', borderTop: '1px solid #eee', background: 'var(--cream-bg)' }}>
+          <div style={{ padding: '20px', borderTop: '1px solid var(--border-light)', background: 'var(--cream-bg)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
               <span style={{ fontSize: '16px', fontWeight: '500' }}>Subtotal:</span>
-              <span style={{ fontSize: '18px', fontWeight: '600' }}>Fl. {total.toFixed(2)}</span>
+              <span style={{ fontSize: '18px', fontWeight: '600' }}>XCG {total.toFixed(2)}</span>
             </div>
             <p style={{ fontSize: '12px', color: 'var(--dark-warmth)', marginBottom: '15px' }}>
               Shipping calculated at checkout
@@ -201,7 +201,7 @@ function CartSidebar({ isOpen, onClose }) {
             </Link>
             <a
               href={`https://wa.me/59990000425?text=${encodeURIComponent(
-                `Hi! I'd like to order:\n${cart.map(item => `- ${item.name} (${item.quantity}x)`).join('\n')}\n\nTotal: Fl. ${total.toFixed(2)}`
+                `Hi! I'd like to order:\n${cart.map(item => `- ${item.name} (${item.quantity}x)`).join('\n')}\n\nTotal: XCG ${total.toFixed(2)}`
               )}`}
               className="btn-whatsapp"
               target="_blank"

@@ -1,0 +1,62 @@
+========================================
+UNISTYLES - PRODUCT IMPORT GUIDE
+========================================
+
+HOW TO ADD MANY PRODUCTS AT ONCE
+--------------------------------
+
+STEP 1: Open the Template
+   - Open "product-import-template.csv" in Excel or Google Sheets
+   - You'll see example products - delete these and add your own
+
+STEP 2: Fill in Your Products
+   Each row = one product. Fill in the columns:
+
+   REQUIRED COLUMNS:
+   - name         : Product name (e.g., "Leonisa Push-Up Bra")
+   - price        : Just the number (e.g., 45.00)
+
+   OPTIONAL COLUMNS:
+   - compareAtPrice : Original price if on sale (e.g., 55.00)
+   - ref           : Reference code (e.g., "REF 12345")
+   - description   : Product description
+   - color         : Color name (e.g., "Black", "Beige")
+   - size          : Size (e.g., "36B", "M", "100ml")
+   - style         : Style type
+   - compression   : For shapewear only: "light", "medium", or "firm"
+   - material      : Material (e.g., "Cotton", "Lace")
+   - badge         : One of: new, bestseller, premium, sale, gift_set, pack_3
+   - inStock       : true or false
+   - featured      : true or false (shows on homepage)
+   - category      : One of: bras, panties, shapewear, colonias, cremas, accesorios
+   - brand         : One of: Leonisa, L'Bel, Esika, Yanbal, Cyzone
+
+STEP 3: Save the File
+   - Save as CSV (Comma Separated Values)
+   - Keep the .csv extension
+
+STEP 4: Import to Strapi
+   1. Go to http://localhost:1337/admin
+   2. Click "Content Manager" on the left
+   3. Click "Product"
+   4. Click the "Import" button (top right area)
+   5. Select your CSV file
+   6. Click Import
+   7. Review and Publish the products
+
+TIPS:
+   - Leave cells empty if you don't have that info
+   - Don't change the column header names
+   - Use quotes around text with commas: "Red, Blue, Green"
+   - Price should be just numbers: 45.00 (not "Fl. 45.00")
+
+ADDING IMAGES:
+   - Images must be added manually after import
+   - Click on each product in Strapi
+   - Upload image in the "image" field
+   - Save and Publish
+
+NEED HELP?
+   Contact your developer or check Strapi documentation.
+
+========================================

@@ -1,8 +1,11 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
 function Register() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { register, isAuthenticated, clearError } = useAuth()
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -14,8 +17,22 @@ function Register() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      const from = location.state?.from?.pathname || '/'
+      navigate(from, { replace: true })
+    }
+  }, [isAuthenticated, navigate, location])
+
+  // Clear auth errors on mount
+  useEffect(() => {
+    clearError()
+  }, [clearError])
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
+    setError('') // Clear error on input change
   }
 
   const handleSubmit = async (e) => {
@@ -35,31 +52,23 @@ function Register() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          password: formData.password
-        })
+      const result = await register({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed')
+      if (!result.success) {
+        setError(result.error)
+      } else {
+        // Navigate to previous page or home
+        const from = location.state?.from?.pathname || '/'
+        navigate(from, { replace: true })
       }
-
-      // Store token
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data.user))
-
-      navigate('/')
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'Registration failed')
     } finally {
       setLoading(false)
     }
@@ -77,7 +86,7 @@ function Register() {
           </p>
 
           {error && (
-            <div style={{ background: '#FEE', color: '#C00', padding: '12px', borderRadius: '5px', marginBottom: '20px', fontSize: '14px' }}>
+            <div style={{ background: 'var(--error-bg)', color: 'var(--error)', padding: '12px', borderRadius: '5px', marginBottom: '20px', fontSize: '14px' }}>
               {error}
             </div>
           )}
@@ -92,7 +101,7 @@ function Register() {
                   value={formData.firstName}
                   onChange={handleChange}
                   required
-                  style={{ width: '100%', padding: '14px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '14px' }}
+                  style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '14px' }}
                 />
               </div>
               <div>
@@ -103,7 +112,7 @@ function Register() {
                   value={formData.lastName}
                   onChange={handleChange}
                   required
-                  style={{ width: '100%', padding: '14px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '14px' }}
+                  style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '14px' }}
                 />
               </div>
             </div>
@@ -116,7 +125,7 @@ function Register() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                style={{ width: '100%', padding: '14px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '14px' }}
+                style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '14px' }}
                 placeholder="your@email.com"
               />
             </div>
@@ -128,7 +137,7 @@ function Register() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                style={{ width: '100%', padding: '14px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '14px' }}
+                style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '14px' }}
                 placeholder="+5999 XXX XXXX"
               />
             </div>
@@ -141,7 +150,7 @@ function Register() {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                style={{ width: '100%', padding: '14px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '14px' }}
+                style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '14px' }}
                 placeholder="At least 8 characters"
               />
             </div>
@@ -154,7 +163,7 @@ function Register() {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
-                style={{ width: '100%', padding: '14px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '14px' }}
+                style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '14px' }}
               />
             </div>
 

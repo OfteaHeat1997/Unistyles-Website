@@ -38,7 +38,7 @@ function Contact() {
               </a>
             </div>
 
-            <div style={{ borderTop: '1px solid #eee', paddingTop: '25px' }}>
+            <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: '25px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
                 <div style={{ width: '45px', height: '45px', background: 'var(--cream-bg)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <i className="fas fa-phone" style={{ color: 'var(--muted-gold)' }}></i>
@@ -97,7 +97,7 @@ function Contact() {
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '13px' }}>Name</label>
                 <input
                   type="text"
-                  style={{ width: '100%', padding: '14px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '14px' }}
+                  style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '14px' }}
                   placeholder="Your name"
                 />
               </div>
@@ -105,14 +105,14 @@ function Contact() {
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '13px' }}>Email</label>
                 <input
                   type="email"
-                  style={{ width: '100%', padding: '14px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '14px' }}
+                  style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '14px' }}
                   placeholder="Your email"
                 />
               </div>
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '13px' }}>Message</label>
                 <textarea
-                  style={{ width: '100%', padding: '14px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '14px', minHeight: '150px', resize: 'vertical' }}
+                  style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '14px', minHeight: '150px', resize: 'vertical' }}
                   placeholder="How can we help you?"
                 ></textarea>
               </div>

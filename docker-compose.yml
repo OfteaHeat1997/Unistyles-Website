@@ -1,23 +1,38 @@
-version: '3.8'
+# ===========================================
+# UNISTYLES E-COMMERCE - Docker Compose
+# Full Stack: React + Node.js + Strapi + PostgreSQL + Redis
+# Updated: Includes AuthContext, Cart API, Profile page
+# ===========================================
 
 services:
   # ===========================================
-  # FRONTEND - React App (Nginx)
+  # FRONTEND - React App (Vite + Nginx)
+  # Includes: AuthContext, ProtectedRoute, Profile,
+  #           CartService, updated Home/Checkout/Login
   # ===========================================
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        # Use relative URLs - nginx proxies to backend/strapi containers
+        - VITE_USE_STRAPI=true
+        - VITE_STRAPI_URL=
+        - VITE_API_URL=
+        - BUILDKIT_INLINE_CACHE=1
     container_name: unistyles-frontend
     ports:
       - "80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+      strapi:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - unistyles-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:80/"]
       interval: 30s
       timeout: 3s
       retries: 3
@@ -36,6 +51,7 @@ services:
     depends_on:
       - frontend
       - backend
+      - strapi
     restart: unless-stopped
     networks:
       - unistyles-network
@@ -44,19 +60,22 @@ services:
 
   # ===========================================
   # BACKEND - Node.js API Server
+  # Includes: Cart merge endpoint, Auth routes
   # ===========================================
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
     container_name: unistyles-backend
     environment:
       - NODE_ENV=production
       - PORT=3000
       - DATABASE_URL=postgresql://unistyles:${DB_PASSWORD}@postgres:5432/unistyles_db
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
       - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRES_IN=1h
+      - JWT_EXPIRES_IN=7d
       - WHATSAPP_NUMBER=${WHATSAPP_NUMBER}
       - SENTOO_API_KEY=${SENTOO_API_KEY}
       - SENTOO_MERCHANT_ID=${SENTOO_MERCHANT_ID}
@@ -64,15 +83,16 @@ services:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - unistyles-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 15s
 
   # ===========================================
   # POSTGRES - Main Database
@@ -97,7 +117,7 @@ services:
       retries: 5
 
   # ===========================================
-  # REDIS - Session & Cache Storage
+  # REDIS - Session & Cart Cache Storage
   # ===========================================
   redis:
     image: redis:7-alpine
@@ -108,6 +128,55 @@ services:
     restart: unless-stopped
     networks:
       - unistyles-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================
+  # STRAPI - Content Management System
+  # ===========================================
+  strapi:
+    build:
+      context: ./strapi
+      dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    container_name: unistyles-strapi
+    ports:
+      - "1337:1337"
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=1337
+      - PUBLIC_URL=${STRAPI_PUBLIC_URL:-http://localhost:1337}
+      - DATABASE_CLIENT=postgres
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=unistyles_db
+      - DATABASE_USERNAME=unistyles
+      - DATABASE_PASSWORD=${DB_PASSWORD}
+      - DATABASE_SSL=false
+      - APP_KEYS=${STRAPI_APP_KEYS}
+      - API_TOKEN_SALT=${STRAPI_API_TOKEN_SALT}
+      - ADMIN_JWT_SECRET=${STRAPI_ADMIN_JWT_SECRET}
+      - TRANSFER_TOKEN_SALT=${STRAPI_TRANSFER_TOKEN_SALT}
+      - JWT_SECRET=${STRAPI_JWT_SECRET}
+    volumes:
+      - strapi-uploads:/app/public/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - unistyles-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:1337/_health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 90s
+      retries: 3
 
   # ===========================================
   # ADMINER - Database Management (Dev Only)
@@ -117,6 +186,8 @@ services:
     container_name: unistyles-adminer
     ports:
       - "8080:8080"
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres
     depends_on:
       - postgres
     restart: unless-stopped
@@ -138,3 +209,4 @@ networks:
 volumes:
   postgres-data:
   redis-data:
+  strapi-uploads:

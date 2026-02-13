@@ -1,0 +1,275 @@
+// Complete Product Database for UNISTYLES Curacao
+// Generated from actual inventory CSV files and HTML catalog
+
+export const products = {
+  bras: {
+    title: 'Bras',
+    description: 'Explore the best of Colombian bras by Leonisa, designed for elegance and comfort. Delivered locally in Curacao.',
+    breadcrumb: 'Lingerie',
+    filterType: 'size',
+    filters: ['All', 'S', 'M', 'L', 'XL'],
+    products: [
+      { id: 'BRA-001', ref: 'REF 71332', name: 'Leonisa Bra', price: 35, image: '/images/LEONISA_HD_01.jpg', color: 'Beige', size: '40 B', brand: 'Leonisa' },
+      { id: 'BRA-002', ref: 'REF 011911', name: 'Leonisa Lace Bralette', price: 125, image: '/images/LEONISA_HD_01.jpg', color: 'Beige', size: '40 C', brand: 'Leonisa', badge: 'New' },
+      { id: 'BRA-003', ref: 'REF 091044', name: 'Leonisa Comfort Bra', price: 35, image: '/images/LEONISA_HD_02.jpg', color: 'Beige', size: 'L', brand: 'Leonisa' },
+      { id: 'BRA-004', ref: 'REF 011912', name: 'Leonisa Lace Bralette', price: 125, image: '/images/LEONISA_HD_02.jpg', color: 'Black', size: 'S', brand: 'Leonisa' },
+      { id: 'BRA-005', ref: 'REF 71318', name: 'Leonisa Strapless Lace', price: 135, image: '/images/LEONISA_HD_03.jpg', color: 'Black', size: '38 B', brand: 'Leonisa' },
+      { id: 'BRA-006', ref: 'REF 011920', name: 'Leonisa Push-Up Lace', price: 135, image: '/images/LEONISA_HD_04.jpg', color: 'Black', size: '38 B', brand: 'Leonisa' },
+      { id: 'BRA-007', ref: 'REF 011925', name: 'Leonisa Push-Up Lace', price: 125, image: '/images/LEONISA_HD_05.jpg', color: 'Beige', size: '36 B', brand: 'Leonisa' },
+      { id: 'BRA-008', ref: 'REF 011843', name: 'Leonisa Full Coverage Unlined Bra', price: 105, image: '/images/LEONISA_HD_06.jpg', color: 'Black', size: '36 B', brand: 'Leonisa', badge: 'Bestseller' },
+      { id: 'BRA-009', ref: 'REF 011968', name: 'Leonisa Contour Push-Up', price: 115, image: '/images/LEONISA_HD_07.jpg', color: 'Beige', size: '38 B', brand: 'Leonisa' },
+      { id: 'BRA-010', ref: 'REF 012100', name: 'Leonisa Triangle Lace Bra', price: 100, image: '/images/LEONISA_HD_10.jpg', color: 'Black', size: '38 B', brand: 'Leonisa' },
+      { id: 'BRA-011', ref: 'REF 011654', name: 'Leonisa Comfort Bra', price: 35, image: '/images/bra1.jpg', color: 'Beige', size: '38 B', brand: 'Leonisa' },
+      { id: 'BRA-012', ref: 'REF 011473', name: 'Leonisa Support Bra', price: 35, image: '/images/bra2.jpg', color: 'Beige', size: '38 B', brand: 'Leonisa' },
+      { id: 'BRA-013', ref: 'REF 71321', name: 'Leonisa Classic Bra', price: 35, image: '/images/bra3.jpg', color: 'Beige', size: '38 B', brand: 'Leonisa' },
+      { id: 'BRA-014', ref: 'REF 011936', name: 'Leonisa Everyday Bra', price: 35, image: '/images/bra4.jpg', color: 'Beige', size: '38 B', brand: 'Leonisa' },
+      { id: 'BRA-015', ref: 'REF 011877', name: 'Leonisa Soft Bra', price: 35, image: '/images/LEONISA_HD_01.jpg', color: 'White', size: '36 B', brand: 'Leonisa' },
+      { id: 'BRA-016', ref: 'REF 011970', name: 'Leonisa Molded Cup Bra', price: 35, image: '/images/LEONISA_HD_02.jpg', color: 'Beige', size: '40 C', brand: 'Leonisa' },
+      { id: 'BRA-017', ref: 'REF 011841', name: 'Leonisa Fashion Bra', price: 35, image: '/images/LEONISA_HD_03.jpg', color: 'Fuchsia', size: '34 B', brand: 'Leonisa', badge: 'New' },
+      { id: 'BRA-018', ref: 'REF 011981', name: 'Leonisa Modern Bra', price: 35, image: '/images/LEONISA_HD_04.jpg', color: 'Gray', size: '34 B', brand: 'Leonisa' },
+      { id: 'BRA-019', ref: 'REF 011898', name: 'Leonisa Elegant Bra', price: 35, image: '/images/LEONISA_HD_05.jpg', color: 'Black', size: '36 B', brand: 'Leonisa' },
+      { id: 'BRA-020', ref: 'REF 011977', name: 'Leonisa T-Shirt Bra', price: 35, image: '/images/LEONISA_HD_06.jpg', color: 'Black', size: '36 B', brand: 'Leonisa' }
+    ]
+  },
+
+  panties: {
+    title: 'Panties',
+    description: 'Discover our collection of Colombian panties by Leonisa. Comfortable, stylish, and perfect for everyday wear. Delivered locally in Curacao.',
+    breadcrumb: 'Lingerie',
+    filterType: 'style',
+    filters: ['All', 'Bikini', 'Thong', 'High Waist', 'Packs'],
+    products: [
+      { id: 'PNT-001', ref: 'REF 012632', name: 'Leonisa Classic Bikini', price: 35, image: '/images/HD_PANTY_NEGRO.jpg', color: 'Black', style: 'Bikini', brand: 'Leonisa', badge: 'New' },
+      { id: 'PNT-002', ref: 'REF 012633', name: 'Leonisa Cotton Bikini', price: 32, image: '/images/HD_PANTY_BLANCO.jpg', color: 'White', style: 'Bikini', brand: 'Leonisa' },
+      { id: 'PNT-003', ref: 'REF 012634', name: 'Leonisa Seamless Bikini', price: 38, image: '/images/HD_PANTY_ROSA.jpg', color: 'Pink', style: 'Bikini', brand: 'Leonisa' },
+      { id: 'PNT-004', ref: 'REF 01214', name: 'Leonisa Cotton Brief', price: 35, image: '/images/HD_PANTY_CREMA.jpg', color: 'Cream', style: 'Brief', brand: 'Leonisa', badge: 'Bestseller' },
+      { id: 'PNT-005', ref: 'REF 012640', name: 'Leonisa Lace Bikini', price: 42, image: '/images/HD_PANTY_AZUL_ENCAJE.jpg', color: 'Blue', style: 'Bikini', brand: 'Leonisa' },
+      { id: 'PNT-006', ref: 'REF 012650', name: 'Leonisa Seamless Thong', price: 38, image: '/images/HD_TANGA_NEGRO.jpg', color: 'Black', style: 'Thong', brand: 'Leonisa' },
+      { id: 'PNT-007', ref: 'REF 012655', name: 'Leonisa Cotton Hipster', price: 36, image: '/images/HD_PANTY_LILA.jpg', color: 'Lilac', style: 'Hipster', brand: 'Leonisa' },
+      { id: 'PNT-008', ref: 'REF 207', name: 'Leonisa High Waist Brief', price: 40, image: '/images/HD_PANTY_MORADO.jpg', color: 'Purple', style: 'High Waist', brand: 'Leonisa' },
+      { id: 'PNT-009', ref: 'REF 012632-3', name: 'Leonisa Cotton Bikini 3-Pack', price: 89, image: '/images/LEONISA_COTTON_BIKINI_3PACK_HD.jpg', style: 'Packs', brand: 'Leonisa', badge: '3-Pack' },
+      { id: 'PNT-010', ref: 'REF 012660', name: 'Leonisa Striped Bikini', price: 35, image: '/images/HD_PANTY_RAYAS_BEIGE.jpg', color: 'Beige', style: 'Bikini', brand: 'Leonisa', badge: 'New' },
+      { id: 'PNT-011', ref: 'REF 012665', name: 'Leonisa Seamless Thong', price: 38, image: '/images/LEONISA_SEAMLESS_THONG_BEIGE.jpg', color: 'Beige', style: 'Thong', brand: 'Leonisa' },
+      { id: 'PNT-012', ref: 'REF 012670', name: 'Leonisa Seamless Hipster', price: 42, image: '/images/LEONISA_SEAMLESS_HIPSTER_BEIGE.jpg', color: 'Beige', style: 'Hipster', brand: 'Leonisa', badge: 'Bestseller' },
+      { id: 'PNT-013', ref: 'REF 1255', name: 'Leonisa High Waist Lycra', price: 45, image: '/images/PANTY TIRO ALTO LICRA REF1255 BEIGE.jpg', color: 'Cream', style: 'High Waist', brand: 'Leonisa' },
+      { id: 'PNT-014', ref: 'REF 0118', name: 'Leonisa High Waist Support', price: 48, image: '/images/PANTY TIRO ALTO LYCRA REF 0118 BEIGE.jpg', color: 'Beige', style: 'High Waist', brand: 'Leonisa' },
+      { id: 'PNT-015', ref: 'REF 207-B', name: 'Leonisa High Waist Beige', price: 40, image: '/images/PANTY TIRO ALTO ALGODON REF 207 BEIGE.jpg', color: 'Beige', style: 'High Waist', brand: 'Leonisa' },
+      { id: 'PNT-016', ref: 'REF 207-W', name: 'Leonisa High Waist White', price: 40, image: '/images/PANTY TIRO ALTO ALGODON REF 207 BLANCO.jpg', color: 'White', style: 'High Waist', brand: 'Leonisa' },
+      { id: 'PNT-017', ref: 'REF 207-N', name: 'Leonisa High Waist Negro', price: 40, image: '/images/PANTY TIRO ALTO ALGODON REF 207 NEGRO.jpg', color: 'Black', style: 'High Waist', brand: 'Leonisa' },
+      { id: 'PNT-018', ref: 'REF 012633-T', name: 'Leonisa Cotton Tanga Beige', price: 35, image: '/images/PANTY TANGA ALGODON REF012633 BEIGE.jpg', color: 'Beige', style: 'Thong', brand: 'Leonisa' },
+      { id: 'PNT-019', ref: 'REF 012633-W', name: 'Leonisa Cotton Tanga Blanco', price: 35, image: '/images/PANTY TANGA ALGODON REF012633 BLANCO.jpg', color: 'White', style: 'Thong', brand: 'Leonisa' },
+      { id: 'PNT-020', ref: 'REF 012633-C', name: 'Leonisa Cotton Tanga Crema', price: 35, image: '/images/PANTY TANGA ALGODON REF012633 CREMA.jpg', color: 'Cream', style: 'Thong', brand: 'Leonisa' }
+    ]
+  },
+
+  shapewear: {
+    title: 'Shapewear',
+    description: 'Discover Colombian shapewear from Leonisa. Premium compression garments designed to sculpt, smooth, and enhance your natural curves with all-day comfort.',
+    breadcrumb: 'Lingerie',
+    filterType: 'style',
+    filters: ['All', 'High Waist', 'Thong', 'Seamless', 'Firm Control'],
+    products: [
+      { id: 'SHP-001', ref: 'REF SHP001', name: 'High Waist Shaper Panty', price: 68, image: '/images/LEONISA_HIGH_WAIST_SHAPER_BEIGE.jpg', color: 'Beige', compression: 'Medium', brand: 'Leonisa', badge: 'Bestseller' },
+      { id: 'SHP-002', ref: 'REF SHP002', name: 'High Waist Shaper Panty', price: 68, image: '/images/LEONISA_HIGH_WAIST_SHAPER_BLACK.jpg', color: 'Black', compression: 'Medium', brand: 'Leonisa', badge: 'New' },
+      { id: 'SHP-003', ref: 'REF SHP003', name: 'Firm Compression Shaper', price: 95, image: '/images/LEONISA_FIRM_COMPRESSION_BEIGE.jpg', color: 'Beige', compression: 'Firm', brand: 'Leonisa', badge: 'Firm Control' },
+      { id: 'SHP-004', ref: 'REF SHP004', name: 'High Waist Thong Shaper', price: 58, image: '/images/LEONISA_THONG_SHAPER_BEIGE.jpg', color: 'Beige', compression: 'Medium', brand: 'Leonisa', badge: 'Bestseller' },
+      { id: 'SHP-005', ref: 'REF SHP005', name: 'High Waist Thong Shaper', price: 58, image: '/images/LEONISA_THONG_SHAPER_HD.jpg', color: 'Black', compression: 'Medium', brand: 'Leonisa' },
+      { id: 'SHP-006', ref: 'REF SHP006', name: 'Seamless Shaper Panty', price: 52, image: '/images/LEONISA_SEAMLESS_SHAPER_HD.jpg', color: 'Beige', compression: 'Light', brand: 'Leonisa', badge: 'New' },
+      { id: 'SHP-007', ref: 'REF SHP007', name: 'Lace Trim Shaper Panty', price: 48, image: '/images/LEONISA_LACE_SHAPER_BEIGE.jpg', color: 'Beige', compression: 'Light', brand: 'Leonisa' },
+      { id: 'SHP-008', ref: 'REF SHP008', name: 'Lace Classic Shaper', price: 48, image: '/images/LEONISA_LACE_CLASSIC_SHAPER_HD.jpg', color: 'Black', compression: 'Light', brand: 'Leonisa' },
+      { id: 'SHP-009', ref: 'REF SHP009', name: 'Comfy Everyday Shaper', price: 45, image: '/images/LEONISA_COMFY_SHAPER_HD.jpg', color: 'Beige', compression: 'Light', brand: 'Leonisa', badge: 'Bestseller' },
+      { id: 'SHP-010', ref: 'REF SHP010', name: 'High Waist Shaper Panty', price: 68, image: '/images/LEONISA_HIGH_WAIST_SHAPER_WHITE.jpg', color: 'White', compression: 'Medium', brand: 'Leonisa' },
+      { id: 'SHP-011', ref: 'REF SHP011', name: 'Sheer Lace Shaper', price: 55, image: '/images/LEONISA_SHEER_LACE_SHAPER_HD.jpg', color: 'Black', compression: 'Light', brand: 'Leonisa', badge: 'New' },
+      { id: 'SHP-012', ref: 'REF SHP012', name: 'High Waist Sculpting Thong', price: 58, image: '/images/LEONISA_HIGH_WAIST_SCULPTING_THONG_HD.jpg', color: 'Beige', compression: 'Medium', brand: 'Leonisa' },
+      { id: 'SHP-013', ref: 'REF SHP013', name: 'Lace Seamless Thong', price: 48, image: '/images/LEONISA_LACE_SEAMLESS_THONG_HD.jpg', color: 'Black', compression: 'Light', brand: 'Leonisa' },
+      { id: 'SHP-014', ref: 'REF SHP014', name: 'Sheer Lace Beige', price: 55, image: '/images/LEONISA_SHEER_LACE_BEIGE.jpg', color: 'Beige', compression: 'Light', brand: 'Leonisa' },
+      { id: 'SHP-015', ref: 'REF SHP015', name: 'High Waist Thong Black', price: 58, image: '/images/LEONISA_HIGH_WAIST_THONG_BLACK.jpg', color: 'Black', compression: 'Medium', brand: 'Leonisa' }
+    ]
+  },
+
+  colonias: {
+    title: 'Fragrances',
+    description: 'Discover our collection of authentic Colombian fragrances from top brands like L\'Bel, Esika, Cyzone, and Yanbal. Premium perfumes delivered locally in Curacao.',
+    breadcrumb: 'Beauty',
+    filterType: 'category',
+    filters: ['All', 'Women', 'Men', 'Gift Sets'],
+    products: [
+      { id: 'COL-001', ref: 'Mithyka', name: 'Mithyka', price: 145, image: '/images/cologne-mithyka.jpg', size: '50ml EDP', brand: "L'Bel", badge: 'New', category: 'Women' },
+      { id: 'COL-002', ref: 'Vibranza', name: 'Vibranza', price: 125, image: '/images/cologne-vibranza.jpg', size: '45ml EDP', brand: 'Esika', badge: 'Bestseller', category: 'Women' },
+      { id: 'COL-003', ref: 'Bleu Intense', name: 'Bleu Intense', price: 175, image: '/images/cologne-bleu-intense.jpg', size: '100ml EDT', brand: "L'Bel", category: 'Men' },
+      { id: 'COL-004', ref: 'Sweet Black', name: 'Sweet Black', price: 89, image: '/images/cologne-sweet-black.jpg', size: '50ml EDP', brand: 'Cyzone', category: 'Women' },
+      { id: 'COL-005', ref: 'Magnat', name: 'Magnat', price: 155, image: '/images/cologne-magnat.jpg', size: '90ml EDT', brand: 'Esika', category: 'Men' },
+      { id: 'COL-006', ref: 'Fleur Divine', name: 'Fleur Divine', price: 165, image: '/images/cologne-fleur-divine.jpg', size: '50ml EDP', brand: "L'Bel", badge: 'New', category: 'Women' },
+      { id: 'COL-007', ref: 'Nitro Air', name: 'Nitro Air', price: 79, image: '/images/cologne-nitro-air.jpg', size: '100ml EDT', brand: 'Cyzone', category: 'Men' },
+      { id: 'COL-008', ref: 'Liberatta', name: 'Liberatta', price: 135, image: '/images/cologne-liberatta.jpg', size: '50ml EDP', brand: 'Yanbal', category: 'Women' },
+      { id: 'COL-009', ref: 'Expression', name: 'Expression', price: 115, image: '/images/cologne-expression.jpg', size: '100ml EDT', brand: 'Esika', category: 'Men' },
+      { id: 'COL-010', ref: 'Emouv', name: 'Emouv', price: 145, image: '/images/cologne-emouv.jpg', size: '50ml EDP', brand: "L'Bel", category: 'Women' },
+      { id: 'COL-011', ref: 'Ccori Oro', name: 'Ccori Oro', price: 185, image: '/images/cologne-ccori-oro.jpg', size: '50ml EDP', brand: 'Yanbal', badge: 'Bestseller', category: 'Women' },
+      { id: 'COL-012', ref: 'Satin Rouge', name: 'Satin Rouge', price: 155, image: '/images/cologne-satin-rouge.jpg', size: '50ml EDP', brand: "L'Bel", category: 'Women' },
+      { id: 'COL-013', ref: 'Cielo', name: 'Cielo', price: 95, image: '/images/CIELO.jpg', size: '50ml EDP', brand: 'Esika', category: 'Women' },
+      { id: 'COL-014', ref: 'Dorsay', name: 'Dorsay', price: 110, image: '/images/DORSAY.jpg', size: '90ml EDT', brand: 'Esika', category: 'Men' },
+      { id: 'COL-015', ref: 'Gaia', name: 'Gaia', price: 125, image: '/images/GAIA.jpg', size: '50ml EDP', brand: 'Yanbal', category: 'Women' },
+      { id: 'COL-016', ref: 'OHM', name: 'OHM', price: 135, image: '/images/OHM.jpg', size: '100ml EDT', brand: 'Esika', category: 'Men' },
+      { id: 'COL-017', ref: 'OHM Black', name: 'OHM Black', price: 145, image: '/images/OHM BLACK.jpg', size: '100ml EDT', brand: 'Esika', category: 'Men', badge: 'New' },
+      { id: 'COL-018', ref: 'Osadia', name: 'Osadia', price: 120, image: '/images/OSADIA.jpg', size: '50ml EDP', brand: 'Yanbal', category: 'Women' },
+      { id: 'COL-019', ref: 'Its You Live', name: 'Its You Live', price: 95, image: '/images/ITS YOU LIVE.jpg', size: '50ml EDP', brand: 'Esika', category: 'Women' },
+      { id: 'COL-020', ref: 'Zentro', name: 'Zentro', price: 110, image: '/images/ZENTRO.jpg', size: '100ml EDT', brand: 'Esika', category: 'Men' },
+      { id: 'COL-021', ref: 'Temtation', name: 'Temtation H', price: 95, image: '/images/TEMTATION H.jpg', size: '50ml EDP', brand: 'Esika', category: 'Women' },
+      { id: 'COL-022', ref: 'Mini Chics', name: 'Mini Chics Set', price: 45, image: '/images/MINI CHICS.jpg', size: 'Set', brand: 'Esika', category: 'Gift Sets', badge: 'Gift Set' }
+    ]
+  },
+
+  cremas: {
+    title: 'Creams',
+    description: 'Premium skincare from L\'Bel, Esika, and Yanbal. Nourish your skin with Colombian beauty secrets.',
+    breadcrumb: 'Beauty',
+    filterType: 'category',
+    filters: ['All', 'Body', 'Face', 'Hand', 'Anti-Aging'],
+    products: [
+      { id: 'CRM-001', ref: 'Mithyka', name: 'Mithyka Body Cream', price: 35, image: '/images/cream-mithyka.jpg', brand: "L'Bel", category: 'Body', badge: 'New' },
+      { id: 'CRM-002', ref: 'Vibranza', name: 'Vibranza Body Cream', price: 32, image: '/images/cream-vibranza.jpg', brand: 'Esika', category: 'Body', badge: 'Bestseller' },
+      { id: 'CRM-003', ref: 'Ccori Oro', name: 'Ccori Oro Body Cream', price: 38, image: '/images/cream-ccori-oro.jpg', brand: 'Yanbal', category: 'Body' },
+      { id: 'CRM-004', ref: 'Gaia', name: 'Gaia Body Cream', price: 32, image: '/images/cream-gaia.jpg', brand: 'Yanbal', category: 'Body' },
+      { id: 'CRM-005', ref: 'Delice', name: 'Delice Hand Cream', price: 19, image: '/images/cream-delice.jpg', brand: "L'Bel", category: 'Hand' },
+      { id: 'CRM-006', ref: 'Multicrem', name: 'Multicrem Nutrients', price: 25, image: '/images/cream-multicrem.jpg', brand: 'Esika', category: 'Body' },
+      { id: 'CRM-007', ref: 'Renacer', name: 'Renacer Night Cream', price: 45, image: '/images/cream-renacer.jpg', brand: 'Esika', category: 'Face', badge: 'Anti-Aging' },
+      { id: 'CRM-008', ref: 'Totalist', name: 'Totalist Face Cream', price: 55, image: '/images/cream-totalist.jpg', brand: "L'Bel", category: 'Anti-Aging' },
+      { id: 'CRM-009', ref: 'Sensitiva', name: 'Sensitiva Face Cream', price: 42, image: '/images/cream-sensitiva.jpg', brand: "L'Bel", category: 'Face' },
+      { id: 'CRM-010', ref: 'Triple Accion', name: 'Triple Accion Cream', price: 38, image: '/images/cream-triple-accion.jpg', brand: 'Esika', category: 'Anti-Aging' },
+      { id: 'CRM-011', ref: 'Osadia', name: 'Osadia Body Cream', price: 32, image: '/images/cream-osadia.jpg', brand: 'Yanbal', category: 'Body' },
+      { id: 'CRM-012', ref: 'Seda Perlas', name: 'Seda Perlas y Rosas', price: 28, image: '/images/cream-seda-perlas.jpg', brand: 'Yanbal', category: 'Body', badge: 'Bestseller' }
+    ]
+  },
+
+  bloqueador: {
+    title: 'Sunscreen',
+    description: 'Sun protection for the Caribbean sun. Stay protected with quality sunscreens from top Colombian brands like Yanbal, Esika, and L\'Bel.',
+    breadcrumb: 'Beauty',
+    filterType: 'category',
+    filters: ['All', 'Facial', 'Body', 'Tinted', 'Spray'],
+    products: [
+      { id: 'BLQ-001', ref: 'Defense Total', name: 'Defense Total Protector Solar FPS 50', price: 35, image: '/images/L_bel-Defense-Total-Protector-solar-50_-FPS-lbel.png', brand: "L'Bel", category: 'Tinted', badge: 'Bestseller' },
+      { id: 'BLQ-002', ref: 'Triple Action SPF 100', name: 'Triple Action Max Anti-aging SPF 100', price: 39, image: '/images/esuka Triple Action Max Anti-aging FPS 100.png', brand: 'Esika', category: 'Facial', badge: 'SPF 100' },
+      { id: 'BLQ-003', ref: 'Total Block 140g', name: 'Total Block SPF 50+ 140g', price: 32, image: '/images/Total Block 140g.png', brand: 'Yanbal', category: 'Body', badge: 'New' },
+      { id: 'BLQ-004', ref: 'Compact Light', name: 'Total Block Compact Beige Claro', price: 28, image: '/images/Total Block Compact Beige Claro.png', brand: 'Yanbal', category: 'Tinted' },
+      { id: 'BLQ-005', ref: 'Compact Dark', name: 'Total Block Compact Beige Oscuro', price: 28, image: '/images/Total Block Compact Beige Oscuro.jpg', brand: 'Yanbal', category: 'Tinted' },
+      { id: 'BLQ-006', ref: 'Compact Nude', name: 'Total Block Compact Nude', price: 28, image: '/images/Total Block Compact Nude.png', brand: 'Yanbal', category: 'Tinted', badge: 'Bestseller' },
+      { id: 'BLQ-007', ref: 'Matt 80g', name: 'Total Block Matt Matificante 80g', price: 25, image: '/images/Total Block Matt Matificante 80g.jpg', brand: 'Yanbal', category: 'Facial', description: 'Oil control formula' },
+      { id: 'BLQ-008', ref: 'Spray', name: 'Total Block Bifasico Spray SPF 50+', price: 35, image: '/images/Total Block 50+ Bifasico Spray.jpeg', brand: 'Yanbal', category: 'Spray', badge: 'New' },
+      { id: 'BLQ-009', ref: 'Total Block 80g', name: 'Total Block SPF 50+ 80g', price: 22, image: '/images/Total Block 80g 50fps.jpeg', brand: 'Yanbal', category: 'Facial' },
+      { id: 'BLQ-010', ref: 'Total Block 140g v2', name: 'Total Block 140g SPF 50', price: 32, image: '/images/Total Block 140g 50fps.jpg', brand: 'Yanbal', category: 'Body' },
+      { id: 'BLQ-011', ref: 'Perfect Block', name: 'Perfect Block SPF 50', price: 29, image: '/images/Perfect Block FPS 50.jpg', brand: 'Esika', category: 'Facial', description: 'Water resistant matte finish' },
+      { id: 'BLQ-012', ref: 'Perfect Block v2', name: 'Perfect Block FPS 50 Fresh', price: 29, image: '/images/bloqueador perfect block fps 50.jpg', brand: 'Esika', category: 'Facial' }
+    ]
+  },
+
+  desodorantes: {
+    title: 'Deodorants',
+    description: 'Stay fresh all day with Colombian deodorants and antiperspirants from Esika and Yanbal.',
+    breadcrumb: 'Beauty',
+    filterType: 'category',
+    filters: ['All', 'Women', 'Men', 'Roll-on', 'Unisex'],
+    products: [
+      { id: 'DES-001', ref: '36 Total Sec', name: '36H Total Sec Roll-on', price: 15, image: '/images/36 totalsec.jpg', brand: 'Yanbal', category: 'Roll-on' },
+      { id: 'DES-002', ref: 'Neutro', name: '36H Total Sec Neutro', price: 15, image: '/images/36H TOTAL SEC NEUTRO.jpg', brand: 'Yanbal', category: 'Roll-on', description: 'Fragrance-free' },
+      { id: 'DES-003', ref: 'Cielo', name: 'Cielo Floral', price: 15, image: '/images/CIELO.jpg', brand: 'Esika', category: 'Women' },
+      { id: 'DES-004', ref: 'Pulso', name: 'Esika Pulso', price: 15, image: '/images/deodorante esika pulso.png', brand: 'Esika', category: 'Women', badge: 'New' },
+      { id: 'DES-005', ref: 'Fantasia', name: 'Fantasia Azul', price: 15, image: '/images/deodorante fantasia azul.jpg', brand: 'Esika', category: 'Women' },
+      { id: 'DES-006', ref: 'Arom', name: 'Yanbal Arom Absolute', price: 15, image: '/images/Desodorante Tambal AROM ABSOLUTE .jpg', brand: 'Yanbal', category: 'Men', badge: 'Premium' },
+      { id: 'DES-007', ref: 'Original', name: 'Yanbal Original', price: 15, image: '/images/Desodorante yambal  ORIGINAL.jpeg', brand: 'Yanbal', category: 'Unisex' },
+      { id: 'DES-008', ref: 'Ccori Oro', name: 'Yanbal Ccori Oro', price: 15, image: '/images/Desodorante yambal ccori oro.jpg', brand: 'Yanbal', category: 'Women', badge: 'Bestseller' },
+      { id: 'DES-009', ref: 'Ccori Rose', name: 'Yanbal Ccori Rose', price: 15, image: '/images/Desodorante yambal CCORI ROSE.jpeg', brand: 'Yanbal', category: 'Women' },
+      { id: 'DES-010', ref: 'Dorsay', name: 'Dorsay Classic', price: 15, image: '/images/DORSAY.jpg', brand: 'Esika', category: 'Men' },
+      { id: 'DES-011', ref: 'Fective', name: 'Fective Brisa Floral', price: 15, image: '/images/FECTIVE BRISA FLORAL.jpg', brand: 'Esika', category: 'Women' },
+      { id: 'DES-012', ref: 'Gaia', name: 'Gaia Natural', price: 15, image: '/images/GAIA.jpg', brand: 'Esika', category: 'Unisex' },
+      { id: 'DES-013', ref: 'Its You', name: 'Its You Live Roll-on', price: 15, image: '/images/ITS YOU Roll-on.jpg', brand: 'Esika', category: 'Women', badge: 'New' },
+      { id: 'DES-014', ref: 'Leyenda', name: 'Leyenda Bold', price: 15, image: '/images/leyenda.png', brand: 'Esika', category: 'Men' },
+      { id: 'DES-015', ref: 'Magnat', name: 'Magnat Classic', price: 15, image: '/images/magnat.png', brand: 'Esika', category: 'Men', badge: 'Bestseller' },
+      { id: 'DES-016', ref: 'Ohm', name: 'Ohm Black', price: 15, image: '/images/OHM BLACK.jpg', brand: 'Esika', category: 'Men' },
+      { id: 'DES-017', ref: 'Osadia', name: 'Osadia Bold', price: 15, image: '/images/OSADIA.jpg', brand: 'Esika', category: 'Women' },
+      { id: 'DES-018', ref: 'Zentro', name: 'Zentro Modern', price: 15, image: '/images/ZENTRO.jpg', brand: 'Esika', category: 'Men' },
+      { id: 'DES-019', ref: 'Talco Fantasia', name: 'Talco Fantasia Azul Infinito', price: 12, image: '/images/talcos esika FANTASIA AZUL INFINITO.png', brand: 'Esika', category: 'Women' },
+      { id: 'DES-020', ref: 'Talco Extreme', name: 'Talcos Extreme', price: 12, image: '/images/talcos extreme.jpg', brand: 'Esika', category: 'Men' }
+    ]
+  },
+
+  'limpieza-facial': {
+    title: 'Facial Cleansing',
+    description: 'Facial cleansing products for radiant skin. Colombian skincare at its best from L\'Bel and Esika.',
+    breadcrumb: 'Beauty',
+    filterType: 'category',
+    filters: ['All', 'Cleansers', 'Micellar Water', 'Toners', 'Exfoliators', 'Serums'],
+    products: [
+      { id: 'LF-001', ref: 'Exfoliante', name: 'Exfoliante Triple Accion Max', price: 22, image: '/images/Exfoliante Triple Accion esika.jpg', brand: 'Esika', category: 'Exfoliators', description: 'Deep cleansing exfoliator' },
+      { id: 'LF-002', ref: 'Micelar Esika', name: 'Agua Micelar Triple Accion Max', price: 25, image: '/images/Agua Micelar Triple Accion esika.png', brand: 'Esika', category: 'Micellar Water', badge: 'Bestseller' },
+      { id: 'LF-003', ref: 'Tonica', name: 'Locion Tonica Essential', price: 28, image: '/images/Locion Tonica Essential lbel.jpg', brand: "L'Bel", category: 'Toners', badge: 'New' },
+      { id: 'LF-004', ref: 'Sensitiva Elixir', name: 'Sensitiva Elixir Toning Cleanser', price: 35, image: '/images/Sensitiva Elixir Toning Cleanser 120ml.jpg', brand: "L'Bel", category: 'Cleansers', description: 'Gentle toning cleanser 120ml' },
+      { id: 'LF-005', ref: 'Anti-Dark Spots', name: 'Anti-Dark Spots Facial Serum', price: 45, image: '/images/Anti-Dark Spots Facial Serum.jpg', brand: "L'Bel", category: 'Serums', badge: 'Premium', description: 'Brightening serum for dark spots' },
+      { id: 'LF-006', ref: 'Bifasico', name: 'Desmaquillador Essential Bifasico', price: 22, image: '/images/Desmaquillador Essential lbel.jpg', brand: "L'Bel", category: 'Cleansers', description: 'Dual-phase makeup remover' },
+      { id: 'LF-007', ref: 'Micelar LBel', name: 'Agua Micelar 2 en 1', price: 25, image: '/images/Agua Micelar 2 en 1 lbel.jpg', brand: "L'Bel", category: 'Micellar Water' },
+      { id: 'LF-008', ref: 'Nocturne', name: 'Nocturne Gel Limpiador Facial', price: 28, image: '/images/Nocturne Limpiadora lbel.jpg', brand: "L'Bel", category: 'Cleansers', description: 'Night cleansing gel' },
+      { id: 'LF-009', ref: 'Antioxidant', name: 'Antioxidant Concentrated Serum', price: 55, image: '/images/Antioxidant Concentrated Serum.jpg', brand: "L'Bel", category: 'Serums', badge: 'Premium' }
+    ]
+  },
+
+  accesorios: {
+    title: 'Accessories & Jewelry',
+    description: 'Beautiful Colombian jewelry and accessories. Elegant pieces for every occasion.',
+    breadcrumb: 'Accessories',
+    filterType: 'category',
+    filters: ['All', 'Necklaces', 'Earrings', 'Bracelets', 'Rings', 'Sets'],
+    products: [
+      { id: 'ACC-001', ref: 'Anillo Leon', name: 'Gold Ring with Black Stone - 4 Styles', price: 25, image: '/images/acc_anillo_gold_black_stone_4styles.jpg', category: 'Rings', material: 'Gold' },
+      { id: 'ACC-002', ref: 'Aretes Mariposa', name: 'Butterfly Crystal Stud Earrings', price: 15, image: '/images/acc_aretes_butterfly_crystal.jpg', category: 'Earrings', material: 'Gold' },
+      { id: 'ACC-003', ref: 'Aretes Chandelier', name: 'Chandelier Drop Earrings', price: 28, image: '/images/acc_aretes_chandelier.jpg', category: 'Earrings', material: 'Gold', badge: 'New' },
+      { id: 'ACC-004', ref: 'Aretes Hoops', name: 'Hoop Earrings Various Sizes', price: 18, image: '/images/acc_aretes_hoops_various.jpg', category: 'Earrings', material: 'Gold' },
+      { id: 'ACC-005', ref: 'Aretes Pearl', name: 'Pearl Drop Earrings', price: 22, image: '/images/acc_aretes_pearl_drop.jpg', category: 'Earrings', material: 'Gold', badge: 'Bestseller' },
+      { id: 'ACC-006', ref: 'Collar Butterfly', name: 'Butterfly Station Necklace', price: 35, image: '/images/acc_collar_butterfly_station.jpg', category: 'Necklaces', material: 'Gold' },
+      { id: 'ACC-007', ref: 'Collar Heart', name: 'Heart Pendant Necklace', price: 32, image: '/images/acc_collar_heart_pendant.jpg', category: 'Necklaces', material: 'Gold' },
+      { id: 'ACC-008', ref: 'Collar Choker', name: 'Layered Choker Necklace', price: 38, image: '/images/acc_collar_layered_choker.jpg', category: 'Necklaces', material: 'Gold', badge: 'New' },
+      { id: 'ACC-009', ref: 'Collar Snake', name: 'Snake Chain Necklace', price: 45, image: '/images/acc_collar_snake_chain.jpg', category: 'Necklaces', material: 'Gold' },
+      { id: 'ACC-010', ref: 'Pulsera Hearts', name: 'Heart Charms Bracelet', price: 28, image: '/images/acc_pulsera_heart_charms.jpg', category: 'Bracelets', material: 'Gold' },
+      { id: 'ACC-011', ref: 'Pulsera Tennis', name: 'Crystal Tennis Bracelet', price: 45, image: '/images/acc_pulsera_tennis_crystal.jpg', category: 'Bracelets', material: 'Gold', badge: 'Bestseller' },
+      { id: 'ACC-012', ref: 'Pulsera Cuff', name: 'Wide Cuff Bracelet', price: 40, image: '/images/acc_pulsera_wide_cuff.jpg', category: 'Bracelets', material: 'Gold' },
+      { id: 'ACC-013', ref: 'Set Clover', name: 'Clover Set - Necklace + Earrings', price: 55, image: '/images/acc_set_clover_set.jpg', category: 'Sets', material: 'Gold', badge: 'Gift Set' },
+      { id: 'ACC-014', ref: 'Set Tree Life', name: 'Tree of Life Set - Necklace + Earrings', price: 48, image: '/images/acc_set_tree_of_life_set.jpg', category: 'Sets', material: 'Gold' }
+    ]
+  }
+}
+
+// Helper function to get all products as a flat array with category info
+export const getAllProducts = () => {
+  const allProducts = []
+  Object.entries(products).forEach(([category, data]) => {
+    data.products.forEach(product => {
+      allProducts.push({
+        ...product,
+        categorySlug: category,
+        categoryName: data.title
+      })
+    })
+  })
+  return allProducts
+}
+
+// Helper function to get a product by ID
+export const getProductById = (id) => {
+  for (const [category, data] of Object.entries(products)) {
+    const product = data.products.find(p => p.id === id)
+    if (product) {
+      return {
+        ...product,
+        categorySlug: category,
+        categoryName: data.title
+      }
+    }
+  }
+  return null
+}
+
+// Helper function to get products by category
+export const getProductsByCategory = (categorySlug) => {
+  return products[categorySlug] || null
+}
+
+export default products

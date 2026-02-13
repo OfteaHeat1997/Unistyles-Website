@@ -46,7 +46,7 @@ router.post('/',
         // Verify items and calculate totals
         const productIds = items.map(item => item.productId);
         const products = await db.query(
-            'SELECT id, sku, name, price, stock, images FROM products WHERE id = ANY($1)',
+            'SELECT id, ref, name, price, in_stock, legacy_image FROM products WHERE id = ANY($1)',
             [productIds]
         );
 
@@ -63,8 +63,8 @@ router.post('/',
             if (!product) {
                 return res.status(400).json({ error: `Product not found: ${item.productId}` });
             }
-            if (product.stock < item.quantity) {
-                return res.status(400).json({ error: `Insufficient stock for: ${product.name}` });
+            if (!product.in_stock) {
+                return res.status(400).json({ error: `Out of stock: ${product.name}` });
             }
 
             const itemPrice = parseFloat(product.price);
@@ -74,12 +74,12 @@ router.post('/',
                 productId: product.id,
                 variantId: item.variantId || null,
                 productName: product.name,
-                productSku: product.sku,
+                productSku: product.ref || '',
                 quantity: item.quantity,
                 price: itemPrice,
                 size: item.size || null,
                 color: item.color || null,
-                imageUrl: product.images?.[0] || null
+                imageUrl: product.legacy_image || null
             });
         }
 
@@ -139,11 +139,8 @@ router.post('/',
                 item.imageUrl
             ]);
 
-            // Update stock
-            await db.query(
-                'UPDATE products SET stock = stock - $1 WHERE id = $2',
-                [item.quantity, item.productId]
-            );
+            // Note: Stock tracking not available with Strapi boolean in_stock field
+            // Consider adding inventory management in Strapi if needed
         }
 
         // Create initial payment record
@@ -168,7 +165,7 @@ router.post('/',
                 deliveryFee: parseFloat(order.delivery_fee),
                 total: parseFloat(order.total),
                 items: orderItems,
-                shippingAddress: JSON.parse(order.shipping_address),
+                shippingAddress: typeof order.shipping_address === 'string' ? JSON.parse(order.shipping_address) : order.shipping_address,
                 deliveryDate: order.delivery_date,
                 deliveryTimeSlot: order.delivery_time_slot,
                 createdAt: order.created_at
@@ -282,7 +279,7 @@ router.get('/:id', optionalAuth, asyncHandler(async (req, res) => {
             color: item.color,
             imageUrl: item.image_url
         })),
-        shippingAddress: JSON.parse(order.shipping_address),
+        shippingAddress: typeof order.shipping_address === 'string' ? JSON.parse(order.shipping_address) : order.shipping_address,
         deliveryDate: order.delivery_date,
         deliveryTimeSlot: order.delivery_time_slot,
         notes: order.notes,

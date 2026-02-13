@@ -1,206 +1,311 @@
 import { Link } from 'react-router-dom'
-import ProductCard from '../components/ProductCard'
+import { useMemo } from 'react'
+import { useHomepage, useCategories, useBrands } from '../hooks/useProducts'
+import HeroSlider from '../components/HeroSlider'
+import NewReleasesCarousel from '../components/NewReleasesCarousel'
 
-// Sample products data (will come from API later)
-const newArrivals = [
-  { id: 1, name: 'Leonisa Lace Bralette', ref: '011911', price: 125, image: '/images/bra1.jpg', badge: 'New' },
-  { id: 2, name: 'Leonisa Contour Push-Up', ref: '011968', price: 115, image: '/images/bra2.jpg' },
-  { id: 3, name: 'Leonisa Strapless Lace', ref: '71318', price: 135, image: '/images/bra3.jpg' },
-  { id: 4, name: 'Leonisa Full Coverage', ref: '011843', price: 105, image: '/images/bra4.jpg', badge: 'Bestseller' }
-]
+// Category tile configuration - CORRECT product images for each category
+const categoryConfig = {
+  shapewear: { image: '/images/LEONISA_HIGH_WAIST_SHAPER_BEIGE.jpg', label: 'Shapewear' },
+  bras: { image: '/images/cat-bras.jpg', label: 'Bras' },
+  panties: { image: '/images/cat-panties.jpg', label: 'Panties' },
+  colonias: { image: '/images/DORSAY.jpg', label: 'Fragrances' },
+  cremas: { image: '/images/cat-skincare.jpg', label: 'Creams' },
+  bloqueador: { image: '/images/Total Block 140g.png', label: 'Sunscreen' },
+  desodorantes: { image: '/images/Desodorante yambal CCORI ROSE.jpeg', label: 'Deodorants' },
+  'limpieza-facial': { image: '/images/Agua Micelar 2 en 1 lbel.jpg', label: 'Facial Care' },
+  accesorios: { image: '/images/cat-accesorios.jpg', label: 'Accessories' }
+}
 
-const categories = [
-  { slug: 'bras', name: 'BH / Bras', count: 77, image: '/images/cat-bras.jpg' },
-  { slug: 'panties', name: 'Pantys', count: 72, image: '/images/cat-panties.jpg' },
-  { slug: 'colonias', name: 'Colonias', count: 71, image: '/images/cat-fragrances.jpg' },
-  { slug: 'cremas', name: 'Cremas', count: 49, image: '/images/cat-beauty.jpg' },
-  { slug: 'bloqueador', name: 'Bloqueador', count: 11, image: '/images/cat-bloqueador.jpg' },
-  { slug: 'desodorantes', name: 'Desodorantes', count: 25, image: '/images/cat-desodorantes.jpg' },
-  { slug: 'limpieza-facial', name: 'Limpieza Facial', count: 6, image: '/images/cat-skincare.jpg' },
-  { slug: 'accesorios', name: 'Accesorios / Joyas', count: 82, image: '/images/cat-accesorios.jpg' }
-]
-
-const testimonials = [
-  {
-    text: "Finally found quality Colombian lingerie in Curacao! The delivery was fast and the bras fit perfectly. I'll definitely order again.",
-    author: 'Maria C.',
-    location: 'Willemstad'
+// Brand configuration with logos and categories
+const brandConfig = {
+  'Leonisa': {
+    category: 'Lingerie & Shapewear',
+    logo: '/images/brand-leonisa.png',
+    link: '/shapewear'
   },
-  {
-    text: "I love that I can order via WhatsApp and pay when they deliver. So easy and personal! The L'Bel creams are amazing.",
-    author: 'Carmen R.',
-    location: 'Otrobanda'
+  "L'Bel": {
+    category: 'Skincare & Fragrances',
+    logo: '/images/brand-lbel.png',
+    link: '/cremas'
   },
-  {
-    text: "Authentic Leonisa products at fair prices. They even helped me choose the right size over WhatsApp. Excellent service!",
-    author: 'Ana L.',
-    location: 'Punda'
+  'Esika': {
+    category: 'Beauty & Fragrances',
+    logo: '/images/brand-esika.png',
+    link: '/colonias'
+  },
+  'Yanbal': {
+    category: 'Beauty & Suncare',
+    logo: '/images/brand-yanbal.png',
+    link: '/bloqueador'
+  },
+  'Cyzone': {
+    category: 'Trendy Fragrances',
+    logo: '/images/brand-cyzone.png',
+    link: '/colonias'
   }
-]
-
-const brands = [
-  { id: 'leonisa', name: 'LEONISA', category: 'Lingerie', tagline: "Colombia's #1 lingerie brand since 1956", link: '/bras' },
-  { id: 'lbel', name: "L'BEL", category: 'Skincare', tagline: 'Science & technology for your skin', link: '/cremas' },
-  { id: 'esika', name: 'esika', category: 'Beauty', tagline: 'Confidence is beauty', link: '/colonias' },
-  { id: 'cyzone', name: 'CYZONE', category: 'Fragrances', tagline: 'Trendy beauty for everyone', link: '/colonias' },
-  { id: 'yanbal', name: 'YANBAL', category: 'Beauty', tagline: 'Premium beauty since 1967', link: '/cremas' }
-]
+}
 
 function Home() {
+  // Fetch homepage data from Strapi (with fallback to local data)
+  const { data: homepageData, isLoading } = useHomepage()
+
+  // Fetch categories and brands
+  const { data: categories } = useCategories({ showInMenu: true })
+  const { data: brands } = useBrands()
+
+  // Get products for new arrivals and bestsellers
+  const { newArrivals, bestsellers, carouselProducts } = useMemo(() => {
+    if (homepageData) {
+      // Transform products for carousel format
+      const carouselItems = (homepageData.newArrivals || []).slice(0, 7).map(product => ({
+        id: product.id,
+        name: product.name,
+        subtitle: product.brand?.name || product.categoryName || 'Premium Collection',
+        image: product.image,
+        badge: product.badge,
+        category: (product.category?.name || product.categoryName || '').toUpperCase(),
+        link: `/product/${product.id}`
+      }))
+
+      return {
+        newArrivals: homepageData.newArrivals?.slice(0, 4) || [],
+        bestsellers: homepageData.featuredProducts?.slice(0, 4) || [],
+        carouselProducts: carouselItems
+      }
+    }
+    return { newArrivals: [], bestsellers: [], carouselProducts: [] }
+  }, [homepageData])
+
+  // Get display categories (from API or use default config)
+  const displayCategories = useMemo(() => {
+    if (categories && categories.length > 0) {
+      return categories.slice(0, 8).map(cat => ({
+        slug: cat.slug,
+        name: categoryConfig[cat.slug]?.label || cat.name,
+        image: cat.image || categoryConfig[cat.slug]?.image || '/images/placeholder.jpg'
+      }))
+    }
+    // Fallback to config-based categories (first 8)
+    return Object.entries(categoryConfig).slice(0, 8).map(([slug, config]) => ({
+      slug,
+      name: config.label,
+      image: config.image
+    }))
+  }, [categories])
+
+  // Get display brands (from API or use default config)
+  const displayBrands = useMemo(() => {
+    if (brands && brands.length > 0) {
+      return brands.filter(b => b.featured !== false).slice(0, 5).map(brand => ({
+        name: brand.name,
+        category: brandConfig[brand.name]?.category || brand.description || 'Premium Products',
+        logo: brandConfig[brand.name]?.logo || '/images/placeholder.jpg',
+        link: brandConfig[brand.name]?.link || '/'
+      }))
+    }
+    // Fallback to config-based brands
+    return Object.entries(brandConfig).map(([name, config]) => ({
+      name,
+      category: config.category,
+      logo: config.logo,
+      link: config.link
+    }))
+  }, [brands])
+
   return (
-    <>
-      {/* Hero Section */}
-      <section className="hero">
-        <div className="hero-content">
-          <div className="hero-text">
-            <div className="hero-badge">
-              <i className="fas fa-truck"></i>
-              FREE DELIVERY IN CURACAO
-            </div>
-            <h1>Elegant &<br />Affordable<br />Colombian Style</h1>
-            <p>Discover carefully curated Colombian lingerie, fashion, and beauty products, delivered with personal care in Curacao.</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
-              <Link to="/bras" className="btn-shop">Shop Now</Link>
-              <a
-                href="https://wa.me/59990000425?text=Hola!%20I'm%20interested%20in%20your%20products"
-                className="btn-whatsapp"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <i className="fab fa-whatsapp"></i>
-                Order via WhatsApp
-              </a>
-            </div>
-          </div>
-          <div className="hero-image">
-            <img src="/images/hero-bra.jpg" alt="Leonisa Elegant Lingerie" />
+    <div className="home-page">
+      {/* Full-Screen Hero Slider with Ken Burns Effect */}
+      <HeroSlider />
+
+      {/* New Releases Carousel */}
+      <NewReleasesCarousel products={carouselProducts} />
+
+      {/* Categories Grid - Clean 4-Column Layout */}
+      <section className="shop-by-category">
+        <div className="container">
+          <h2 className="shop-category-title">Shop by Category</h2>
+          <div className="shop-category-grid">
+            {displayCategories.map((category) => (
+              <Link to={`/${category.slug}`} className="shop-category-card" key={category.slug}>
+                <img src={category.image} alt={category.name} loading="lazy" />
+                <span className="shop-category-name">{category.name}</span>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Features Bar */}
-      <div className="features-bar">
-        <div className="features-content">
-          <div className="feature-item">
-            <div className="feature-icon">
-              <i className="fas fa-truck"></i>
-            </div>
-            <div className="feature-text">
-              <h4>Local Delivery</h4>
-              <p>Delivery gifts on Curacao</p>
-            </div>
+      {/* New Releases - Product Grid */}
+      <section className="products-section">
+        <div className="container">
+          <div className="section-header">
+            <h2>New Releases</h2>
+            <Link to="/bras" className="view-all-link">View All</Link>
           </div>
-          <div className="feature-item">
-            <div className="feature-icon">
-              <i className="fas fa-shield-alt"></i>
-            </div>
-            <div className="feature-text">
-              <h4>Safe Payments</h4>
-              <p>Pay secure via florin</p>
-            </div>
-          </div>
-          <div className="feature-item">
-            <div className="feature-icon">
-              <i className="fas fa-undo"></i>
-            </div>
-            <div className="feature-text">
-              <h4>Easy Returns</h4>
-              <p>Return 7 days after delivery</p>
-            </div>
+          <div className="products-grid-4">
+            {newArrivals.map((product) => (
+              <Link to={`/product/${product.id}`} className="product-tile" key={product.id}>
+                <div className="product-image">
+                  <img src={product.image} alt={product.name} />
+                  {product.badge && (
+                    <span className="product-badge">{product.badge}</span>
+                  )}
+                </div>
+                <div className="product-details">
+                  {product.brand && <span className="product-brand">{typeof product.brand === 'object' ? product.brand.name : product.brand}</span>}
+                  <h3 className="product-name">{product.name}</h3>
+                  <p className="product-price">XCG {product.price}</p>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Categories Section */}
-      <section className="categories">
-        <div className="section-header">
-          <h2>Shop by Category</h2>
-          <p>Explore our curated collection of Colombian products</p>
+      {/* Featured Banner */}
+      <section className="featured-banner">
+        <div className="banner-content">
+          <div className="banner-text">
+            <span className="banner-label">Featured Brand</span>
+            <h2>LEONISA</h2>
+            <p>Colombia's #1 lingerie brand since 1956. Premium quality shapewear and lingerie designed for the modern woman.</p>
+            <Link to="/shapewear" className="btn-primary">Shop Leonisa</Link>
+          </div>
+          <div className="banner-image">
+            <img src="/images/LEONISA_HD_03.jpg" alt="Leonisa Shapewear" />
+          </div>
         </div>
-        <div className="categories-grid">
-          {categories.map((cat) => (
-            <Link to={`/${cat.slug}`} className="category-card" key={cat.slug}>
-              <img src={cat.image} alt={cat.name} />
-              <div className="category-overlay">
-                <h3>{cat.name}</h3>
-                <p>{cat.count} Products</p>
+      </section>
+
+      {/* Bestsellers - Product Grid */}
+      <section className="products-section">
+        <div className="container">
+          <div className="section-header">
+            <h2>Bestsellers</h2>
+            <Link to="/bras" className="view-all-link">View All</Link>
+          </div>
+          <div className="products-grid-4">
+            {bestsellers.map((product) => (
+              <Link to={`/product/${product.id}`} className="product-tile" key={product.id}>
+                <div className="product-image">
+                  <img src={product.image} alt={product.name} />
+                  {product.badge && (
+                    <span className="product-badge bestseller">{product.badge}</span>
+                  )}
+                </div>
+                <div className="product-details">
+                  {product.brand && <span className="product-brand">{typeof product.brand === 'object' ? product.brand.name : product.brand}</span>}
+                  <h3 className="product-name">{product.name}</h3>
+                  <p className="product-price">XCG {product.price}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Features */}
+      <section className="trust-section">
+        <div className="container">
+          <div className="trust-grid">
+            <div className="trust-item">
+              <div className="trust-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="1" y="3" width="15" height="13" rx="2"/>
+                  <path d="M16 8h4l3 3v5a2 2 0 0 1-2 2h-1"/>
+                  <circle cx="5.5" cy="18.5" r="2.5"/>
+                  <circle cx="18.5" cy="18.5" r="2.5"/>
+                </svg>
               </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* New Arrivals Section */}
-      <section className="new-arrivals">
-        <div className="section-header">
-          <h2>New Arrivals</h2>
-          <p>Our latest products just for you</p>
-        </div>
-        <div className="products-grid">
-          {newArrivals.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      </section>
-
-      {/* Welcome Section */}
-      <section className="welcome">
-        <div className="welcome-content">
-          <div className="welcome-image">
-            <img src="/images/welcome-img.jpg" alt="Leonisa Colombian Lingerie" />
-          </div>
-          <div className="welcome-text">
-            <h2>Welcome to Unistyles</h2>
-            <p>We bring the best of Colombian fashion and beauty to Curacao, with quality products from brands like Leonisa, Esika, L'Bel, and more.</p>
-            <p>Enjoy a personal, worry-free shopping experience with local delivery and easy returns.</p>
-            <Link to="/about" className="btn-outline">Learn More About Us</Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="testimonials">
-        <div className="section-header">
-          <h2>What Our Customers Say</h2>
-          <p>Real experiences from women in Curacao</p>
-        </div>
-        <div className="testimonials-grid">
-          {testimonials.map((testimonial, index) => (
-            <div className="testimonial-card" key={index}>
-              <div className="stars">
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
+              <div className="trust-text">
+                <h4>Free Delivery</h4>
+                <p>On orders over XCG 80</p>
               </div>
-              <p>"{testimonial.text}"</p>
-              <span className="author">{testimonial.author}</span>
-              <span className="location">{testimonial.location}</span>
             </div>
-          ))}
+            <div className="trust-item">
+              <div className="trust-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+              </div>
+              <div className="trust-text">
+                <h4>100% Authentic</h4>
+                <p>Original Colombian brands</p>
+              </div>
+            </div>
+            <div className="trust-item">
+              <div className="trust-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                </svg>
+              </div>
+              <div className="trust-text">
+                <h4>WhatsApp Orders</h4>
+                <p>Personal service</p>
+              </div>
+            </div>
+            <div className="trust-item">
+              <div className="trust-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <polyline points="23 4 23 10 17 10"/>
+                  <polyline points="1 20 1 14 7 14"/>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+              </div>
+              <div className="trust-text">
+                <h4>Easy Returns</h4>
+                <p>7 day return policy</p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Brands Section */}
-      <section className="brands">
-        <div className="section-header">
-          <h2>Authentic Colombian Brands</h2>
-          <p>Premium quality products directly from Colombia</p>
-        </div>
-        <div className="brands-grid">
-          {brands.map((brand) => (
-            <Link to={brand.link} className={`brand-card ${brand.id}`} key={brand.id}>
-              <div className="brand-logo">
-                <span className="brand-text">{brand.name}</span>
-              </div>
-              <p className="brand-category">{brand.category}</p>
-              <p className="brand-tagline">{brand.tagline}</p>
-            </Link>
-          ))}
+      {/* Brands Section - Logo Grid */}
+      <section className="brands-section-new">
+        <div className="container">
+          <div className="section-header centered">
+            <h2>Our Brands</h2>
+          </div>
+          <div className="brands-logo-grid">
+            {displayBrands.map((brand) => (
+              <Link to={brand.link} className="brand-logo-card" key={brand.name}>
+                <div className="brand-logo-wrapper">
+                  <img src={brand.logo} alt={brand.name} loading="lazy" />
+                </div>
+                <span className="brand-category-label">{brand.category}</span>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
-    </>
+
+      {/* WhatsApp CTA */}
+      <section className="whatsapp-section">
+        <div className="container">
+          <div className="whatsapp-cta">
+            <div className="whatsapp-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+            </div>
+            <div className="whatsapp-text">
+              <h3>Need Help Ordering?</h3>
+              <p>Chat with us on WhatsApp for personal assistance</p>
+            </div>
+            <a
+              href="https://wa.me/59990000425?text=Hola!%20I'm%20interested%20in%20your%20products"
+              className="btn-whatsapp"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Chat Now
+            </a>
+          </div>
+        </div>
+      </section>
+    </div>
   )
 }
 

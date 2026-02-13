@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
+import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Category from './pages/Category'
 import Product from './pages/Product'
@@ -8,11 +9,14 @@ import Contact from './pages/Contact'
 import Checkout from './pages/Checkout'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
 
 function App() {
   return (
     <Routes>
+
+      {/* Main site with header/footer */}
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="bras" element={<Category category="bras" />} />
@@ -30,6 +34,7 @@ function App() {
         <Route path="checkout" element={<Checkout />} />
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
+        <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

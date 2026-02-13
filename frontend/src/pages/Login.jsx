@@ -1,14 +1,31 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
 function Login() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { login, isAuthenticated, error: authError, clearError } = useAuth()
   const [formData, setFormData] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      const from = location.state?.from?.pathname || '/'
+      navigate(from, { replace: true })
+    }
+  }, [isAuthenticated, navigate, location])
+
+  // Clear auth errors on mount
+  useEffect(() => {
+    clearError()
+  }, [clearError])
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
+    setError('') // Clear error on input change
   }
 
   const handleSubmit = async (e) => {
@@ -17,25 +34,17 @@ function Login() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      })
+      const result = await login(formData.email, formData.password)
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed')
+      if (!result.success) {
+        setError(result.error)
+      } else {
+        // Navigate to previous page or home
+        const from = location.state?.from?.pathname || '/'
+        navigate(from, { replace: true })
       }
-
-      // Store token
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data.user))
-
-      navigate('/')
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'Login failed')
     } finally {
       setLoading(false)
     }
@@ -53,7 +62,7 @@ function Login() {
           </p>
 
           {error && (
-            <div style={{ background: '#FEE', color: '#C00', padding: '12px', borderRadius: '5px', marginBottom: '20px', fontSize: '14px' }}>
+            <div style={{ background: 'var(--error-bg)', color: 'var(--error)', padding: '12px', borderRadius: '5px', marginBottom: '20px', fontSize: '14px' }}>
               {error}
             </div>
           )}
@@ -67,7 +76,7 @@ function Login() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                style={{ width: '100%', padding: '14px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '14px' }}
+                style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '14px' }}
                 placeholder="your@email.com"
               />
             </div>
@@ -80,7 +89,7 @@ function Login() {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                style={{ width: '100%', padding: '14px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '14px' }}
+                style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '14px' }}
                 placeholder="Your password"
               />
             </div>
@@ -110,7 +119,7 @@ function Login() {
             </p>
           </div>
 
-          <div style={{ marginTop: '25px', paddingTop: '25px', borderTop: '1px solid #eee' }}>
+          <div style={{ marginTop: '25px', paddingTop: '25px', borderTop: '1px solid var(--border-light)' }}>
             <a
               href="https://wa.me/59990000425?text=Hi!%20I%20need%20help%20with%20my%20account"
               className="btn-whatsapp"

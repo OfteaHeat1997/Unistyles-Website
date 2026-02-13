@@ -4,11 +4,40 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 3000,
+    port: 5173,
+    host: true,
     proxy: {
+      // Backend API
       '/api': {
-        target: 'http://localhost:5000',
-        changeOrigin: true
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false
+      },
+      // Strapi CMS API
+      '/cms': {
+        target: 'http://localhost:1337',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/cms/, '/api')
+      },
+      // Strapi uploads
+      '/uploads': {
+        target: 'http://localhost:1337',
+        changeOrigin: true,
+        secure: false
+      }
+    }
+  },
+  build: {
+    target: 'es2015',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'router': ['react-router-dom'],
+          'query': ['@tanstack/react-query']
+        }
       }
     }
   },
