@@ -3,6 +3,7 @@ import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Category from './pages/Category'
+import Perfume from './pages/Perfume'
 import Product from './pages/Product'
 import About from './pages/About'
 import Contact from './pages/Contact'
@@ -22,7 +23,7 @@ function App() {
         <Route path="bras" element={<Category category="bras" />} />
         <Route path="panties" element={<Category category="panties" />} />
         <Route path="shapewear" element={<Category category="shapewear" />} />
-        <Route path="perfume" element={<Category category="perfume" />} />
+        <Route path="perfume" element={<Perfume />} />
         <Route path="cremas" element={<Category category="cremas" />} />
         <Route path="bloqueador" element={<Category category="bloqueador" />} />
         <Route path="desodorantes" element={<Category category="desodorantes" />} />

@@ -43,75 +43,9 @@ CREATE TABLE addresses (
 CREATE INDEX idx_addresses_user ON addresses(user_id);
 
 -- ===========================================
--- CATEGORIES TABLE
+-- NOTE: Categories and Products are managed by Strapi CMS.
+-- Do NOT create those tables here to avoid conflicts.
 -- ===========================================
-CREATE TABLE categories (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(100) NOT NULL,
-    name_es VARCHAR(100),
-    slug VARCHAR(100) UNIQUE NOT NULL,
-    description TEXT,
-    image_url VARCHAR(500),
-    parent_id UUID REFERENCES categories(id) ON DELETE SET NULL,
-    sort_order INTEGER DEFAULT 0,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE INDEX idx_categories_slug ON categories(slug);
-CREATE INDEX idx_categories_parent ON categories(parent_id);
-
--- ===========================================
--- PRODUCTS TABLE
--- ===========================================
-CREATE TABLE products (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    sku VARCHAR(50) UNIQUE NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    name_es VARCHAR(255),
-    slug VARCHAR(255) UNIQUE NOT NULL,
-    description TEXT,
-    description_es TEXT,
-    price DECIMAL(10,2) NOT NULL,
-    compare_price DECIMAL(10,2),
-    cost DECIMAL(10,2),
-    category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
-    brand VARCHAR(100),
-    images JSONB DEFAULT '[]',
-    sizes JSONB DEFAULT '[]',
-    colors JSONB DEFAULT '[]',
-    stock INTEGER DEFAULT 0,
-    is_active BOOLEAN DEFAULT TRUE,
-    is_featured BOOLEAN DEFAULT FALSE,
-    meta_title VARCHAR(255),
-    meta_description TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE INDEX idx_products_sku ON products(sku);
-CREATE INDEX idx_products_slug ON products(slug);
-CREATE INDEX idx_products_category ON products(category_id);
-CREATE INDEX idx_products_brand ON products(brand);
-CREATE INDEX idx_products_active ON products(is_active);
-CREATE INDEX idx_products_featured ON products(is_featured);
-
--- ===========================================
--- PRODUCT VARIANTS TABLE
--- ===========================================
-CREATE TABLE product_variants (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    product_id UUID REFERENCES products(id) ON DELETE CASCADE,
-    sku VARCHAR(50) UNIQUE NOT NULL,
-    size VARCHAR(20),
-    color VARCHAR(50),
-    price DECIMAL(10,2),
-    stock INTEGER DEFAULT 0,
-    image_url VARCHAR(500),
-    is_active BOOLEAN DEFAULT TRUE
-);
-
-CREATE INDEX idx_variants_product ON product_variants(product_id);
 
 -- ===========================================
 -- ORDERS TABLE
@@ -152,8 +86,8 @@ CREATE INDEX idx_orders_created ON orders(created_at DESC);
 CREATE TABLE order_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
-    product_id UUID REFERENCES products(id) ON DELETE SET NULL,
-    variant_id UUID REFERENCES product_variants(id) ON DELETE SET NULL,
+    product_id UUID,
+    variant_id UUID,
     product_name VARCHAR(255) NOT NULL,
     product_sku VARCHAR(50) NOT NULL,
     quantity INTEGER NOT NULL,
@@ -202,7 +136,7 @@ CREATE UNIQUE INDEX idx_carts_user ON carts(user_id);
 -- ===========================================
 CREATE TABLE reviews (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    product_id UUID REFERENCES products(id) ON DELETE CASCADE,
+    product_id UUID,
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     order_id UUID REFERENCES orders(id) ON DELETE SET NULL,
     rating INTEGER CHECK (rating >= 1 AND rating <= 5),
@@ -236,34 +170,8 @@ CREATE TABLE settings (
 );
 
 -- ===========================================
--- INITIAL DATA - CATEGORIES
+-- NOTE: Category seed data is managed via Strapi CMS.
 -- ===========================================
-INSERT INTO categories (name, name_es, slug, sort_order) VALUES
-('Lingerie', 'Lenceria', 'lingerie', 1),
-('Beauty', 'Belleza', 'beauty', 2),
-('Accessories', 'Accesorios', 'accessories', 3);
-
--- Sub-categories for Lingerie
-INSERT INTO categories (name, name_es, slug, parent_id, sort_order) VALUES
-('Bras', 'Brasier', 'bras', (SELECT id FROM categories WHERE slug = 'lingerie'), 1),
-('Panties', 'Pantys', 'panties', (SELECT id FROM categories WHERE slug = 'lingerie'), 2),
-('Shapewear', 'Fajas', 'shapewear', (SELECT id FROM categories WHERE slug = 'lingerie'), 3);
-
--- Sub-categories for Beauty
-INSERT INTO categories (name, name_es, slug, parent_id, sort_order) VALUES
-('Fragrances', 'Colonias', 'fragrances', (SELECT id FROM categories WHERE slug = 'beauty'), 1),
-('Creams', 'Cremas', 'creams', (SELECT id FROM categories WHERE slug = 'beauty'), 2),
-('Sunscreen', 'Bloqueador', 'sunscreen', (SELECT id FROM categories WHERE slug = 'beauty'), 3),
-('Deodorants', 'Desodorantes', 'deodorants', (SELECT id FROM categories WHERE slug = 'beauty'), 4),
-('Facial Cleansers', 'Limpieza Facial', 'facial-cleansers', (SELECT id FROM categories WHERE slug = 'beauty'), 5);
-
--- Sub-categories for Accessories
-INSERT INTO categories (name, name_es, slug, parent_id, sort_order) VALUES
-('Earrings', 'Aretes', 'earrings', (SELECT id FROM categories WHERE slug = 'accessories'), 1),
-('Necklaces', 'Collares', 'necklaces', (SELECT id FROM categories WHERE slug = 'accessories'), 2),
-('Bracelets', 'Pulseras', 'bracelets', (SELECT id FROM categories WHERE slug = 'accessories'), 3),
-('Rings', 'Anillos', 'rings', (SELECT id FROM categories WHERE slug = 'accessories'), 4),
-('Sets', 'Sets', 'jewelry-sets', (SELECT id FROM categories WHERE slug = 'accessories'), 5);
 
 -- ===========================================
 -- INITIAL SETTINGS
@@ -293,7 +201,6 @@ $$ LANGUAGE plpgsql;
 
 -- Apply trigger to tables
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER update_payments_updated_at BEFORE UPDATE ON payments FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER update_carts_updated_at BEFORE UPDATE ON carts FOR EACH ROW EXECUTE FUNCTION update_updated_at();

@@ -99,6 +99,47 @@
     },
     "legacyImage": {
       "type": "string"
+    },
+    "gender": {
+      "type": "enumeration",
+      "enum": ["women", "men", "unisex"],
+      "default": "unisex"
+    },
+    "fragranceFamily": {
+      "type": "enumeration",
+      "enum": ["floral", "oriental", "woody", "fresh", "fruity", "gourmand", "citrus", "aquatic"]
+    },
+    "scentProfile": {
+      "type": "enumeration",
+      "enum": ["sweet", "spicy", "musky", "powdery", "green", "aromatic", "warm", "cool"]
+    },
+    "intensity": {
+      "type": "enumeration",
+      "enum": ["light", "moderate", "intense", "very_intense"]
+    },
+    "occasion": {
+      "type": "enumeration",
+      "enum": ["daily", "office", "evening", "romantic", "special", "casual", "sport"]
+    },
+    "season": {
+      "type": "enumeration",
+      "enum": ["spring", "summer", "fall", "winter", "all_year"]
+    },
+    "topNotes": {
+      "type": "string"
+    },
+    "middleNotes": {
+      "type": "string"
+    },
+    "baseNotes": {
+      "type": "string"
+    },
+    "volume": {
+      "type": "string"
+    },
+    "concentration": {
+      "type": "enumeration",
+      "enum": ["parfum", "edp", "edt", "cologne", "splash"]
     }
   }
 }

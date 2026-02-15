@@ -129,8 +129,9 @@ function Header() {
                     <div className="mega-col">
                       <h4>Fragrances</h4>
                       <ul>
-                        <li><Link to="/perfume">Women's Perfume</Link></li>
-                        <li><Link to="/perfume">Men's Cologne</Link></li>
+                        <li><Link to="/perfume">All Fragrances</Link></li>
+                        <li><Link to="/perfume?gender=women">For Her</Link></li>
+                        <li><Link to="/perfume?gender=men">For Him</Link></li>
                       </ul>
                     </div>
                     <div className="mega-col">
