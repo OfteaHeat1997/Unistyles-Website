@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { cartStore } from '../stores/cartStore'
 import { PAYMENT_METHODS, DELIVERY } from '../config'
+import { getCheckoutOrderUrl } from '../utils/whatsapp'
 
 function Checkout() {
   const navigate = useNavigate()
@@ -11,6 +12,10 @@ function Checkout() {
   const [orderPlaced, setOrderPlaced] = useState(false)
   const [orderNumber, setOrderNumber] = useState('')
   const [orderError, setOrderError] = useState('')
+  const [couponCode, setCouponCode] = useState('')
+  const [couponDiscount, setCouponDiscount] = useState(0)
+  const [couponApplied, setCouponApplied] = useState('')
+  const [couponError, setCouponError] = useState('')
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -33,7 +38,37 @@ function Checkout() {
   }, [])
 
   const deliveryFee = total >= DELIVERY.freeShippingThreshold ? 0 : DELIVERY.standardFee
-  const orderTotal = total + deliveryFee
+  const orderTotal = total + deliveryFee - couponDiscount
+
+  const applyCoupon = async () => {
+    setCouponError('')
+    if (!couponCode.trim()) return
+    try {
+      const res = await fetch('/api/coupons/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponCode.trim(), subtotal: total })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setCouponDiscount(data.discount)
+        setCouponApplied(data.couponCode)
+      } else {
+        setCouponError(data.error || 'Invalid coupon')
+        setCouponDiscount(0)
+        setCouponApplied('')
+      }
+    } catch {
+      setCouponError('Failed to validate coupon')
+    }
+  }
+
+  const removeCoupon = () => {
+    setCouponCode('')
+    setCouponDiscount(0)
+    setCouponApplied('')
+    setCouponError('')
+  }
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -54,27 +89,6 @@ function Checkout() {
   const placeOrder = async () => {
     setOrderError('')
 
-    // For WhatsApp orders, skip API and redirect directly
-    if (formData.paymentMethod === 'whatsapp') {
-      const tempOrderNumber = 'UNI-' + Date.now().toString().slice(-8)
-      setOrderNumber(tempOrderNumber)
-      setOrderPlaced(true)
-      cartStore.clearCart()
-
-      const message = encodeURIComponent(
-        `New Order ${tempOrderNumber}\n\n` +
-        `Customer: ${formData.firstName} ${formData.lastName}\n` +
-        `Phone: ${formData.phone}\n` +
-        `Address: ${formData.address}, ${formData.area}\n\n` +
-        `Items:\n${cart.map(item => `- ${item.name} x${item.quantity} = XCG ${(item.price * item.quantity).toFixed(2)}`).join('\n')}\n\n` +
-        `Subtotal: XCG ${total.toFixed(2)}\n` +
-        `Delivery: XCG ${deliveryFee.toFixed(2)}\n` +
-        `Total: XCG ${orderTotal.toFixed(2)}`
-      )
-      window.open(`https://wa.me/59990000425?text=${message}`, '_blank')
-      return
-    }
-
     try {
       // Build auth headers
       const headers = { 'Content-Type': 'application/json' }
@@ -83,7 +97,7 @@ function Checkout() {
         headers['Authorization'] = `Bearer ${token}`
       }
 
-      // Call backend orders API
+      // All payment methods (including 'whatsapp') go through the API
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers,
@@ -103,7 +117,8 @@ function Checkout() {
             landmark: formData.landmark || null
           },
           guestEmail: !token ? formData.email : undefined,
-          notes: formData.notes || null
+          notes: formData.notes || null,
+          couponCode: couponApplied || undefined
         })
       })
 
@@ -114,9 +129,60 @@ function Checkout() {
       }
 
       // Success - store order number and clear cart
-      setOrderNumber(data.orderNumber || data.order?.orderNumber || 'UNI-' + Date.now().toString().slice(-8))
+      const confirmedOrderNumber = data.orderNumber || data.order?.orderNumber || 'UNI-' + Date.now().toString().slice(-8)
+      const confirmedOrderId = data.order?.id
+
+      // For Sentoo payments, redirect to Sentoo payment screen
+      if (formData.paymentMethod === 'sentoo' && confirmedOrderId) {
+        try {
+          const sentooResponse = await fetch('/api/payments/sentoo', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ orderId: confirmedOrderId })
+          })
+          const sentooData = await sentooResponse.json()
+
+          if (sentooResponse.ok && sentooData.paymentUrl) {
+            // Store payment info for retry on callback page
+            localStorage.setItem(`sentoo_payment_${confirmedOrderId}`, JSON.stringify({
+              paymentUrl: sentooData.paymentUrl,
+              qrCodeUrl: sentooData.qrCodeUrl,
+              orderNumber: confirmedOrderNumber
+            }))
+
+            // Open Sentoo payment in new tab, navigate app to callback page to poll status
+            cartStore.clearCart()
+            window.open(sentooData.paymentUrl, '_blank')
+            navigate(`/payment/callback?orderId=${confirmedOrderId}&attempt=pending`)
+            return
+          } else {
+            throw new Error(sentooData.error || 'Failed to initialize Sentoo payment')
+          }
+        } catch (sentooError) {
+          console.error('Sentoo payment init failed:', sentooError)
+          setOrderError(sentooError.message || 'Failed to initialize payment. Please try again.')
+          return
+        }
+      }
+
+      // For non-Sentoo methods, show confirmation as before
+      setOrderNumber(confirmedOrderNumber)
       setOrderPlaced(true)
       cartStore.clearCart()
+
+      // For WhatsApp orders, also open wa.me link as convenience/fallback
+      if (formData.paymentMethod === 'whatsapp') {
+        const whatsappUrl = getCheckoutOrderUrl({
+          orderNumber: confirmedOrderNumber,
+          customer: `${formData.firstName} ${formData.lastName}`,
+          address: `${formData.address}, ${formData.area}`,
+          items: cart,
+          subtotal: total,
+          deliveryFee,
+          total: orderTotal
+        })
+        window.open(whatsappUrl, '_blank')
+      }
 
     } catch (error) {
       console.error('Order placement failed:', error)
@@ -138,7 +204,7 @@ function Checkout() {
   if (orderPlaced) {
     return (
       <section style={{ padding: '100px 0', background: 'var(--cream-bg)', textAlign: 'center', minHeight: '60vh' }}>
-        <i className="fas fa-check-circle" style={{ fontSize: '80px', color: '#25D366', marginBottom: '20px' }}></i>
+        <i className="fas fa-check-circle" style={{ fontSize: '80px', color: '#3D7A5F', marginBottom: '20px' }}></i>
         <h2 style={{ fontFamily: "'Playfair Display', serif", marginBottom: '15px' }}>Order Placed Successfully!</h2>
         {orderNumber && (
           <p style={{ marginBottom: '10px', fontSize: '18px', fontWeight: '600', color: 'var(--dark)' }}>
@@ -306,10 +372,10 @@ function Checkout() {
                       alignItems: 'center',
                       gap: '15px',
                       padding: '20px',
-                      border: formData.paymentMethod === 'whatsapp' ? '2px solid #25D366' : '1px solid var(--border)',
+                      border: formData.paymentMethod === 'whatsapp' ? '2px solid #1B4D4F' : '1px solid var(--border)',
                       borderRadius: '8px',
                       cursor: 'pointer',
-                      background: formData.paymentMethod === 'whatsapp' ? '#E8F8EE' : 'white'
+                      background: formData.paymentMethod === 'whatsapp' ? '#F3EDE6' : 'white'
                     }}>
                       <input
                         type="radio"
@@ -319,7 +385,7 @@ function Checkout() {
                         onChange={handleChange}
                         style={{ width: '18px', height: '18px' }}
                       />
-                      <i className="fab fa-whatsapp" style={{ fontSize: '24px', color: '#25D366', width: '30px' }}></i>
+                      <i className="fab fa-whatsapp" style={{ fontSize: '24px', color: '#1B4D4F', width: '30px' }}></i>
                       <div>
                         <p style={{ fontWeight: '600', marginBottom: '3px' }}>Order via WhatsApp</p>
                         <p style={{ fontSize: '13px', color: 'var(--dark-warmth)' }}>Complete your order through WhatsApp chat</p>
@@ -432,6 +498,36 @@ function Checkout() {
                 ))}
               </div>
 
+              {/* Coupon Code */}
+              <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: '15px', marginBottom: '15px' }}>
+                {couponApplied ? (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: '#E8F5E9', borderRadius: '5px' }}>
+                    <div>
+                      <span style={{ fontSize: '13px', color: '#3D7A5F', fontWeight: '600' }}>
+                        <i className="fas fa-tag" style={{ marginRight: '6px' }}></i>{couponApplied}
+                      </span>
+                      <span style={{ fontSize: '12px', color: '#3D7A5F', marginLeft: '8px' }}>-XCG {couponDiscount.toFixed(2)}</span>
+                    </div>
+                    <button onClick={removeCoupon} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: '#c0392b' }}>
+                      <i className="fas fa-times"></i>
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input type="text" value={couponCode} onChange={e => setCouponCode(e.target.value)}
+                        placeholder="Coupon code" onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), applyCoupon())}
+                        style={{ flex: 1, padding: '10px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '13px' }}
+                      />
+                      <button type="button" onClick={applyCoupon} className="btn-outline" style={{ padding: '10px 15px', fontSize: '13px', whiteSpace: 'nowrap' }}>
+                        Apply
+                      </button>
+                    </div>
+                    {couponError && <p style={{ fontSize: '12px', color: '#c0392b', marginTop: '5px' }}>{couponError}</p>}
+                  </div>
+                )}
+              </div>
+
               {/* Totals */}
               <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: '15px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
@@ -442,6 +538,12 @@ function Checkout() {
                   <span>Delivery</span>
                   <span>{deliveryFee === 0 ? 'FREE' : `XCG ${deliveryFee.toFixed(2)}`}</span>
                 </div>
+                {couponDiscount > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: '#3D7A5F' }}>
+                    <span>Discount</span>
+                    <span>-XCG {couponDiscount.toFixed(2)}</span>
+                  </div>
+                )}
                 {total < DELIVERY.freeShippingThreshold && (
                   <p style={{ fontSize: '12px', color: 'var(--muted-gold)', marginBottom: '10px' }}>
                     Add XCG {(DELIVERY.freeShippingThreshold - total).toFixed(2)} more for free delivery

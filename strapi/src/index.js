@@ -229,7 +229,16 @@ async function seedDataIfEmpty(strapi) {
           });
 
           if (existingProduct.length > 0) {
-            continue; // Skip existing products
+            // Update price and stock if seed data has changed
+            const existing = existingProduct[0];
+            const seedStock = product.stockQuantity != null ? product.stockQuantity : 0;
+            const seedInStock = product.inStock != null ? product.inStock : seedStock > 0;
+            if (existing.price !== product.price || existing.stockQuantity !== seedStock || existing.inStock !== seedInStock) {
+              await strapi.entityService.update('api::product.product', existing.id, {
+                data: { price: product.price, stockQuantity: seedStock, inStock: seedInStock }
+              });
+            }
+            continue;
           }
 
           const productSlug = slugify(`${product.name}-${product.id}`);
@@ -247,7 +256,8 @@ async function seedDataIfEmpty(strapi) {
             compression: mapCompression(product.compression),
             material: product.material || null,
             badge: mapBadge(product.badge),
-            inStock: true,
+            inStock: product.inStock != null ? product.inStock : true,
+            stockQuantity: product.stockQuantity != null ? product.stockQuantity : 0,
             featured: product.badge === 'Bestseller' || product.badge === 'New',
             sortOrder: data.products.indexOf(product) + 1,
             category: categoryId,

@@ -1,3 +1,5 @@
+import { getGeneralQuestionUrl } from '../utils/whatsapp'
+
 function Contact() {
   return (
     <>
@@ -27,7 +29,7 @@ function Contact() {
 
             <div style={{ marginBottom: '25px' }}>
               <a
-                href="https://wa.me/59990000425?text=Hola!%20I%20have%20a%20question"
+                href={getGeneralQuestionUrl()}
                 className="btn-whatsapp"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -45,7 +47,7 @@ function Contact() {
                 </div>
                 <div>
                   <p style={{ fontWeight: '600', color: 'var(--dark)', marginBottom: '2px' }}>Phone</p>
-                  <a href="tel:+59990000425" style={{ color: 'var(--charcoal)', textDecoration: 'none' }}>+5999 000-0425</a>
+                  <a href="tel:+59996736285" style={{ color: 'var(--charcoal)', textDecoration: 'none' }}>+5999 673 6285</a>
                 </div>
               </div>
 

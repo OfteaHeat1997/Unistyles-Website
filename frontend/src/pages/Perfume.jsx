@@ -1,13 +1,25 @@
 import { Link, useSearchParams } from 'react-router-dom'
 import { useState, useMemo, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useProductsByCategory } from '../hooks/useProducts'
 import { cartStore } from '../stores/cartStore'
 import QuickViewModal from '../components/QuickViewModal'
+import { getCategoryHelpUrl } from '../utils/whatsapp'
 
 const API_URL = import.meta.env.VITE_API_URL || ''
 
 // Professional brand options
 const brandOptions = ['All', 'Cyzone', 'Esika', "L'Bel", 'Yanbal', 'Avon']
+
+// Product type / concentration options
+const productTypes = [
+  { id: 'all', name: 'All Types' },
+  { id: 'parfum', name: 'Parfum' },
+  { id: 'edp', name: 'Eau de Parfum' },
+  { id: 'edt', name: 'Eau de Toilette' },
+  { id: 'cologne', name: 'Cologne' },
+  { id: 'splash', name: 'Body Splash' }
+]
 
 // Price range filters
 const priceRanges = [
@@ -87,6 +99,7 @@ function Perfume() {
   const [selectedPrice, setSelectedPrice] = useState('all')
   const [selectedFragrance, setSelectedFragrance] = useState('all')
   const [selectedIntensity, setSelectedIntensity] = useState('all')
+  const [selectedType, setSelectedType] = useState('all')
   const [sortBy, setSortBy] = useState('featured')
   const [quickViewProduct, setQuickViewProduct] = useState(null)
   const [visibleCount, setVisibleCount] = useState(12)
@@ -171,9 +184,9 @@ function Perfume() {
     setQuizLoading(false)
   }
 
-  const resetQuiz = () => {
+  const resetQuiz = (keepAnswers = false) => {
     setQuizStep(0)
-    setQuizAnswers({})
+    if (!keepAnswers) setQuizAnswers({})
     setQuizResults(null)
     setShowQuiz(false)
   }
@@ -183,6 +196,34 @@ function Perfume() {
       setQuizStep(prev => prev - 1)
     }
   }
+
+  // Gender counts for tabs
+  const genderCounts = useMemo(() => {
+    const products = productsData?.products || []
+    return {
+      all: products.length,
+      women: products.filter(p => p.gender === 'women').length,
+      men: products.filter(p => p.gender === 'men').length
+    }
+  }, [productsData])
+
+  // Check which filters have data
+  const hasFragranceData = useMemo(() => {
+    const products = productsData?.products || []
+    return products.some(p => p.fragranceFamily)
+  }, [productsData])
+
+  const hasIntensityData = useMemo(() => {
+    const products = productsData?.products || []
+    return products.some(p => p.intensity)
+  }, [productsData])
+
+  // Available product types based on actual data
+  const availableTypes = useMemo(() => {
+    const products = productsData?.products || []
+    const types = new Set(products.map(p => p.concentration).filter(Boolean))
+    return productTypes.filter(t => t.id === 'all' || types.has(t.id))
+  }, [productsData])
 
   // Filter products
   const filteredProducts = useMemo(() => {
@@ -219,14 +260,42 @@ function Perfume() {
       }
     }
 
-    // Fragrance family filter
+    // Fragrance family filter — match by field OR by keyword in name/description
     if (selectedFragrance !== 'all') {
-      products = products.filter(p => p.fragranceFamily === selectedFragrance)
+      const scentKeywords = {
+        floral: ['floral', 'flower', 'rose', 'jasmine', 'gardenia', 'lily', 'rosa', 'jazmin'],
+        fresh: ['fresh', 'citrus', 'aquatic', 'marine', 'green', 'limon', 'citric', 'fresco'],
+        oriental: ['oriental', 'vanilla', 'vainilla', 'amber', 'ambar', 'spice', 'warm', 'musk'],
+        woody: ['woody', 'wood', 'sandal', 'cedar', 'oud', 'madera', 'sandalwood']
+      }
+      const keywords = scentKeywords[selectedFragrance] || []
+      products = products.filter(p => {
+        if (p.fragranceFamily === selectedFragrance) return true
+        if (keywords.length === 0) return true
+        const text = ((p.name || '') + ' ' + (p.description || '')).toLowerCase()
+        return keywords.some(k => text.includes(k))
+      })
     }
 
-    // Intensity filter
+    // Intensity filter — match by field OR infer from concentration/type
     if (selectedIntensity !== 'all') {
-      products = products.filter(p => p.intensity === selectedIntensity)
+      const intensityMap = {
+        light: ['splash', 'cologne', 'body mist', 'body splash', 'suave'],
+        moderate: ['edt', 'eau de toilette', 'toilette'],
+        intense: ['edp', 'parfum', 'eau de parfum', 'intense', 'intenso']
+      }
+      const keywords = intensityMap[selectedIntensity] || []
+      products = products.filter(p => {
+        if (p.intensity === selectedIntensity) return true
+        if (keywords.length === 0) return true
+        const text = ((p.name || '') + ' ' + (p.description || '') + ' ' + (p.concentration || '')).toLowerCase()
+        return keywords.some(k => text.includes(k))
+      })
+    }
+
+    // Product type / concentration filter
+    if (selectedType !== 'all') {
+      products = products.filter(p => p.concentration === selectedType)
     }
 
     // Sort
@@ -248,7 +317,7 @@ function Perfume() {
     }
 
     return products
-  }, [productsData, selectedGender, selectedBrand, selectedPrice, selectedFragrance, selectedIntensity, sortBy, searchQuery])
+  }, [productsData, selectedGender, selectedBrand, selectedPrice, selectedFragrance, selectedIntensity, selectedType, sortBy, searchQuery])
 
   const visibleProducts = filteredProducts.slice(0, visibleCount)
   const hasMore = visibleCount < filteredProducts.length
@@ -267,6 +336,7 @@ function Perfume() {
     setSelectedPrice('all')
     setSelectedFragrance('all')
     setSelectedIntensity('all')
+    setSelectedType('all')
     setSearchQuery('')
     searchParams.delete('gender')
     setSearchParams(searchParams)
@@ -278,6 +348,7 @@ function Perfume() {
     selectedPrice !== 'all',
     selectedFragrance !== 'all',
     selectedIntensity !== 'all',
+    selectedType !== 'all',
     searchQuery.trim() !== ''
   ].filter(Boolean).length
 
@@ -300,9 +371,9 @@ function Perfume() {
       <nav className="gender-nav">
         <div className="gender-nav-inner">
           {[
-            { id: 'all', label: 'All Fragrances' },
-            { id: 'women', label: 'For Her' },
-            { id: 'men', label: 'For Him' }
+            { id: 'all', label: 'All Fragrances', count: genderCounts.all },
+            { id: 'women', label: 'For Her', count: genderCounts.women },
+            { id: 'men', label: 'For Him', count: genderCounts.men }
           ].map(tab => (
             <button
               key={tab.id}
@@ -310,6 +381,7 @@ function Perfume() {
               onClick={() => handleGenderChange(tab.id)}
             >
               {tab.label}
+              {tab.count > 0 && <span className="gender-count">{tab.count}</span>}
             </button>
           ))}
         </div>
@@ -402,43 +474,64 @@ function Perfume() {
               </div>
             </div>
 
+            {/* Product Type Filter */}
+            {availableTypes.length > 2 && (
+              <div className="filter-section">
+                <h4>Type</h4>
+                <div className="filter-options">
+                  {availableTypes.map(type => (
+                    <label key={type.id} className="filter-radio">
+                      <input
+                        type="radio"
+                        name="productType"
+                        checked={selectedType === type.id}
+                        onChange={() => setSelectedType(type.id)}
+                      />
+                      <span className="radio-custom" />
+                      <span className="radio-label">{type.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Fragrance Family Filter */}
             <div className="filter-section">
               <h4>Scent Family</h4>
-              <div className="filter-options">
-                {fragranceFamilies.map(family => (
-                  <label key={family.id} className="filter-radio">
-                    <input
-                      type="radio"
-                      name="fragrance"
-                      checked={selectedFragrance === family.id}
-                      onChange={() => setSelectedFragrance(family.id)}
-                    />
-                    <span className="radio-custom" />
-                    <span className="radio-label">{family.name}</span>
-                  </label>
-                ))}
+                <div className="filter-options">
+                  {fragranceFamilies.map(family => (
+                    <label key={family.id} className="filter-radio">
+                      <input
+                        type="radio"
+                        name="fragrance"
+                        checked={selectedFragrance === family.id}
+                        onChange={() => setSelectedFragrance(family.id)}
+                      />
+                      <span className="radio-custom" />
+                      <span className="radio-label">{family.name}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
-            </div>
 
             {/* Intensity Filter */}
             <div className="filter-section">
               <h4>Intensity</h4>
-              <div className="filter-options">
-                {intensityOptions.map(opt => (
-                  <label key={opt.id} className="filter-radio">
-                    <input
-                      type="radio"
-                      name="intensity"
-                      checked={selectedIntensity === opt.id}
-                      onChange={() => setSelectedIntensity(opt.id)}
-                    />
-                    <span className="radio-custom" />
-                    <span className="radio-label">{opt.name}</span>
-                  </label>
-                ))}
+                <div className="filter-options">
+                  {intensityOptions.map(opt => (
+                    <label key={opt.id} className="filter-radio">
+                      <input
+                        type="radio"
+                        name="intensity"
+                        checked={selectedIntensity === opt.id}
+                        onChange={() => setSelectedIntensity(opt.id)}
+                      />
+                      <span className="radio-custom" />
+                      <span className="radio-label">{opt.name}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
-            </div>
 
             {/* Quiz CTA */}
             <div className="sidebar-quiz-cta">
@@ -455,7 +548,7 @@ function Perfume() {
             </div>
 
             {/* WhatsApp Help */}
-            <a href="https://wa.me/59990000425" className="sidebar-help-link" target="_blank" rel="noopener noreferrer">
+            <a href={getCategoryHelpUrl('perfume')} className="sidebar-help-link" target="_blank" rel="noopener noreferrer">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
               </svg>
@@ -549,6 +642,16 @@ function Perfume() {
                       <div className="card-info">
                         {brandName && <span className="card-brand">{brandName}</span>}
                         <h3 className="card-name">{product.name}</h3>
+                        {product.concentration && (
+                          <span className={`card-type ${product.concentration === 'splash' ? 'type-splash' : ''}`}>
+                            {product.concentration === 'parfum' ? 'Parfum'
+                              : product.concentration === 'edp' ? 'EDP'
+                              : product.concentration === 'edt' ? 'EDT'
+                              : product.concentration === 'cologne' ? 'Cologne'
+                              : product.concentration === 'splash' ? 'Body Splash'
+                              : product.concentration}
+                          </span>
+                        )}
                         <p className="card-price">XCG {product.price.toFixed(2)}</p>
                       </div>
                     </Link>
@@ -600,7 +703,7 @@ function Perfume() {
       </section>
 
       {/* Quiz Modal */}
-      {showQuiz && (
+      {showQuiz && createPortal(
         <div className="quiz-overlay" onClick={(e) => e.target === e.currentTarget && resetQuiz()}>
           <div className="quiz-modal">
             <button className="quiz-close" onClick={resetQuiz} aria-label="Close quiz">
@@ -660,7 +763,7 @@ function Perfume() {
             ) : (
               <div className="quiz-results">
                 <div className="results-header">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="1.5">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#C5A55A" strokeWidth="1.5">
                     <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <h2>Your Perfect Matches</h2>
@@ -694,14 +797,30 @@ function Perfume() {
                   <button className="btn-secondary" onClick={() => { setQuizResults(null); setQuizStep(0); setQuizAnswers({}) }}>
                     Retake Quiz
                   </button>
-                  <button className="btn-primary" onClick={resetQuiz}>
+                  <button className="btn-primary" onClick={() => {
+                    // Apply quiz answers as filters to the main product grid
+                    if (quizAnswers.gender && quizAnswers.gender !== 'unisex') {
+                      handleGenderChange(quizAnswers.gender)
+                    }
+                    if (quizAnswers.scent && quizAnswers.scent !== 'all') {
+                      setSelectedFragrance(quizAnswers.scent)
+                    }
+                    if (quizAnswers.intensity && quizAnswers.intensity !== 'all') {
+                      setSelectedIntensity(quizAnswers.intensity)
+                    }
+                    resetQuiz(true) // keep answers so filters stay applied
+                  }}>
+                    Shop These Results
+                  </button>
+                  <button className="btn-secondary" onClick={() => resetQuiz(false)} style={{ marginTop: '8px' }}>
                     Browse All Fragrances
                   </button>
                 </div>
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Quick View Modal */}
@@ -714,14 +833,14 @@ function Perfume() {
       <style>{`
         /* Variables */
         .perfume-page {
-          --gold: #c9a868;
-          --gold-light: #dfc693;
+          --gold: #C5A55A;
+          --gold-light: #D4B96E;
           --dark: #1a1a1a;
-          --gray-100: #f8f8f8;
-          --gray-200: #e5e5e5;
-          --gray-400: #999;
-          --gray-600: #666;
-          --success: #22c55e;
+          --gray-100: #FAF8F5;
+          --gray-200: #E6DED8;
+          --gray-400: #9B9490;
+          --gray-600: #6B6560;
+          --success: #1B4D4F;
           background: var(--gray-100);
         }
 
@@ -739,7 +858,7 @@ function Perfume() {
         .hero-bg {
           position: absolute;
           inset: 0;
-          background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+          background: linear-gradient(135deg, #1a1a1a 0%, #1F3347 50%, #1B4D4F 100%);
         }
         .hero-content {
           position: relative;
@@ -753,11 +872,11 @@ function Perfume() {
           font-weight: 600;
           letter-spacing: 3px;
           text-transform: uppercase;
-          margin-bottom: 16px;
+          margin-bottom: 14px;
         }
         .perfume-hero h1 {
           color: white;
-          font-size: 48px;
+          font-size: 44px;
           font-weight: 300;
           letter-spacing: -1px;
           margin: 0 0 12px;
@@ -771,11 +890,11 @@ function Perfume() {
           display: inline-flex;
           align-items: center;
           gap: 10px;
-          padding: 16px 32px;
+          padding: 14px 32px;
           background: var(--gold);
-          color: var(--dark);
+          color: white;
           border: none;
-          border-radius: 4px;
+          border-radius: 6px;
           font-size: 14px;
           font-weight: 600;
           letter-spacing: 0.5px;
@@ -826,6 +945,24 @@ function Perfume() {
           right: 20%;
           height: 2px;
           background: var(--gold);
+        }
+        .gender-count {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 22px;
+          height: 20px;
+          padding: 0 6px;
+          margin-left: 6px;
+          background: var(--gray-200);
+          border-radius: 10px;
+          font-size: 11px;
+          font-weight: 600;
+          color: var(--gray-600);
+        }
+        .gender-btn.active .gender-count {
+          background: var(--gold);
+          color: white;
         }
 
         /* Container */
@@ -1026,14 +1163,14 @@ function Perfume() {
           align-items: center;
           gap: 12px;
           padding: 14px;
-          background: #f0fdf4;
+          background: #F3EDE6;
           border-radius: 10px;
           text-decoration: none;
-          color: #166534;
+          color: #1B4D4F;
           font-size: 13px;
         }
         .sidebar-help-link svg {
-          color: #25d366;
+          color: #1B4D4F;
           flex-shrink: 0;
         }
 
@@ -1120,7 +1257,7 @@ function Perfume() {
         }
         .card-media {
           position: relative;
-          padding-top: 120%;
+          padding-top: 110%;
           background: linear-gradient(to bottom, var(--gray-100), white);
         }
         .card-media img {
@@ -1175,7 +1312,7 @@ function Perfume() {
           z-index: 5;
         }
         .wishlist-btn:hover, .wishlist-btn.active {
-          color: #e74c3c;
+          color: #A4443A;
         }
         .card-actions {
           position: absolute;
@@ -1229,6 +1366,18 @@ function Perfume() {
           min-height: 40px;
           line-height: 1.4;
           color: var(--dark);
+        }
+        .card-type {
+          display: inline-block;
+          font-size: 10px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          color: var(--gray-400);
+          margin-bottom: 6px;
+        }
+        .card-type.type-splash {
+          color: #1B4D4F;
         }
         .card-price {
           font-size: 16px;
@@ -1384,7 +1533,7 @@ function Perfume() {
         }
         .quiz-option.selected {
           border-color: var(--gold);
-          background: #faf6ed;
+          background: #FAF8F5;
         }
         .option-label {
           font-size: 15px;
@@ -1566,7 +1715,7 @@ function Perfume() {
           .perfume-hero p { font-size: 14px; }
           .hero-cta { padding: 14px 24px; font-size: 13px; }
 
-          .products-grid { grid-template-columns: 1fr; gap: 16px; }
+          .products-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
           .results-grid { grid-template-columns: repeat(2, 1fr); }
 
           .trust-inner { gap: 30px; }

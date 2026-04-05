@@ -24,8 +24,9 @@ RUN npm run build
 RUN addgroup -g 1001 -S strapi && \
     adduser -S strapi -u 1001 -G strapi
 
-# Set ownership
-RUN chown -R strapi:strapi /app
+# Ensure uploads directory exists and set ownership
+RUN mkdir -p /app/public/uploads && \
+    chown -R strapi:strapi /app
 
 # Switch to non-root user
 USER strapi

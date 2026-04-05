@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cartStore } from '../stores/cartStore'
+import { getProductInquiryUrl } from '../utils/whatsapp'
 
 function ProductCard({ product }) {
   const { id, name, ref, price, compareAtPrice, image, badge, brand } = product
   const [isAdding, setIsAdding] = useState(false)
   const [showAdded, setShowAdded] = useState(false)
 
-  const whatsappUrl = `https://wa.me/59990000425?text=${encodeURIComponent(`Hi! I'm interested in ${name} REF ${ref}`)}`
+  const whatsappUrl = getProductInquiryUrl({ name, ref })
 
   const handleAddToCart = async (e) => {
     e.preventDefault()
@@ -36,9 +37,9 @@ function ProductCard({ product }) {
   const hasDiscount = compareAtPrice && compareAtPrice > price
 
   return (
-    <Link to={`/product/${id}`} className="product-card card-lift">
+    <Link to={`/product/${id}`} className="product-card card-lift" aria-label={`${name} - XCG ${price}`}>
       <div className="product-image">
-        <img src={image || '/images/placeholder.jpg'} alt={name} loading="lazy" />
+        <img src={image || '/images/placeholder.jpg'} alt={`${name}${brand ? ` by ${typeof brand === 'object' ? brand.name : brand}` : ''}`} loading="lazy" />
         {badge && (
           <span className={`product-badge ${badge.toLowerCase().replace(' ', '-')}`}>
             {badge}
@@ -47,7 +48,9 @@ function ProductCard({ product }) {
         {hasDiscount && !badge && (
           <span className="product-badge sale">Sale</span>
         )}
-        <div className="quick-add" onClick={handleAddToCart}>
+        <div className="quick-add" onClick={handleAddToCart} role="button" tabIndex={0}
+          onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && handleAddToCart(e)}
+          aria-label={`Quick add ${name} to cart`}>
           {isAdding ? (
             <span className="spinner" style={{ margin: '0 auto' }}></span>
           ) : showAdded ? (

@@ -1,11 +1,23 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { cartStore } from '../stores/cartStore'
+import { getProductInquiryUrl } from '../utils/whatsapp'
 
 function QuickViewModal({ product, isOpen, onClose }) {
   const [quantity, setQuantity] = useState(1)
   const [selectedSize, setSelectedSize] = useState(product?.size || '')
   const [selectedColor, setSelectedColor] = useState(product?.color || '')
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isOpen])
 
   if (!isOpen || !product) return null
 
@@ -14,9 +26,7 @@ function QuickViewModal({ product, isOpen, onClose }) {
     onClose()
   }
 
-  const whatsappUrl = `https://wa.me/59990000425?text=${encodeURIComponent(
-    `Hi! I'm interested in ${product.name} ${product.ref}${selectedSize ? ` - Size: ${selectedSize}` : ''}${selectedColor ? ` - Color: ${selectedColor}` : ''}`
-  )}`
+  const whatsappUrl = getProductInquiryUrl({ name: product.name, ref: product.ref, size: selectedSize, color: selectedColor })
 
   // Available sizes based on category
   const sizes = product.size
@@ -27,10 +37,16 @@ function QuickViewModal({ product, isOpen, onClose }) {
         ? ['S', 'M', 'L', 'XL']
         : []
 
-  // Available colors
-  const colors = product.color ? [product.color] : ['Black', 'Beige', 'White']
+  // Available colors - only show defaults for lingerie categories
+  const lingerieCategories = ['bras', 'panties', 'shapewear']
+  const productCategory = product.categorySlug || (typeof product.category === 'object' ? product.category?.slug : '')
+  const colors = product.color
+    ? [product.color]
+    : lingerieCategories.includes(productCategory)
+      ? ['Black', 'Beige', 'White']
+      : []
 
-  return (
+  return createPortal(
     <div className="quickview-overlay" onClick={onClose}>
       <div className="quickview-modal" onClick={(e) => e.stopPropagation()}>
         <button className="quickview-close" onClick={onClose}>
@@ -125,7 +141,8 @@ function QuickViewModal({ product, isOpen, onClose }) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { cartStore } from '../stores/cartStore'
+import { getCartOrderUrl } from '../utils/whatsapp'
 
 function CartSidebar({ isOpen, onClose }) {
   const [cart, setCart] = useState(cartStore.getCart())
@@ -200,9 +201,7 @@ function CartSidebar({ isOpen, onClose }) {
               Checkout
             </Link>
             <a
-              href={`https://wa.me/59990000425?text=${encodeURIComponent(
-                `Hi! I'd like to order:\n${cart.map(item => `- ${item.name} (${item.quantity}x)`).join('\n')}\n\nTotal: XCG ${total.toFixed(2)}`
-              )}`}
+              href={getCartOrderUrl(cart, total)}
               className="btn-whatsapp"
               target="_blank"
               rel="noopener noreferrer"

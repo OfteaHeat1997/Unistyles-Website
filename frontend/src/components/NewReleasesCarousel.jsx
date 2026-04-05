@@ -24,26 +24,7 @@ function NewReleasesCarousel({ products }) {
 
   // Don't render carousel if no products
   if (totalItems === 0) {
-    return (
-      <section style={{background: 'var(--off-white)', padding: '80px 0', overflow: 'hidden'}}>
-        <div style={{textAlign: 'center', marginBottom: '50px'}}>
-          <h2 style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: '14px',
-            fontWeight: '600',
-            letterSpacing: '3px',
-            textTransform: 'uppercase',
-            color: 'var(--charcoal)',
-            margin: 0
-          }}>
-            NEW RELEASES
-          </h2>
-        </div>
-        <div style={{textAlign: 'center', padding: '60px 20px', color: 'var(--text-tertiary)'}}>
-          <p>Loading new releases...</p>
-        </div>
-      </section>
-    )
+    return null
   }
 
   const goToNext = () => {

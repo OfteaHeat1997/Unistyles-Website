@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { getAccountHelpUrl } from '../utils/whatsapp'
 
 function Login() {
   const navigate = useNavigate()
@@ -62,8 +63,22 @@ function Login() {
           </p>
 
           {error && (
-            <div style={{ background: 'var(--error-bg)', color: 'var(--error)', padding: '12px', borderRadius: '5px', marginBottom: '20px', fontSize: '14px' }}>
+            <div style={{ background: error.includes('verify') ? '#FFF3E0' : 'var(--error-bg)', color: error.includes('verify') ? '#E65100' : 'var(--error)', padding: '12px', borderRadius: '5px', marginBottom: '20px', fontSize: '14px' }}>
               {error}
+              {error.includes('verify') && (
+                <button onClick={async () => {
+                  try {
+                    await fetch('/api/auth/resend-verification', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email: formData.email })
+                    })
+                    setError('Verification email resent! Check your inbox.')
+                  } catch { setError('Failed to resend. Try again later.') }
+                }} style={{ display: 'block', marginTop: '8px', background: 'none', border: 'none', color: '#E65100', textDecoration: 'underline', cursor: 'pointer', fontSize: '13px', padding: 0 }}>
+                  Resend verification email
+                </button>
+              )}
             </div>
           )}
 
@@ -99,7 +114,7 @@ function Login() {
                 <input type="checkbox" />
                 Remember me
               </label>
-              <a href="#" style={{ fontSize: '13px', color: 'var(--muted-gold)' }}>Forgot password?</a>
+              <Link to="/forgot-password" style={{ fontSize: '13px', color: 'var(--muted-gold)' }}>Forgot password?</Link>
             </div>
 
             <button
@@ -121,7 +136,7 @@ function Login() {
 
           <div style={{ marginTop: '25px', paddingTop: '25px', borderTop: '1px solid var(--border-light)' }}>
             <a
-              href="https://wa.me/59990000425?text=Hi!%20I%20need%20help%20with%20my%20account"
+              href={getAccountHelpUrl()}
               className="btn-whatsapp"
               target="_blank"
               rel="noopener noreferrer"

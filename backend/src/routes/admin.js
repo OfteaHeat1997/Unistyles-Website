@@ -7,6 +7,7 @@ const router = express.Router();
 const { asyncHandler } = require('../middleware/errorHandler');
 const { authenticate } = require('../middleware/auth');
 const db = require('../utils/db');
+const { sendOrderStatusUpdate } = require('../utils/notifications');
 
 // Middleware to check if user is admin
 const requireAdmin = async (req, res, next) => {
@@ -14,13 +15,12 @@ const requireAdmin = async (req, res, next) => {
         return res.status(401).json({ error: 'Authentication required' });
     }
 
-    // Check if user has admin role
     const result = await db.query(
-        'SELECT role FROM users WHERE id = $1',
+        'SELECT is_admin FROM users WHERE id = $1',
         [req.user.id]
     );
 
-    if (result.rows.length === 0 || result.rows[0].role !== 'admin') {
+    if (result.rows.length === 0 || !result.rows[0].is_admin) {
         return res.status(403).json({ error: 'Admin access required' });
     }
 
@@ -36,10 +36,10 @@ router.get('/users', authenticate, requireAdmin, asyncHandler(async (req, res) =
     const offset = (page - 1) * limit;
 
     let query = `
-        SELECT id, email, first_name, last_name, phone, role, created_at, updated_at
+        SELECT id, email, first_name, last_name, phone, is_admin, created_at, updated_at
         FROM users
     `;
-    let countQuery = 'SELECT COUNT(*) FROM users';
+    let countQuery = 'SELECT COUNT(*) as count FROM users';
     let params = [];
     let countParams = [];
 
@@ -103,18 +103,18 @@ router.get('/users/:id', authenticate, requireAdmin, asyncHandler(async (req, re
 // ===========================================
 router.put('/users/:id', authenticate, requireAdmin, asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { firstName, lastName, phone, role } = req.body;
+    const { firstName, lastName, phone, isAdmin } = req.body;
 
     const result = await db.query(
         `UPDATE users
          SET first_name = COALESCE($1, first_name),
              last_name = COALESCE($2, last_name),
              phone = COALESCE($3, phone),
-             role = COALESCE($4, role),
+             is_admin = COALESCE($4, is_admin),
              updated_at = NOW()
          WHERE id = $5
-         RETURNING id, email, first_name, last_name, phone, role, updated_at`,
-        [firstName, lastName, phone, role, id]
+         RETURNING id, email, first_name, last_name, phone, is_admin, updated_at`,
+        [firstName, lastName, phone, isAdmin, id]
     );
 
     if (result.rows.length === 0) {
@@ -163,7 +163,7 @@ router.get('/orders', authenticate, requireAdmin, asyncHandler(async (req, res) 
         FROM orders o
         LEFT JOIN users u ON o.user_id = u.id
     `;
-    let countQuery = 'SELECT COUNT(*) FROM orders';
+    let countQuery = 'SELECT COUNT(*) as count FROM orders';
     let params = [];
     let countParams = [];
 
@@ -204,6 +204,10 @@ router.put('/orders/:id', authenticate, requireAdmin, asyncHandler(async (req, r
         return res.status(400).json({ error: 'Invalid status' });
     }
 
+    // Fetch old status before updating
+    const oldOrder = await db.query('SELECT status FROM orders WHERE id = $1', [id]);
+    const oldStatus = oldOrder.rows[0]?.status;
+
     const result = await db.query(
         `UPDATE orders
          SET status = COALESCE($1, status),
@@ -218,7 +222,16 @@ router.put('/orders/:id', authenticate, requireAdmin, asyncHandler(async (req, r
         return res.status(404).json({ error: 'Order not found' });
     }
 
-    res.json({ order: result.rows[0], message: 'Order updated successfully' });
+    const updatedOrder = result.rows[0];
+
+    // Send WhatsApp notification if status changed (fire-and-forget)
+    if (status && status !== oldStatus) {
+        sendOrderStatusUpdate(updatedOrder, status).catch(err =>
+            console.error('[Admin] Failed to send status notification:', err.message)
+        );
+    }
+
+    res.json({ order: updatedOrder, message: 'Order updated successfully' });
 }));
 
 // ===========================================
@@ -227,8 +240,8 @@ router.put('/orders/:id', authenticate, requireAdmin, asyncHandler(async (req, r
 // ===========================================
 router.get('/stats', authenticate, requireAdmin, asyncHandler(async (req, res) => {
     const [usersCount, ordersCount, recentOrders, revenue] = await Promise.all([
-        db.query('SELECT COUNT(*) FROM users'),
-        db.query('SELECT COUNT(*) FROM orders'),
+        db.query('SELECT COUNT(*) as count FROM users'),
+        db.query('SELECT COUNT(*) as count FROM orders'),
         db.query(`
             SELECT COUNT(*) as count, status
             FROM orders

@@ -79,6 +79,13 @@ services:
       - WHATSAPP_NUMBER=${WHATSAPP_NUMBER}
       - SENTOO_API_KEY=${SENTOO_API_KEY}
       - SENTOO_MERCHANT_ID=${SENTOO_MERCHANT_ID}
+      - SENTOO_SANDBOX=${SENTOO_SANDBOX:-true}
+      - SITE_URL=${SITE_URL:-https://unistylescuracao.com}
+      - WHATSAPP_ACCESS_TOKEN=${WHATSAPP_ACCESS_TOKEN}
+      - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID}
+      - WHATSAPP_BUSINESS_ACCOUNT_ID=${WHATSAPP_BUSINESS_ACCOUNT_ID}
+      - WHATSAPP_VERIFY_TOKEN=${WHATSAPP_VERIFY_TOKEN}
+      - WHATSAPP_APP_SECRET=${WHATSAPP_APP_SECRET}
     depends_on:
       postgres:
         condition: service_healthy
@@ -137,6 +144,15 @@ services:
   # ===========================================
   # STRAPI - Content Management System
   # ===========================================
+  # Init container to fix upload volume permissions (runs once, then exits)
+  strapi-init:
+    image: busybox
+    container_name: unistyles-strapi-init
+    volumes:
+      - strapi-uploads:/uploads
+    command: sh -c "chown -R 1001:1001 /uploads"
+    restart: "no"
+
   strapi:
     build:
       context: ./strapi
@@ -163,11 +179,17 @@ services:
       - ADMIN_JWT_SECRET=${STRAPI_ADMIN_JWT_SECRET}
       - TRANSFER_TOKEN_SALT=${STRAPI_TRANSFER_TOKEN_SALT}
       - JWT_SECRET=${STRAPI_JWT_SECRET}
+      - STRAPI_ADMIN_PASSWORD=${STRAPI_ADMIN_PASSWORD:-Admin123!}
+      - STRAPI_ADMIN_EMAIL=${STRAPI_ADMIN_EMAIL:-admin@unistylescuracao.com}
     volumes:
       - strapi-uploads:/app/public/uploads
+      - ./frontend/public/images:/app/legacy-images:ro
+      - ./frontend/public:/app/legacy-public:ro
     depends_on:
       postgres:
         condition: service_healthy
+      strapi-init:
+        condition: service_completed_successfully
     restart: unless-stopped
     networks:
       - unistyles-network
@@ -175,8 +197,8 @@ services:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:1337/_health"]
       interval: 30s
       timeout: 10s
-      start_period: 90s
-      retries: 3
+      start_period: 180s
+      retries: 5
 
   # ===========================================
   # ADMINER - Database Management (Dev Only)

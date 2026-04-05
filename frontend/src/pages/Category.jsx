@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useState, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { useProductsByCategory, useCategory } from '../hooks/useProducts'
 import QuickViewModal from '../components/QuickViewModal'
 
@@ -27,13 +28,27 @@ const cupSizeOptions = ['A', 'B', 'C', 'D', 'DD', 'E']
 // Style options for bras
 const styleOptions = ['Push-Up', 'Wireless', 'Sports', 'Strapless', 'Full Coverage', 'Balconette']
 
+// Wishlist persistence via localStorage
+function getStoredWishlist() {
+  try {
+    return JSON.parse(localStorage.getItem('unistyles_wishlist') || '[]')
+  } catch { return [] }
+}
+function saveWishlist(items) {
+  localStorage.setItem('unistyles_wishlist', JSON.stringify(items))
+}
+
 function Category({ category }) {
   const [activeFilter, setActiveFilter] = useState('All')
   const [sortBy, setSortBy] = useState('bestselling')
   const [quickViewProduct, setQuickViewProduct] = useState(null)
-  const [wishlist, setWishlist] = useState([])
+  const [wishlist, setWishlist] = useState(getStoredWishlist)
   const [selectedColors, setSelectedColors] = useState([])
   const [selectedSizes, setSelectedSizes] = useState([])
+  const [selectedStyles, setSelectedStyles] = useState([])
+  const [priceMin, setPriceMin] = useState('')
+  const [priceMax, setPriceMax] = useState('')
+  const [selectedBrands, setSelectedBrands] = useState([])
   const [quickAddProduct, setQuickAddProduct] = useState(null)
   const [visibleCount, setVisibleCount] = useState(9)
 
@@ -56,15 +71,17 @@ function Category({ category }) {
     }
   }, [categoryData, productsData])
 
-  // Toggle wishlist
+  // Toggle wishlist (persisted to localStorage)
   const toggleWishlist = (e, productId) => {
     e.preventDefault()
     e.stopPropagation()
-    setWishlist(prev =>
-      prev.includes(productId)
+    setWishlist(prev => {
+      const next = prev.includes(productId)
         ? prev.filter(id => id !== productId)
         : [...prev, productId]
-    )
+      saveWishlist(next)
+      return next
+    })
   }
 
   // Toggle color filter
@@ -85,11 +102,29 @@ function Category({ category }) {
     )
   }
 
+  // Toggle style filter
+  const toggleStyle = (style) => {
+    setSelectedStyles(prev =>
+      prev.includes(style)
+        ? prev.filter(s => s !== style)
+        : [...prev, style]
+    )
+  }
+
+  // Toggle brand filter
+  const toggleBrand = (brand) => {
+    setSelectedBrands(prev =>
+      prev.includes(brand)
+        ? prev.filter(b => b !== brand)
+        : [...prev, brand]
+    )
+  }
+
   // Filter and sort products
   const filteredProducts = useMemo(() => {
     let products = data.products
 
-    // Apply filter
+    // Apply tab filter
     if (activeFilter !== 'All') {
       products = products.filter(p => {
         if (data.filterType === 'size') return p.size?.includes(activeFilter)
@@ -104,6 +139,38 @@ function Category({ category }) {
       products = products.filter(p =>
         selectedColors.some(c => p.color?.toLowerCase().includes(c.toLowerCase()))
       )
+    }
+
+    // Apply size filter
+    if (selectedSizes.length > 0) {
+      products = products.filter(p =>
+        selectedSizes.some(s => p.size?.toUpperCase().includes(s.toUpperCase()))
+      )
+    }
+
+    // Apply style filter
+    if (selectedStyles.length > 0) {
+      products = products.filter(p =>
+        selectedStyles.some(s => p.style?.toLowerCase().includes(s.toLowerCase()))
+      )
+    }
+
+    // Apply brand filter
+    if (selectedBrands.length > 0) {
+      products = products.filter(p => {
+        const brandName = typeof p.brand === 'object' ? p.brand?.name : p.brand
+        return selectedBrands.includes(brandName)
+      })
+    }
+
+    // Apply price range filter
+    if (priceMin !== '') {
+      const min = parseFloat(priceMin)
+      if (!isNaN(min)) products = products.filter(p => parseFloat(p.price) >= min)
+    }
+    if (priceMax !== '') {
+      const max = parseFloat(priceMax)
+      if (!isNaN(max)) products = products.filter(p => parseFloat(p.price) <= max)
     }
 
     // Apply sort
@@ -125,7 +192,7 @@ function Category({ category }) {
     }
 
     return sorted
-  }, [data.products, data.filterType, activeFilter, sortBy, selectedColors])
+  }, [data.products, data.filterType, activeFilter, sortBy, selectedColors, selectedSizes, selectedStyles, selectedBrands, priceMin, priceMax])
 
   // Visible products (for load more)
   const visibleProducts = filteredProducts.slice(0, visibleCount)
@@ -207,6 +274,10 @@ function Category({ category }) {
             <button className="clear-filters" onClick={() => {
               setSelectedColors([])
               setSelectedSizes([])
+              setSelectedStyles([])
+              setSelectedBrands([])
+              setPriceMin('')
+              setPriceMax('')
               setActiveFilter('All')
             }}>Clear All</button>
           </div>
@@ -261,7 +332,12 @@ function Category({ category }) {
             <div className="filter-options">
               {styleOptions.map(style => (
                 <div className="filter-option" key={style}>
-                  <input type="checkbox" id={`style-${style}`} />
+                  <input
+                    type="checkbox"
+                    id={`style-${style}`}
+                    checked={selectedStyles.includes(style)}
+                    onChange={() => toggleStyle(style)}
+                  />
                   <label htmlFor={`style-${style}`}>{style}</label>
                 </div>
               ))}
@@ -294,7 +370,12 @@ function Category({ category }) {
             <div className="filter-options">
               {[...new Set(data.products.map(p => typeof p.brand === 'object' ? p.brand?.name : p.brand).filter(Boolean))].map(brandName => (
                 <div className="filter-option" key={brandName}>
-                  <input type="checkbox" id={`brand-${brandName}`} defaultChecked />
+                  <input
+                    type="checkbox"
+                    id={`brand-${brandName}`}
+                    checked={selectedBrands.length === 0 || selectedBrands.includes(brandName)}
+                    onChange={() => toggleBrand(brandName)}
+                  />
                   <label htmlFor={`brand-${brandName}`}>{brandName}</label>
                   <span className="count">({data.products.filter(p => (typeof p.brand === 'object' ? p.brand?.name : p.brand) === brandName).length})</span>
                 </div>
@@ -304,16 +385,36 @@ function Category({ category }) {
 
           {/* Price Filter */}
           <div className="filter-group">
-            <h4>Price</h4>
+            <h4>Price (XCG)</h4>
             <div className="price-range">
               <div className="price-inputs">
-                <input type="text" defaultValue="XCG 50" placeholder="Min" />
+                <input
+                  type="number"
+                  value={priceMin}
+                  onChange={(e) => setPriceMin(e.target.value)}
+                  placeholder="Min"
+                  min="0"
+                  style={{ width: '80px' }}
+                />
                 <span>-</span>
-                <input type="text" defaultValue="XCG 200" placeholder="Max" />
+                <input
+                  type="number"
+                  value={priceMax}
+                  onChange={(e) => setPriceMax(e.target.value)}
+                  placeholder="Max"
+                  min="0"
+                  style={{ width: '80px' }}
+                />
               </div>
-              <div className="price-slider">
-                <div className="price-slider-fill"></div>
-              </div>
+              {priceMin || priceMax ? (
+                <button
+                  className="clear-filters"
+                  style={{ fontSize: '11px', marginTop: '8px' }}
+                  onClick={() => { setPriceMin(''); setPriceMax('') }}
+                >
+                  Clear price filter
+                </button>
+              ) : null}
             </div>
           </div>
         </aside>
@@ -451,14 +552,6 @@ function Category({ category }) {
                       {/* Product Name */}
                       <h3 className="product-name">{product.name}</h3>
 
-                      {/* Star Rating */}
-                      <div className="product-rating">
-                        <div className="stars">
-                          {renderStars(4.5)}
-                        </div>
-                        <span className="rating-count">(24)</span>
-                      </div>
-
                       {/* Price */}
                       <div className="product-price-row">
                         {hasDiscount && (
@@ -469,13 +562,13 @@ function Category({ category }) {
                         </span>
                       </div>
 
-                      {/* Size Availability */}
-                      <div className="size-availability">
-                        <span className="available">S</span>
-                        <span className="available">M</span>
-                        <span className="available">L</span>
-                        <span className="unavailable">XL</span>
-                      </div>
+                      {/* Stock status */}
+                      {product.inStock === false && (
+                        <div style={{ fontSize: '12px', color: '#dc3545', fontWeight: '600', marginTop: '4px' }}>Out of Stock</div>
+                      )}
+                      {product.stockQuantity > 0 && product.stockQuantity <= 5 && product.inStock !== false && (
+                        <div style={{ fontSize: '12px', color: '#e67e22', marginTop: '4px' }}>Only {product.stockQuantity} left</div>
+                      )}
                     </div>
                   </Link>
                 </div>
@@ -529,7 +622,7 @@ function Category({ category }) {
       </div>
 
       {/* Quick Add Modal */}
-      {quickAddProduct && (
+      {quickAddProduct && createPortal(
         <div className="quick-add-modal-overlay" onClick={() => setQuickAddProduct(null)}>
           <div className="quick-add-modal" onClick={e => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setQuickAddProduct(null)}>
@@ -554,7 +647,8 @@ function Category({ category }) {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Bottom Features */}

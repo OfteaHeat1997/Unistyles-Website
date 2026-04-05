@@ -40,11 +40,11 @@
     },
     "currency": {
       "type": "string",
-      "default": "ANG"
+      "default": "XCG"
     },
     "currencySymbol": {
       "type": "string",
-      "default": "NAf."
+      "default": "XCG"
     },
     "freeDeliveryThreshold": {
       "type": "decimal",

@@ -1,4 +1,7 @@
 import { Link } from 'react-router-dom'
+import AnimatedLogo from './AnimatedLogo'
+import { BUSINESS } from '../config'
+import { getGeneralInquiryUrl } from '../utils/whatsapp'
 
 function Footer() {
   return (
@@ -6,14 +9,14 @@ function Footer() {
       <div className="footer-content">
         <div className="footer-brand">
           <Link to="/" className="logo logo-small">
-            <img src="/logo.png" alt="UNISTYLES" style={{ filter: 'brightness(0) invert(1)' }} />
+            <AnimatedLogo variant="footer" />
           </Link>
           <p>Your destination for premium Colombian fashion and beauty in Curacao.</p>
           <div className="footer-social">
-            <a href="#"><i className="fab fa-facebook-f"></i></a>
-            <a href="#"><i className="fab fa-instagram"></i></a>
-            <a href="https://wa.me/59990000425" target="_blank" rel="noopener noreferrer"><i className="fab fa-whatsapp"></i></a>
-            <a href="#"><i className="fab fa-tiktok"></i></a>
+            <a href={BUSINESS.social.facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>
+            <a href={BUSINESS.social.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
+            <a href={getGeneralInquiryUrl()} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><i className="fab fa-whatsapp"></i></a>
+            <a href={BUSINESS.social.tiktok} target="_blank" rel="noopener noreferrer" aria-label="TikTok"><i className="fab fa-tiktok"></i></a>
           </div>
         </div>
         <div className="footer-links">
@@ -33,19 +36,29 @@ function Footer() {
         <div className="footer-links">
           <h4>Help</h4>
           <ul>
-            <li><a href="#">Size Guide</a></li>
-            <li><a href="#">Shipping</a></li>
-            <li><a href="#">Returns</a></li>
-            <li><a href="#">FAQ</a></li>
-            <li><Link to="/contact">Contact</Link></li>
+            <li><Link to="/shipping">Shipping & Delivery</Link></li>
+            <li><Link to="/track-order">Track Your Order</Link></li>
+            <li><Link to="/faq">FAQ</Link></li>
+            <li><Link to="/contact">Contact Us</Link></li>
+          </ul>
+          <h4 style={{marginTop: '20px'}}>Legal</h4>
+          <ul>
+            <li><Link to="/terms">Terms & Conditions</Link></li>
+            <li><Link to="/privacy">Privacy Policy</Link></li>
           </ul>
         </div>
         <div className="footer-links">
           <h4>Contact</h4>
           <ul>
-            <li><a href="#">Curacao, Caribbean</a></li>
-            <li><a href="tel:+59990000425">+5999 000-0425</a></li>
-            <li><a href="mailto:info@unistylescuracao.com">info@unistylescuracao.com</a></li>
+            <li>Curacao, Caribbean</li>
+            <li><a href={`tel:${BUSINESS.phone}`}>{BUSINESS.phone}</a></li>
+            <li><a href={`mailto:${BUSINESS.email}`}>{BUSINESS.email}</a></li>
+          </ul>
+          <h4 style={{marginTop: '20px'}}>Hours</h4>
+          <ul>
+            <li>Mon-Fri: {BUSINESS.hours.weekdays}</li>
+            <li>Sat: {BUSINESS.hours.saturday}</li>
+            <li>Sun: {BUSINESS.hours.sunday}</li>
           </ul>
         </div>
       </div>
@@ -54,7 +67,6 @@ function Footer() {
         <div className="payment-icons">
           <i className="fab fa-cc-visa"></i>
           <i className="fab fa-cc-mastercard"></i>
-          <i className="fab fa-cc-paypal"></i>
         </div>
       </div>
     </footer>

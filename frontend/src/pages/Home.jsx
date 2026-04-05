@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useMemo } from 'react'
 import { useHomepage, useCategories, useBrands } from '../hooks/useProducts'
+import { getGeneralInquiryUrl } from '../utils/whatsapp'
 import HeroSlider from '../components/HeroSlider'
 import NewReleasesCarousel from '../components/NewReleasesCarousel'
 
@@ -12,7 +13,7 @@ const categoryConfig = {
   perfume: { image: '/images/cat-perfume.jpg', label: 'Perfumes' },
   cremas: { image: '/images/cat-skincare.jpg', label: 'Creams' },
   bloqueador: { image: '/images/Total Block 140g.png', label: 'Sunscreen' },
-  desodorantes: { image: '/images/Desodorante yambal CCORI ROSE.jpeg', label: 'Deodorants' },
+  desodorantes: { image: '/images/deodorante corri rose.jpg', label: 'Personal Care' },
   'limpieza-facial': { image: '/images/Agua Micelar 2 en 1 lbel.jpg', label: 'Facial Care' },
   accesorios: { image: '/images/cat-accesorios.jpg', label: 'Accessories' }
 }
@@ -57,8 +58,9 @@ function Home() {
   // Get products for new arrivals and bestsellers
   const { newArrivals, bestsellers, carouselProducts } = useMemo(() => {
     if (homepageData) {
-      // Transform products for carousel format
-      const carouselItems = (homepageData.newArrivals || []).slice(0, 7).map(product => ({
+      // Transform products for carousel format (use newArrivals, fall back to featuredProducts)
+      const carouselSource = (homepageData.newArrivals?.length > 0 ? homepageData.newArrivals : homepageData.featuredProducts) || []
+      const carouselItems = carouselSource.slice(0, 7).map(product => ({
         id: product.id,
         name: product.name,
         subtitle: product.brand?.name || product.categoryName || 'Premium Collection',
@@ -295,7 +297,7 @@ function Home() {
               <p>Chat with us on WhatsApp for personal assistance</p>
             </div>
             <a
-              href="https://wa.me/59990000425?text=Hola!%20I'm%20interested%20in%20your%20products"
+              href={getGeneralInquiryUrl()}
               className="btn-whatsapp"
               target="_blank"
               rel="noopener noreferrer"

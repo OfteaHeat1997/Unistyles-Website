@@ -1,12 +1,14 @@
 import { Outlet } from 'react-router-dom'
 import Header from './Header'
 import Footer from './Footer'
+import SplashScreen from './SplashScreen'
+import { getGeneralInquiryUrl } from '../utils/whatsapp'
 
 // Floating WhatsApp Button Component
 function WhatsAppFloat() {
   return (
     <a
-      href="https://wa.me/59990000425?text=Hola!%20I'm%20interested%20in%20your%20products"
+      href={getGeneralInquiryUrl()}
       className="whatsapp-float"
       target="_blank"
       rel="noopener noreferrer"
@@ -22,6 +24,7 @@ function WhatsAppFloat() {
 function Layout() {
   return (
     <>
+      <SplashScreen />
       <Header />
       <main className="fade-in">
         <Outlet />

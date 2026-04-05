@@ -1,18 +1,32 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { cartStore } from '../stores/cartStore'
 import { useCategories } from '../hooks/useProducts'
 import { useAuth } from '../contexts/AuthContext'
 import CartSidebar from './CartSidebar'
+import AnimatedLogo from './AnimatedLogo'
+import { getGeneralInquiryUrl } from '../utils/whatsapp'
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [cartOpen, setCartOpen] = useState(false)
   const [cartCount, setCartCount] = useState(cartStore.getItemCount())
   const [activeMenu, setActiveMenu] = useState(null)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const navigate = useNavigate()
+
+  const location = useLocation()
 
   // Auth context
   const { user, isAuthenticated, logout } = useAuth()
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMenuOpen(false)
+    setActiveMenu(null)
+    setSearchOpen(false)
+  }, [location.pathname])
 
   // Fetch categories from Strapi (with fallback to local data)
   const { data: categories } = useCategories({ showInMenu: true })
@@ -35,14 +49,25 @@ function Header() {
     return unsubscribe
   }, [])
 
-  // Close menu when clicking outside
+  // Close menu when clicking outside or pressing Escape
   useEffect(() => {
     const handleClick = () => setActiveMenu(null)
-    if (activeMenu) {
-      document.addEventListener('click', handleClick)
-      return () => document.removeEventListener('click', handleClick)
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        setActiveMenu(null)
+        setMenuOpen(false)
+        setSearchOpen(false)
+      }
     }
-  }, [activeMenu])
+    if (activeMenu || menuOpen || searchOpen) {
+      document.addEventListener('click', handleClick)
+      document.addEventListener('keydown', handleEscape)
+      return () => {
+        document.removeEventListener('click', handleClick)
+        document.removeEventListener('keydown', handleEscape)
+      }
+    }
+  }, [activeMenu, menuOpen, searchOpen])
 
   return (
     <>
@@ -56,14 +81,14 @@ function Header() {
         <div className="header-inner">
           {/* Logo - Left */}
           <Link to="/" className="logo">
-            <img src="/logo.png" alt="UNISTYLES" />
+            <AnimatedLogo />
           </Link>
 
           {/* Navigation - Center */}
-          <nav className="main-nav">
-            <ul className="nav-list">
-              <li>
-                <NavLink to="/" className={({ isActive }) => isActive ? 'active' : ''}>
+          <nav className="main-nav" aria-label="Main navigation">
+            <ul className="nav-list" role="menubar">
+              <li role="none">
+                <NavLink to="/" className={({ isActive }) => isActive ? 'active' : ''} role="menuitem">
                   Home
                 </NavLink>
               </li>
@@ -71,17 +96,19 @@ function Header() {
               {/* Lingerie - Mega Menu */}
               <li
                 className="has-dropdown"
+                role="none"
                 onMouseEnter={() => setActiveMenu('lingerie')}
                 onMouseLeave={() => setActiveMenu(null)}
               >
-                <span className="nav-link">
+                <span className="nav-link" role="menuitem" aria-haspopup="true" aria-expanded={activeMenu === 'lingerie'}
+                  tabIndex={0} onKeyDown={e => e.key === 'Enter' && setActiveMenu(activeMenu === 'lingerie' ? null : 'lingerie')}>
                   Lingerie
-                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
                     <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </span>
 
-                <div className={`mega-menu ${activeMenu === 'lingerie' ? 'active' : ''}`}>
+                <div className={`mega-menu ${activeMenu === 'lingerie' ? 'active' : ''}`} role="menu" aria-label="Lingerie submenu">
                   <div className="mega-menu-inner">
                     <div className="mega-col">
                       <h4>Shop by Category</h4>
@@ -114,17 +141,19 @@ function Header() {
               {/* Beauty - Mega Menu */}
               <li
                 className="has-dropdown"
+                role="none"
                 onMouseEnter={() => setActiveMenu('beauty')}
                 onMouseLeave={() => setActiveMenu(null)}
               >
-                <span className="nav-link">
+                <span className="nav-link" role="menuitem" aria-haspopup="true" aria-expanded={activeMenu === 'beauty'}
+                  tabIndex={0} onKeyDown={e => e.key === 'Enter' && setActiveMenu(activeMenu === 'beauty' ? null : 'beauty')}>
                   Beauty
-                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
                     <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </span>
 
-                <div className={`mega-menu ${activeMenu === 'beauty' ? 'active' : ''}`}>
+                <div className={`mega-menu ${activeMenu === 'beauty' ? 'active' : ''}`} role="menu" aria-label="Beauty submenu">
                   <div className="mega-menu-inner">
                     <div className="mega-col">
                       <h4>Fragrances</h4>
@@ -140,34 +169,85 @@ function Header() {
                         <li><Link to="/cremas">Creams & Lotions</Link></li>
                         <li><Link to="/bloqueador">Sunscreen</Link></li>
                         <li><Link to="/limpieza-facial">Facial Care</Link></li>
-                        <li><Link to="/desodorantes">Deodorants</Link></li>
+                      </ul>
+                    </div>
+                    <div className="mega-col">
+                      <h4>Personal Care</h4>
+                      <ul>
+                        <li><Link to="/desodorantes">Deodorants & Talcos</Link></li>
                       </ul>
                     </div>
                     <div className="mega-col">
                       <h4>Brands</h4>
                       <ul>
-                        <li><Link to="/perfume?brand=lbel">L'BEL</Link></li>
-                        <li><Link to="/perfume?brand=esika">ESIKA</Link></li>
-                        <li><Link to="/perfume?brand=yanbal">YANBAL</Link></li>
-                        <li><Link to="/perfume?brand=cyzone">CYZONE</Link></li>
+                        <li><Link to="/brand/lbel">L'BEL</Link></li>
+                        <li><Link to="/brand/esika">ESIKA</Link></li>
+                        <li><Link to="/brand/yanbal">YANBAL</Link></li>
+                        <li><Link to="/brand/cyzone">CYZONE</Link></li>
+                        <li><Link to="/brand/leonisa">LEONISA</Link></li>
                       </ul>
                     </div>
                   </div>
                 </div>
               </li>
 
-              <li>
-                <NavLink to="/accesorios">Accessories</NavLink>
+              <li role="none">
+                <NavLink to="/accesorios" role="menuitem">Accessories</NavLink>
               </li>
 
-              <li>
-                <NavLink to="/about">About</NavLink>
+              <li role="none">
+                <NavLink to="/about" role="menuitem">About</NavLink>
               </li>
             </ul>
           </nav>
 
           {/* Actions - Right */}
           <div className="header-actions">
+            {/* Search */}
+            {searchOpen ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  if (searchQuery.trim().length >= 2) {
+                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+                    setSearchOpen(false)
+                    setSearchQuery('')
+                  }
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search..."
+                  autoFocus
+                  style={{
+                    width: '160px', padding: '6px 12px', border: '1px solid var(--border)',
+                    borderRadius: '4px', fontSize: '13px', outline: 'none'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => { setSearchOpen(false); setSearchQuery('') }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--charcoal)' }}
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              </form>
+            ) : (
+              <button
+                className="action-icon"
+                onClick={() => setSearchOpen(true)}
+                aria-label="Search"
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </button>
+            )}
+
             {isAuthenticated ? (
               <>
                 <div className="user-menu-container" style={{ position: 'relative' }}>
@@ -192,7 +272,7 @@ function Header() {
             )}
 
             <a
-              href="https://wa.me/59990000425"
+              href={getGeneralInquiryUrl()}
               className="action-icon whatsapp"
               target="_blank"
               rel="noopener noreferrer"
@@ -220,7 +300,9 @@ function Header() {
             <button
               className={`mobile-toggle ${menuOpen ? 'active' : ''}`}
               onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="Menu"
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={menuOpen}
+              aria-controls="mobile-menu"
             >
               <span></span>
               <span></span>
@@ -230,8 +312,8 @@ function Header() {
         </div>
 
         {/* Mobile Menu */}
-        <div className={`mobile-menu ${menuOpen ? 'active' : ''}`}>
-          <nav className="mobile-nav">
+        <div className={`mobile-menu ${menuOpen ? 'active' : ''}`} role="dialog" aria-label="Mobile navigation" aria-hidden={!menuOpen}>
+          <nav className="mobile-nav" aria-label="Mobile navigation">
             <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
 
             <div className="mobile-group">
@@ -247,6 +329,7 @@ function Header() {
               <Link to="/cremas" onClick={() => setMenuOpen(false)}>Skincare</Link>
               <Link to="/bloqueador" onClick={() => setMenuOpen(false)}>Sunscreen</Link>
               <Link to="/limpieza-facial" onClick={() => setMenuOpen(false)}>Facial Care</Link>
+              <Link to="/desodorantes" onClick={() => setMenuOpen(false)}>Personal Care</Link>
             </div>
 
             <Link to="/accesorios" onClick={() => setMenuOpen(false)}>Accessories</Link>

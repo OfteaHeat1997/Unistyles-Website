@@ -7,9 +7,22 @@ const express = require('express');
 const router = express.Router();
 const { asyncHandler } = require('../middleware/errorHandler');
 const db = require('../utils/db');
+const { getUploadedImages } = require('../utils/images');
 
-// Category ID for perfumes (from database)
-const PERFUME_CATEGORY_ID = 40;
+// Resolve perfume category ID dynamically
+let PERFUME_CATEGORY_ID = null;
+async function getPerfumeCategoryId() {
+    if (PERFUME_CATEGORY_ID) return PERFUME_CATEGORY_ID;
+    try {
+        const result = await db.query(
+            "SELECT id FROM categories WHERE slug = 'perfume' AND published_at IS NOT NULL LIMIT 1"
+        );
+        if (result.rows.length > 0) {
+            PERFUME_CATEGORY_ID = result.rows[0].id;
+        }
+    } catch { /* ignore */ }
+    return PERFUME_CATEGORY_ID || 40; // fallback
+}
 
 // ===========================================
 // GET /api/perfumes/quiz
@@ -75,9 +88,10 @@ router.post('/quiz/results', asyncHandler(async (req, res) => {
   }
 
   try {
+    const categoryId = await getPerfumeCategoryId();
     // Build dynamic query based on answers
     let whereConditions = ['pcl.category_id = $1', 'p.published_at IS NOT NULL'];
-    let params = [PERFUME_CATEGORY_ID];
+    let params = [categoryId];
     let paramCount = 1;
 
     // Gender-based scoring keywords
@@ -171,6 +185,9 @@ router.post('/quiz/results', asyncHandler(async (req, res) => {
     recommendations.sort((a, b) => b.matchScore - a.matchScore);
     recommendations = recommendations.slice(0, 6);
 
+    // Get uploaded images
+    const uploadMap = await getUploadedImages(recommendations.map(p => p.id));
+
     res.json({
       success: true,
       message: `We found ${recommendations.length} fragrances that match your preferences`,
@@ -181,7 +198,7 @@ router.post('/quiz/results', asyncHandler(async (req, res) => {
         slug: p.slug,
         description: p.description,
         price: parseFloat(p.price),
-        image: p.image,
+        image: uploadMap[p.id] || p.image,
         brand: p.brand_name,
         matchScore: p.matchScore,
         gender: p.gender,
@@ -244,11 +261,12 @@ router.get('/filters', asyncHandler(async (req, res) => {
       ORDER BY count DESC
     `;
 
+    const categoryId = await getPerfumeCategoryId();
     const [brands, prices, count, families] = await Promise.all([
-      db.query(brandsQuery, [PERFUME_CATEGORY_ID]),
-      db.query(priceQuery, [PERFUME_CATEGORY_ID]),
-      db.query(countQuery, [PERFUME_CATEGORY_ID]),
-      db.query(familiesQuery, [PERFUME_CATEGORY_ID])
+      db.query(brandsQuery, [categoryId]),
+      db.query(priceQuery, [categoryId]),
+      db.query(countQuery, [categoryId]),
+      db.query(familiesQuery, [categoryId])
     ]);
 
     res.json({
@@ -315,9 +333,10 @@ router.get('/', asyncHandler(async (req, res) => {
     search
   } = req.query;
 
+  const categoryId = await getPerfumeCategoryId();
   const offset = (parseInt(page) - 1) * parseInt(limit);
   let whereConditions = ['pcl.category_id = $1', 'p.published_at IS NOT NULL'];
-  let params = [PERFUME_CATEGORY_ID];
+  let params = [categoryId];
   let paramCount = 1;
 
   // Brand filter
@@ -417,6 +436,8 @@ router.get('/', asyncHandler(async (req, res) => {
 
     const total = parseInt(countResult.rows[0]?.total || 0);
 
+    const uploadMap = await getUploadedImages(productsResult.rows.map(p => p.id));
+
     res.json({
       products: productsResult.rows.map(p => ({
         id: p.id,
@@ -424,7 +445,7 @@ router.get('/', asyncHandler(async (req, res) => {
         slug: p.slug,
         description: p.description,
         price: parseFloat(p.price),
-        image: p.image,
+        image: uploadMap[p.id] || p.image,
         brand: p.brand_name ? { id: p.brand_id, name: p.brand_name } : null,
         badge: p.badge,
         inStock: p.in_stock !== false,
@@ -481,13 +502,16 @@ router.get('/:id', asyncHandler(async (req, res) => {
       WHERE p.id = $1 AND pcl.category_id = $2 AND p.published_at IS NOT NULL
     `;
 
-    const result = await db.query(query, [id, PERFUME_CATEGORY_ID]);
+    const perfCatId = await getPerfumeCategoryId();
+    const result = await db.query(query, [id, perfCatId]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Perfume not found' });
     }
 
     const p = result.rows[0];
+    const uploadMap = await getUploadedImages([p.id]);
+
     res.json({
       id: p.id,
       name: p.name,
@@ -495,7 +519,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
       description: p.description,
       price: parseFloat(p.price),
       compareAtPrice: p.compare_at_price ? parseFloat(p.compare_at_price) : null,
-      image: p.image,
+      image: uploadMap[p.id] || p.image,
       brand: p.brand_name ? { id: p.brand_id, name: p.brand_name } : null,
       badge: p.badge,
       inStock: p.in_stock !== false,

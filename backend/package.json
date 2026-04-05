@@ -6,12 +6,10 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "db:migrate": "prisma migrate deploy",
-    "db:generate": "prisma generate",
-    "db:seed": "node prisma/seed.js"
+    "db:init": "node -e \"require('./src/utils/db').query('SELECT 1').then(() => console.log('DB connected')).catch(console.error)\"",
+    "db:migrate": "node ../database/migrate.js"
   },
   "dependencies": {
-    "@prisma/client": "^5.9.0",
     "pg": "^8.11.3",
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.4",
@@ -25,12 +23,14 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
+    "axios": "^1.7.9",
     "nodemailer": "^6.9.8",
-    "uuid": "^9.0.1"
+    "socket.io": "^4.7.4",
+    "uuid": "^9.0.1",
+    "winston": "^3.11.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.3",
-    "prisma": "^5.9.0"
+    "nodemon": "^3.0.3"
   },
   "engines": {
     "node": ">=20.0.0"

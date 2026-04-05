@@ -142,14 +142,14 @@ function Profile() {
 
   const getStatusColor = (status) => {
     const colors = {
-      pending: '#FFA500',
-      confirmed: '#4CAF50',
-      processing: '#2196F3',
-      shipped: '#9C27B0',
-      delivered: '#4CAF50',
-      cancelled: '#F44336'
+      pending: '#B8862D',
+      confirmed: '#3D7A5F',
+      processing: '#1B4D4F',
+      shipped: '#1F3347',
+      delivered: '#3D7A5F',
+      cancelled: '#A4443A'
     }
-    return colors[status] || '#666'
+    return colors[status] || '#6B6560'
   }
 
   return (

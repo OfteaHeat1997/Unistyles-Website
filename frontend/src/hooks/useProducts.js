@@ -289,11 +289,11 @@ export function useBusinessSettings() {
         return {
           storeName: 'Unistyles Curacao',
           tagline: 'Colombian Beauty & Lingerie',
-          currency: 'ANG',
-          currencySymbol: 'NAf.',
-          freeDeliveryThreshold: 150,
+          currency: 'XCG',
+          currencySymbol: 'XCG',
+          freeDeliveryThreshold: 80,
           deliveryFee: 10,
-          whatsappNumber: '+59990000425'
+          whatsappNumber: '+59996736285'
         };
       }
 

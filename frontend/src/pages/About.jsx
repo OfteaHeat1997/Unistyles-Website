@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { getGeneralInquiryUrl } from '../utils/whatsapp'
 
 function About() {
   return (
@@ -191,7 +192,7 @@ function About() {
                 Explore Collection
               </Link>
               <a
-                href="https://wa.me/59990000425?text=Hola!%20I'm%20interested%20in%20your%20products"
+                href={getGeneralInquiryUrl()}
                 className="btn-secondary"
                 target="_blank"
                 rel="noopener noreferrer"

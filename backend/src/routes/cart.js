@@ -4,13 +4,24 @@
 
 const express = require('express');
 const router = express.Router();
+const { body, param, validationResult } = require('express-validator');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { optionalAuth } = require('../middleware/auth');
 const redis = require('../utils/redis');
 const db = require('../utils/db');
+const { CART_TTL } = require('../constants');
+
+// Reusable validation error handler
+function handleValidationErrors(req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.status(400).json({ errors: errors.array() });
+        return true;
+    }
+    return false;
+}
 
 // Cart stored in Redis for guests, DB for logged-in users
-const CART_TTL = 60 * 60 * 24 * 7; // 7 days
 
 // ===========================================
 // GET /api/cart
@@ -49,21 +60,40 @@ router.get('/', optionalAuth, asyncHandler(async (req, res) => {
 // POST /api/cart/add
 // Add item to cart
 // ===========================================
-router.post('/add', optionalAuth, asyncHandler(async (req, res) => {
+router.post('/add',
+    optionalAuth,
+    [
+        body('productId').isInt({ min: 1 }).withMessage('Valid product ID required'),
+        body('quantity').optional().isInt({ min: 1, max: 99 }).withMessage('Quantity must be between 1 and 99'),
+        body('size').optional().trim().isLength({ max: 20 }).escape(),
+        body('color').optional().trim().isLength({ max: 50 }).escape(),
+        body('variantId').optional().isInt({ min: 1 })
+    ],
+    asyncHandler(async (req, res) => {
+    if (handleValidationErrors(req, res)) return;
     const { productId, variantId, quantity = 1, size, color } = req.body;
-
-    if (!productId) {
-        return res.status(400).json({ error: 'Product ID required' });
-    }
 
     // Verify product exists (using Strapi schema)
     const product = await db.query(
-        'SELECT id, name, price, in_stock, legacy_image FROM products WHERE id = $1 AND published_at IS NOT NULL',
+        'SELECT id, name, price, in_stock, stock_quantity, legacy_image FROM products WHERE id = $1 AND published_at IS NOT NULL',
         [productId]
     );
 
     if (product.rows.length === 0) {
         return res.status(404).json({ error: 'Product not found' });
+    }
+
+    const productData = product.rows[0];
+
+    // Check stock availability before adding to cart
+    if (productData.in_stock === false) {
+        return res.status(400).json({ error: `${productData.name} is out of stock` });
+    }
+
+    if (productData.stock_quantity !== null && productData.stock_quantity < parseInt(quantity)) {
+        return res.status(400).json({
+            error: `Not enough stock for ${productData.name}. Available: ${productData.stock_quantity}`
+        });
     }
 
     const newItem = {
@@ -148,12 +178,18 @@ router.post('/add', optionalAuth, asyncHandler(async (req, res) => {
 // PUT /api/cart/update
 // Update item quantity
 // ===========================================
-router.put('/update', optionalAuth, asyncHandler(async (req, res) => {
+router.put('/update',
+    optionalAuth,
+    [
+        body('productId').isInt({ min: 1 }).withMessage('Valid product ID required'),
+        body('quantity').isInt({ min: 0, max: 99 }).withMessage('Quantity must be between 0 and 99'),
+        body('size').optional().trim().isLength({ max: 20 }).escape(),
+        body('color').optional().trim().isLength({ max: 50 }).escape(),
+        body('variantId').optional().isInt({ min: 1 })
+    ],
+    asyncHandler(async (req, res) => {
+    if (handleValidationErrors(req, res)) return;
     const { productId, variantId, quantity, size, color } = req.body;
-
-    if (!productId || quantity === undefined) {
-        return res.status(400).json({ error: 'Product ID and quantity required' });
-    }
 
     let cartItems = [];
 
@@ -293,7 +329,12 @@ router.delete('/clear', optionalAuth, asyncHandler(async (req, res) => {
 // POST /api/cart/merge
 // Merge guest cart into user cart after login
 // ===========================================
-router.post('/merge', asyncHandler(async (req, res) => {
+router.post('/merge',
+    [
+        body('guestCartId').trim().notEmpty().isUUID().withMessage('Valid guest cart ID required')
+    ],
+    asyncHandler(async (req, res) => {
+    if (handleValidationErrors(req, res)) return;
     const { guestCartId } = req.body;
     const authHeader = req.headers.authorization;
 
@@ -308,7 +349,7 @@ router.post('/merge', asyncHandler(async (req, res) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        userId = decoded.userId;
+        userId = decoded.id;
     } catch (err) {
         return res.status(401).json({ error: 'Invalid token' });
     }
@@ -337,7 +378,8 @@ router.post('/merge', asyncHandler(async (req, res) => {
     );
     let userItems = result.rows[0]?.items || [];
 
-    // Merge guest items into user cart
+    // Merge guest items into user cart (cap quantities at MAX_ITEM_QUANTITY, cap total at MAX_CART_ITEMS)
+    const { MAX_ITEM_QUANTITY, MAX_CART_ITEMS } = require('../constants');
     guestItems.forEach(guestItem => {
         const existingIndex = userItems.findIndex(item =>
             item.productId === guestItem.productId &&
@@ -347,11 +389,14 @@ router.post('/merge', asyncHandler(async (req, res) => {
         );
 
         if (existingIndex > -1) {
-            // Add quantities if item already exists
-            userItems[existingIndex].quantity += guestItem.quantity;
-        } else {
-            // Add new item
-            userItems.push(guestItem);
+            // Add quantities, capped at max
+            userItems[existingIndex].quantity = Math.min(
+                userItems[existingIndex].quantity + guestItem.quantity,
+                MAX_ITEM_QUANTITY
+            );
+        } else if (userItems.length < MAX_CART_ITEMS) {
+            // Add new item only if cart isn't full
+            userItems.push({ ...guestItem, quantity: Math.min(guestItem.quantity, MAX_ITEM_QUANTITY) });
         }
     });
 
@@ -387,10 +432,28 @@ async function enrichCartItems(cartItems) {
 
     const productIds = [...new Set(cartItems.map(item => item.productId))];
     const products = await db.query(`
-        SELECT id, ref, name, slug, price, legacy_image, in_stock
+        SELECT id, ref, name, slug, price, legacy_image, in_stock, stock_quantity
         FROM products
         WHERE id = ANY($1) AND published_at IS NOT NULL
     `, [productIds]);
+
+    // Get uploaded images from Strapi's file system
+    const uploadedImages = await db.query(`
+        SELECT frm.related_id as product_id, f.url as upload_url
+        FROM files f
+        JOIN files_related_morphs frm ON f.id = frm.file_id
+        WHERE frm.related_id = ANY($1)
+          AND frm.related_type = 'api::product.product'
+          AND frm.field = 'image'
+        ORDER BY frm."order" ASC
+    `, [productIds]).catch(() => ({ rows: [] }));
+
+    const uploadMap = {};
+    uploadedImages.rows.forEach(img => {
+        if (!uploadMap[img.product_id]) {
+            uploadMap[img.product_id] = img.upload_url;
+        }
+    });
 
     const productMap = {};
     products.rows.forEach(p => {
@@ -411,8 +474,10 @@ async function enrichCartItems(cartItems) {
                 quantity: item.quantity,
                 size: item.size,
                 color: item.color,
-                image: product.legacy_image || null,
+                image: uploadMap[item.productId]
+                    || product.legacy_image || null,
                 inStock: product.in_stock,
+                stockQuantity: product.stock_quantity || 0,
                 subtotal: parseFloat(product.price) * item.quantity
             };
         });

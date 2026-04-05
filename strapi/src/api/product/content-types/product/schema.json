@@ -73,6 +73,11 @@
       "type": "boolean",
       "default": true
     },
+    "stockQuantity": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
     "featured": {
       "type": "boolean",
       "default": false
@@ -140,6 +145,41 @@
     "concentration": {
       "type": "enumeration",
       "enum": ["parfum", "edp", "edt", "cologne", "splash"]
+    },
+    "skinType": {
+      "type": "enumeration",
+      "enum": ["all", "normal", "dry", "oily", "combination", "sensitive"]
+    },
+    "skinConcern": {
+      "type": "enumeration",
+      "enum": ["hydration", "anti_aging", "brightening", "nourishing", "acne", "sensitive"]
+    },
+    "applicationArea": {
+      "type": "enumeration",
+      "enum": ["face", "body", "hands", "all"]
+    },
+    "texture": {
+      "type": "enumeration",
+      "enum": ["cream", "lotion", "gel", "serum", "oil", "balm"]
+    },
+    "keyIngredients": {
+      "type": "text"
+    },
+    "spf": {
+      "type": "integer",
+      "min": 0
+    },
+    "dermatologistTested": {
+      "type": "boolean",
+      "default": false
+    },
+    "routineStep": {
+      "type": "enumeration",
+      "enum": ["cleanse", "treat", "moisturize", "protect"]
+    },
+    "timeOfUse": {
+      "type": "enumeration",
+      "enum": ["morning", "evening", "both"]
     }
   }
 }

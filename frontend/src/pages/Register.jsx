@@ -169,7 +169,7 @@ function Register() {
 
             <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '25px', fontSize: '13px' }}>
               <input type="checkbox" required style={{ marginTop: '3px' }} />
-              <span>I agree to the <a href="#" style={{ color: 'var(--muted-gold)' }}>Terms of Service</a> and <a href="#" style={{ color: 'var(--muted-gold)' }}>Privacy Policy</a></span>
+              <span>I agree to the <Link to="/terms" style={{ color: 'var(--muted-gold)' }}>Terms of Service</Link> and <Link to="/privacy" style={{ color: 'var(--muted-gold)' }}>Privacy Policy</Link></span>
             </label>
 
             <button

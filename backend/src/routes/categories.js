@@ -1,5 +1,6 @@
 // ===========================================
 // CATEGORIES ROUTES
+// Reads from Strapi's PostgreSQL tables directly
 // ===========================================
 
 const express = require('express');
@@ -9,104 +10,85 @@ const db = require('../utils/db');
 
 // ===========================================
 // GET /api/categories
-// Get all categories with hierarchy
+// Get all categories with product counts
 // ===========================================
 router.get('/', asyncHandler(async (req, res) => {
+    const { showInMenu } = req.query;
+
+    let whereConditions = ['c.published_at IS NOT NULL'];
+    let params = [];
+
+    if (showInMenu === 'true') {
+        whereConditions.push('c.show_in_menu = true');
+    }
+
+    const whereClause = whereConditions.join(' AND ');
+
     const result = await db.query(`
         SELECT
-            c.id, c.name, c.name_es, c.slug, c.description,
-            c.image_url, c.parent_id, c.sort_order,
-            COUNT(p.id) as product_count
+            c.id, c.name, c.slug, c.description, c.breadcrumb,
+            c.filter_type, c.filters, c.sort_order, c.show_in_menu,
+            COUNT(pcl.product_id) as product_count
         FROM categories c
-        LEFT JOIN products p ON p.category_id = c.id AND p.is_active = true
-        WHERE c.is_active = true
+        LEFT JOIN products_category_links pcl ON c.id = pcl.category_id
+        LEFT JOIN products p ON pcl.product_id = p.id AND p.published_at IS NOT NULL
+        WHERE ${whereClause}
         GROUP BY c.id
-        ORDER BY c.parent_id NULLS FIRST, c.sort_order, c.name
-    `);
+        ORDER BY c.sort_order ASC, c.name ASC
+    `, params);
 
-    // Build hierarchy
-    const categories = result.rows;
-    const parentCategories = categories.filter(c => !c.parent_id);
-
-    const hierarchy = parentCategories.map(parent => ({
-        id: parent.id,
-        name: parent.name,
-        nameEs: parent.name_es,
-        slug: parent.slug,
-        description: parent.description,
-        imageUrl: parent.image_url,
-        productCount: parseInt(parent.product_count),
-        children: categories
-            .filter(c => c.parent_id === parent.id)
-            .map(child => ({
-                id: child.id,
-                name: child.name,
-                nameEs: child.name_es,
-                slug: child.slug,
-                description: child.description,
-                imageUrl: child.image_url,
-                productCount: parseInt(child.product_count)
-            }))
-    }));
-
-    res.json({ categories: hierarchy });
+    res.json({
+        categories: result.rows.map(c => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            description: c.description,
+            breadcrumb: c.breadcrumb,
+            filterType: c.filter_type,
+            filters: c.filters || [],
+            sortOrder: c.sort_order,
+            showInMenu: c.show_in_menu,
+            productCount: parseInt(c.product_count)
+        }))
+    });
 }));
 
 // ===========================================
 // GET /api/categories/:slug
-// Get category by slug with products count
+// Get category by slug with product count
 // ===========================================
 router.get('/:slug', asyncHandler(async (req, res) => {
     const { slug } = req.params;
 
     const result = await db.query(`
         SELECT
-            c.id, c.name, c.name_es, c.slug, c.description,
-            c.image_url, c.parent_id,
-            pc.name as parent_name, pc.slug as parent_slug,
-            COUNT(p.id) as product_count
+            c.id, c.name, c.slug, c.description, c.breadcrumb,
+            c.filter_type, c.filters, c.sort_order, c.show_in_menu,
+            COUNT(pcl.product_id) as product_count
         FROM categories c
-        LEFT JOIN categories pc ON c.parent_id = pc.id
-        LEFT JOIN products p ON p.category_id = c.id AND p.is_active = true
-        WHERE c.slug = $1 AND c.is_active = true
-        GROUP BY c.id, pc.name, pc.slug
+        LEFT JOIN products_category_links pcl ON c.id = pcl.category_id
+        LEFT JOIN products p ON pcl.product_id = p.id AND p.published_at IS NOT NULL
+        WHERE c.slug = $1 AND c.published_at IS NOT NULL
+        GROUP BY c.id
     `, [slug]);
 
     if (result.rows.length === 0) {
         return res.status(404).json({ error: 'Category not found' });
     }
 
-    const category = result.rows[0];
-
-    // Get subcategories if this is a parent
-    const subcategories = await db.query(`
-        SELECT id, name, name_es, slug, image_url,
-               (SELECT COUNT(*) FROM products WHERE category_id = c.id AND is_active = true) as product_count
-        FROM categories c
-        WHERE parent_id = $1 AND is_active = true
-        ORDER BY sort_order, name
-    `, [category.id]);
+    const c = result.rows[0];
 
     res.json({
-        id: category.id,
-        name: category.name,
-        nameEs: category.name_es,
-        slug: category.slug,
-        description: category.description,
-        imageUrl: category.image_url,
-        productCount: parseInt(category.product_count),
-        parent: category.parent_name ? {
-            name: category.parent_name,
-            slug: category.parent_slug
-        } : null,
-        subcategories: subcategories.rows.map(s => ({
-            id: s.id,
-            name: s.name,
-            nameEs: s.name_es,
-            slug: s.slug,
-            imageUrl: s.image_url,
-            productCount: parseInt(s.product_count)
-        }))
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+        description: c.description,
+        breadcrumb: c.breadcrumb,
+        filterType: c.filter_type,
+        filters: c.filters || [],
+        sortOrder: c.sort_order,
+        showInMenu: c.show_in_menu,
+        productCount: parseInt(c.product_count)
     });
 }));
 

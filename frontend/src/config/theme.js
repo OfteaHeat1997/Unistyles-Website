@@ -1,31 +1,42 @@
-// UNISTYLES - Luxury E-commerce Theme
-// Rule: Black + Gold + White (Maximum 12 colors)
+// UNISTYLES - Brand Identity Theme
+// Based on Brand Board v1 + Proposed Final Palette
+// Warm neutrals + Gold accents + Caribbean Teal
 
 export const theme = {
   colors: {
-    // Primary
-    black: '#1A1A1A',
-    white: '#FFFFFF',
-
-    // Background
+    // Backgrounds — Warm Sand Tones
     bg: '#FFFFFF',
-    bgPage: '#FAFAFA',
+    bgPage: '#FAF8F5',
+    bgSection: '#F3EDE6',
 
-    // Accent (Gold only)
-    gold: '#C9A868',
-    goldHover: '#A8894D',
-
-    // Text (3 levels only)
+    // Text — Warm Charcoal Family
+    black: '#1A1A1A',
     text: '#1A1A1A',
-    textSecondary: '#4A4A4A',
-    textMuted: '#8A8A8A',
+    textSecondary: '#3A3F45',
+    textMuted: '#6B6560',
+    textDisabled: '#9B9490',
+
+    // Accent — Gold (from Logo)
+    gold: '#C5A55A',
+    goldHover: '#D4B96E',
+    goldSoft: '#EDD9A3',
+
+    // Actions — Caribbean Teal + Navy
+    teal: '#1B4D4F',
+    tealHover: '#24635F',
+    navy: '#1F3347',
 
     // Border
-    border: '#E5E5E5',
+    border: '#E6DED8',
+    borderLight: '#F3EDE6',
 
-    // Functional
-    error: '#C41E3A',
-    success: '#2E7D32'
+    // Semantic
+    success: '#3D7A5F',
+    warning: '#B8862D',
+    error: '#A4443A',
+
+    // Legacy aliases
+    white: '#FFFFFF'
   },
 
   fonts: {

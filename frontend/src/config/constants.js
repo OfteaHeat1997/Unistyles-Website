@@ -8,8 +8,8 @@ export const BUSINESS = {
 
   // Contact Information
   email: 'info@unistylescuracao.com',
-  phone: '+599 9 XXX XXXX',
-  whatsapp: '5999XXXXXXX',
+  phone: '+5999 673 6285',
+  whatsapp: '59996736285',
   whatsappMessage: 'Hola! Me interesa conocer más sobre sus productos.',
 
   // Location
@@ -76,9 +76,9 @@ export const CATEGORIES = [
   },
   {
     id: 'desodorantes',
-    name: 'Desodorantes',
+    name: 'Personal Care',
     slug: 'desodorantes',
-    description: 'Desodorantes y antitranspirantes',
+    description: 'Deodorants, talcum powders, body sprays & personal care',
     image: '/images/categories/desodorantes.jpg'
   },
   {
@@ -109,8 +109,8 @@ export const PAYMENT_METHODS = [
   {
     id: 'sentoo',
     name: 'Sentoo',
-    description: 'Paga con tu app Sentoo',
-    icon: 'fa-mobile-alt',
+    description: 'Paga con banco, Visa/Mastercard, o iDEAL',
+    icon: 'fa-credit-card',
     enabled: true
   },
   {
@@ -124,7 +124,7 @@ export const PAYMENT_METHODS = [
 
 // Delivery Options
 export const DELIVERY = {
-  freeShippingThreshold: 100, // Free delivery over $100
+  freeShippingThreshold: 80, // Free delivery over XCG 80
   standardFee: 10,
   expressMultiplier: 2,
   zones: [
@@ -137,9 +137,9 @@ export const DELIVERY = {
 
 // Currency
 export const CURRENCY = {
-  code: 'ANG',
-  symbol: 'NAf.',
-  name: 'Netherlands Antillean Guilder'
+  code: 'XCG',
+  symbol: 'XCG',
+  name: 'Caribbean Guilder'
 }
 
 // Size Charts
