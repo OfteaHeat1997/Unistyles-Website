@@ -46,3 +46,4 @@ backups/
 
 # Large image originals (too big for GitHub)
 images/
+.vercel
