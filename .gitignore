@@ -44,6 +44,7 @@ backups/
 .claude/settings.local.json
 .claude/worktrees/
 
-# Large image originals (too big for GitHub)
-images/
+# Large image originals at repo root (too big for GitHub)
+# Anchored with leading slash so it does NOT match frontend/public/images/
+/images/
 .vercel

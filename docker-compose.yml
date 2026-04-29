@@ -181,6 +181,8 @@ services:
       - JWT_SECRET=${STRAPI_JWT_SECRET}
       - STRAPI_ADMIN_PASSWORD=${STRAPI_ADMIN_PASSWORD:-Admin123!}
       - STRAPI_ADMIN_EMAIL=${STRAPI_ADMIN_EMAIL:-admin@unistylescuracao.com}
+      # Set FORCE_RESEED=1 to wipe and reseed all products on next start
+      - FORCE_RESEED=${FORCE_RESEED:-0}
     volumes:
       - strapi-uploads:/app/public/uploads
       - ./frontend/public/images:/app/legacy-images:ro

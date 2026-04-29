@@ -102,6 +102,11 @@
       "type": "string",
       "private": true
     },
+    "variants": {
+      "type": "component",
+      "repeatable": true,
+      "component": "product.variant"
+    },
     "legacyImage": {
       "type": "string"
     },

@@ -105,13 +105,42 @@ module.exports = {
     // Set up public permissions
     await setupPublicPermissions(strapi);
 
-    // Seed data if empty
-    await seedDataIfEmpty(strapi);
+    // FORCE_RESEED=1 wipes products and re-creates everything from seed-data.json.
+    // Use this when the catalog has been overhauled (discontinued items removed,
+    // new SKUs added, variant structure changed). Owner can trigger from a one-shot
+    // env var on next deploy/restart.
+    const forceReseed = process.env.FORCE_RESEED === '1' || process.env.FORCE_RESEED === 'true';
+    if (forceReseed) {
+      await wipeProducts(strapi);
+    }
+
+    // Seed (or sync) products
+    await seedOrSyncData(strapi);
 
     // Always check homepage (separate from products)
     await seedHomepage(strapi);
   },
 };
+
+async function wipeProducts(strapi) {
+  try {
+    strapi.log.warn('FORCE_RESEED=1 — wiping all products before reseed');
+    const all = await strapi.entityService.findMany('api::product.product', {
+      fields: ['id'],
+      pagination: { limit: -1 },
+    });
+    for (const p of all) {
+      try {
+        await strapi.entityService.delete('api::product.product', p.id);
+      } catch (e) {
+        strapi.log.error(`failed to delete product ${p.id}: ${e.message}`);
+      }
+    }
+    strapi.log.info(`wiped ${all.length} products`);
+  } catch (error) {
+    strapi.log.error('wipe failed:', error.message);
+  }
+}
 
 async function setupPublicPermissions(strapi) {
   const publicContentTypes = [
@@ -151,16 +180,28 @@ async function setupPublicPermissions(strapi) {
   }
 }
 
-async function seedDataIfEmpty(strapi) {
+async function seedOrSyncData(strapi) {
   try {
-    // Check if products already exist
+    // In sync mode (DB already has products and FORCE_RESEED is off):
+    //   - update existing by legacyId (price, stock, variants)
+    //   - create new
+    //   - delete DB products whose legacyId is not in the current seed
+    //     (this is how discontinued items get removed)
     const existingProducts = await strapi.entityService.count('api::product.product');
-    if (existingProducts > 0) {
-      strapi.log.info(`Database already has ${existingProducts} products, skipping seed`);
-      return;
+    const isSync = existingProducts > 0;
+    if (isSync) {
+      strapi.log.info(`DB has ${existingProducts} products — running sync (add/update/delete)`);
+    } else {
+      strapi.log.info('DB empty — seeding from scratch');
     }
 
-    strapi.log.info('Seeding database with initial data (144 products)...');
+    // Build set of legacyIds present in seed for later cleanup
+    const seedLegacyIds = new Set();
+    for (const cat of Object.values(productsData)) {
+      for (const p of cat.products || []) {
+        if (p.id) seedLegacyIds.add(p.id);
+      }
+    }
 
     // Create brands
     const brandMap = {};
@@ -228,16 +269,32 @@ async function seedDataIfEmpty(strapi) {
             filters: { legacyId: product.id }
           });
 
+          const seedStock = product.stockQuantity != null ? product.stockQuantity : 0;
+          const seedInStock = product.inStock != null ? product.inStock : seedStock > 0;
+          const variantsData = (product.variants || []).map(v => ({
+            sku: v.sku,
+            color: v.color || null,
+            size: v.size || null,
+            price: v.price != null ? v.price : product.price,
+            stockQuantity: v.stockQuantity != null ? v.stockQuantity : 0,
+            inStock: v.inStock != null ? v.inStock : (v.stockQuantity || 0) > 0,
+          }));
+
           if (existingProduct.length > 0) {
-            // Update price and stock if seed data has changed
             const existing = existingProduct[0];
-            const seedStock = product.stockQuantity != null ? product.stockQuantity : 0;
-            const seedInStock = product.inStock != null ? product.inStock : seedStock > 0;
-            if (existing.price !== product.price || existing.stockQuantity !== seedStock || existing.inStock !== seedInStock) {
-              await strapi.entityService.update('api::product.product', existing.id, {
-                data: { price: product.price, stockQuantity: seedStock, inStock: seedInStock }
-              });
-            }
+            await strapi.entityService.update('api::product.product', existing.id, {
+              data: {
+                price: product.price,
+                stockQuantity: seedStock,
+                inStock: seedInStock,
+                description: product.description || existing.description,
+                color: product.color || null,
+                size: product.size || null,
+                variants: variantsData,
+                legacyImage: product.image,
+              }
+            });
+            totalProducts++;
             continue;
           }
 
@@ -256,12 +313,13 @@ async function seedDataIfEmpty(strapi) {
             compression: mapCompression(product.compression),
             material: product.material || null,
             badge: mapBadge(product.badge),
-            inStock: product.inStock != null ? product.inStock : true,
-            stockQuantity: product.stockQuantity != null ? product.stockQuantity : 0,
+            inStock: seedInStock,
+            stockQuantity: seedStock,
             featured: product.badge === 'Bestseller' || product.badge === 'New',
             sortOrder: data.products.indexOf(product) + 1,
             category: categoryId,
             brand: product.brand ? brandMap[product.brand] || null : null,
+            variants: variantsData,
             publishedAt: new Date()
           };
 
@@ -281,9 +339,34 @@ async function seedDataIfEmpty(strapi) {
       strapi.log.warn(`... and ${failedProducts - 5} more product errors`);
     }
 
-    strapi.log.info(`Seeding complete: ${totalProducts} products created, ${failedProducts} failed`);
+    // Discontinued cleanup: any DB product whose legacyId is not in the seed
+    // gets deleted. This is how products marked red in the catalog get removed.
+    let removedCount = 0;
+    try {
+      const allDbProducts = await strapi.entityService.findMany('api::product.product', {
+        fields: ['id', 'legacyId', 'name'],
+        pagination: { limit: -1 },
+      });
+      for (const dbp of allDbProducts) {
+        if (dbp.legacyId && !seedLegacyIds.has(dbp.legacyId)) {
+          try {
+            await strapi.entityService.delete('api::product.product', dbp.id);
+            removedCount++;
+          } catch (e) {
+            strapi.log.error(`failed to delete discontinued ${dbp.legacyId}: ${e.message}`);
+          }
+        }
+      }
+      if (removedCount > 0) {
+        strapi.log.info(`removed ${removedCount} discontinued products (legacyId not in seed)`);
+      }
+    } catch (e) {
+      strapi.log.error('discontinued cleanup failed:', e.message);
+    }
+
+    strapi.log.info(`Seed/sync complete: ${totalProducts} upserted, ${failedProducts} failed, ${removedCount} discontinued removed`);
   } catch (error) {
-    strapi.log.error('Seeding failed:', error.message);
+    strapi.log.error('Seed/sync failed:', error.message);
   }
 }
 
