@@ -1,157 +1,94 @@
-# Unistyles E-Commerce Website
+# Unistyles E-Commerce
 
-A complete e-commerce solution for Unistyles Curacao - selling Colombian beauty products to Caribbean women.
+E-commerce platform for Unistyles Curacao — Colombian beauty products for the Caribbean market.
 
-## Tech Stack
+## Stack
 
-### Frontend
-- **React 18** with Vite
-- **Tailwind CSS** for styling
-- **React Query** for data fetching
-- **Zustand** for state management
-- **React Router** for navigation
+| Layer | Tech |
+|---|---|
+| Frontend | React 18 + Vite, Tailwind CSS, React Query, React Router |
+| Backend | Node.js / Express, Postgres, Redis, JWT, Socket.IO |
+| CMS | Directus 11 (admin UI on top of the shared Postgres) |
+| Hosting | Coolify (Docker Compose stack, Traefik for routing + SSL) |
+| Payments | Sentoo (Curaçao), Cash on Delivery, Bank Transfer |
+| Messaging | WhatsApp Business / Cloud API |
 
-### Backend
-- **Node.js** with Express
-- **PostgreSQL** for database
-- **Redis** for session/cache
-- **JWT** for authentication
-- **bcrypt** for password hashing
+## Repository layout
 
-### Infrastructure
-- **Docker** & Docker Compose
-- **Nginx** for reverse proxy
-
-## Quick Start
-
-### Prerequisites
-- Docker & Docker Compose
-- Node.js 20+ (for local development)
-
-### Development Setup
-
-1. **Clone and setup environment:**
-```bash
-cd unistyles-website
-cp .env.example .env
-# Edit .env with your values
+```
+unistyles-website-v2/
+├── docker-compose.yml          # Source of truth for the deployment
+├── services/                   # Runtime services built into images
+│   ├── backend/                # Express API + Socket.IO (port 3000)
+│   ├── frontend/               # Vite SPA served by Nginx (port 80)
+│   └── directus/               # bootstrap.js + future Directus extensions
+├── database/                   # Schema and seed data
+│   ├── init.sql                # Auto-loaded by Postgres on first boot
+│   ├── migrations/             # SQL migrations (manual run)
+│   └── seed-data.json          # Source for the Directus content migration
+├── deploy/                     # Operations artifacts
+│   ├── README.md               # Coolify deployment runbook
+│   └── scripts/                # backup-db.sh, migrate-strapi-to-directus.js
+├── archive/                    # Legacy assets kept for reference (pre-migration)
+├── .github/workflows/          # CI: lint, test, Docker build
+├── .env.example                # Local development env template
+└── .env.coolify.example        # Production env checklist for Coolify
 ```
 
-2. **Start with Docker:**
+## Getting started
+
+### Local development (without Docker)
+
 ```bash
-docker-compose up -d
-```
+# 1. Copy env template
+cp .env.example .env  # then fill in values
 
-3. **Access the application:**
-- Frontend: http://localhost
-- Backend API: http://localhost/api
-- Adminer (DB): http://localhost:8080 (dev mode only)
+# 2. Start Postgres + Redis (lightest path: Docker for the data stack only)
+docker compose up -d postgres redis
 
-### Local Development (without Docker)
-
-1. **Backend:**
-```bash
-cd backend
+# 3. Backend
+cd services/backend
 npm install
-npm run dev
-```
+npm run db:migrate
+npm run dev          # nodemon, port 3000
 
-2. **Frontend:**
-```bash
-cd frontend
+# 4. Directus (in another shell)
+docker compose up -d directus
+node services/directus/bootstrap.js   # one-time schema setup
+
+# 5. Frontend (in another shell)
+cd services/frontend
 npm install
-npm run dev
+npm run dev          # Vite dev server, port 5173
 ```
 
-## Project Structure
+### Full stack with Docker
 
-```
-unistyles-website/
-├── backend/
-│   ├── src/
-│   │   ├── routes/          # API routes
-│   │   ├── middleware/      # Express middleware
-│   │   └── utils/           # Utilities
-│   ├── Dockerfile
-│   └── package.json
-├── frontend/
-│   ├── src/
-│   │   ├── components/      # React components
-│   │   ├── pages/           # Page components
-│   │   ├── stores/          # Zustand stores
-│   │   └── utils/           # Utilities
-│   ├── Dockerfile
-│   └── package.json
-├── database/
-│   └── init.sql             # Database schema
-├── nginx/
-│   └── nginx.conf           # Nginx config
-├── docker-compose.yml
-└── .env.example
-```
-
-## API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login
-- `POST /api/auth/logout` - Logout
-- `POST /api/auth/refresh` - Refresh token
-
-### Products
-- `GET /api/products` - List products
-- `GET /api/products/:slug` - Get product details
-- `GET /api/categories` - List categories
-
-### Cart & Orders
-- `GET /api/cart` - Get cart
-- `POST /api/cart/add` - Add to cart
-- `POST /api/orders` - Create order
-- `GET /api/orders/track/:orderNumber` - Track order
-
-### Payments
-- `POST /api/payments/cod` - Cash on Delivery
-- `POST /api/payments/sentoo` - Sentoo payment
-- `POST /api/payments/bank-transfer` - Bank transfer
-
-## Payment Methods
-
-1. **Cash on Delivery (COD)** - Primary method for Curacao market
-2. **Sentoo** - Local mobile payment app
-3. **Bank Transfer** - Traditional bank payment
-
-## Environment Variables
-
-See `.env.example` for all required variables:
-- Database credentials
-- JWT secrets
-- Sentoo API keys
-- WhatsApp number
-- SMTP settings
-
-## Features
-
-- Responsive design optimized for 40-65 age group
-- Guest checkout (no account required)
-- WhatsApp integration for support
-- Order tracking
-- Size guide
-- Multi-currency (ANG)
-- Island-wide delivery
-- Free delivery over ANG 150
-
-## Deployment
-
-### Production with Docker
 ```bash
-docker-compose --profile production up -d
+docker compose up -d
 ```
 
-### SSL Setup
-1. Place SSL certificates in `nginx/ssl/`
-2. Update nginx.conf with your domain
-3. Restart nginx container
+| URL | Service |
+|---|---|
+| http://localhost (port 80) | Frontend |
+| http://localhost:3000 | Backend (when port-forwarded for local dev) |
+| http://localhost:8055 | Directus admin |
+
+## Deployment to Coolify
+
+See [deploy/README.md](deploy/README.md) for the full runbook. Summary:
+
+1. Push the repo to GitHub.
+2. In Coolify: **New Resource → Docker Compose**, point at this repo.
+3. Set env vars from `.env.coolify.example` (mark secrets).
+4. Configure per-service domains: frontend → `unistylescuracao.com`, backend → `api.*`, directus → `cms.*`.
+5. Deploy. Run `node services/directus/bootstrap.js` to create the CMS schema.
+6. Run `node deploy/scripts/migrate-strapi-to-directus.js` to import seed data.
+
+## API
+
+Backend exposes `/api/auth`, `/api/products`, `/api/perfumes`, `/api/skincare`, `/api/categories`, `/api/cart`, `/api/orders`, `/api/payments`, `/api/users`, `/api/admin`, `/api/whatsapp`, `/api/newsletter`, `/api/reviews`, `/api/coupons`, `/api/variants`, `/api/delivery`. Health check at `/health`. Real-time order updates via Socket.IO at `/ws`.
 
 ## License
 
-Private - Unistyles Curacao
+Private — Unistyles Curacao.

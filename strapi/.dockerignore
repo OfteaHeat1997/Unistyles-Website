@@ -1,8 +1,0 @@
-node_modules
-.cache
-.tmp
-build
-.git
-.gitignore
-.DS_Store
-*.log
