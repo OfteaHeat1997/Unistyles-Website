@@ -48,3 +48,6 @@ backups/
 # Anchored with leading slash so it does NOT match frontend/public/images/
 /images/
 .vercel
+
+# Legacy assets — kept on master branch only, excluded from deploys
+archive/
