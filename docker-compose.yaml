@@ -28,9 +28,9 @@ services:
       - "80"
     depends_on:
       backend:
-        condition: service_healthy
+        condition: service_started
       directus:
-        condition: service_healthy
+        condition: service_started
     restart: unless-stopped
     networks:
       - unistyles-network
@@ -128,8 +128,8 @@ services:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:8055/server/health"]
       interval: 30s
       timeout: 10s
-      start_period: 60s
-      retries: 5
+      start_period: 300s
+      retries: 20
 
   # ===========================================
   # POSTGRES - Main Database (shared by backend + Directus)
