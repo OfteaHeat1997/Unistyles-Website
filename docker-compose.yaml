@@ -26,6 +26,10 @@ services:
     container_name: unistyles-frontend
     expose:
       - "80"
+    environment:
+      # Coolify magic: routes this domain to the frontend service (port 80)
+      # and auto-generates the Traefik labels + SSL.
+      - SERVICE_FQDN_FRONTEND_80=https://unistylescuracao.com
     depends_on:
       backend:
         condition: service_started
@@ -54,6 +58,8 @@ services:
     expose:
       - "3000"
     environment:
+      # Coolify magic: routes api.unistylescuracao.com to the backend (port 3000)
+      - SERVICE_FQDN_BACKEND_3000=https://api.unistylescuracao.com
       - NODE_ENV=production
       - PORT=3000
       - DATABASE_URL=postgresql://unistyles:${DB_PASSWORD}@postgres:5432/unistyles_db
@@ -97,6 +103,8 @@ services:
     expose:
       - "8055"
     environment:
+      # Coolify magic: routes cms.unistylescuracao.com to directus (port 8055)
+      - SERVICE_FQDN_DIRECTUS_8055=https://cms.unistylescuracao.com
       - KEY=${DIRECTUS_KEY}
       - SECRET=${DIRECTUS_SECRET}
       - ADMIN_EMAIL=${DIRECTUS_ADMIN_EMAIL:-admin@unistylescuracao.com}
