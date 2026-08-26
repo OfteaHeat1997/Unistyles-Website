@@ -125,7 +125,7 @@ function transformBrand(b) {
 }
 
 const PRODUCT_FIELDS = '*,image.*,category_id.*,brand_id.*';
-const PRODUCT_LIST_FIELDS = 'id,legacy_id,slug,ref,name,description,price,compare_at_price,image.*,color,size,style,compression,material,badge,in_stock,featured,gender,fragrance_family,scent_profile,intensity,occasion,season,top_notes,middle_notes,base_notes,volume,concentration,skin_type,skin_concern,application_area,texture,key_ingredients,spf,dermatologist_tested,routine_step,time_of_use,sort_order,category_id.id,category_id.name,category_id.slug,brand_id.id,brand_id.name,brand_id.slug';
+const PRODUCT_LIST_FIELDS = 'id,legacy_id,slug,ref,name,description,price,compare_at_price,image.*,legacy_image,color,size,style,compression,material,badge,in_stock,featured,gender,fragrance_family,scent_profile,intensity,occasion,season,top_notes,middle_notes,base_notes,volume,concentration,skin_type,skin_concern,application_area,texture,key_ingredients,spf,dermatologist_tested,routine_step,time_of_use,sort_order,category_id.id,category_id.name,category_id.slug,brand_id.id,brand_id.name,brand_id.slug';
 
 /**
  * Translate Strapi-style sort like "sortOrder:asc" / "name:desc" into
