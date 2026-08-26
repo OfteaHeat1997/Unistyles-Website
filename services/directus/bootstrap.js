@@ -294,13 +294,27 @@ const PUBLIC_READ_COLLECTIONS = [
     'business_settings',
 ];
 
+// Directus 11 attaches permissions to a *policy*, not directly to a role.
+// Public access is the policy whose access row has both role and user null.
+let publicPolicyId = null;
+
+async function getPublicPolicy() {
+    if (publicPolicyId) return publicPolicyId;
+    const r = await api('/access?filter[role][_null]=true&filter[user][_null]=true&fields=policy&limit=1');
+    const id = r?.data?.[0]?.policy;
+    if (!id) throw new Error('Could not resolve the public policy from /access');
+    publicPolicyId = id;
+    return publicPolicyId;
+}
+
 async function ensurePublicReadPermission(collection) {
-    const existing = await api(`/permissions?filter[collection][_eq]=${collection}&filter[action][_eq]=read&filter[role][_null]=true`).catch(() => null);
+    const policy = await getPublicPolicy();
+    const existing = await api(`/permissions?filter[collection][_eq]=${collection}&filter[action][_eq]=read&filter[policy][_eq]=${policy}`).catch(() => null);
     if (existing?.data?.length) return false;
     await api('/permissions', {
         method: 'POST',
         body: JSON.stringify({
-            role: null,           // null role == public
+            policy,
             collection,
             action: 'read',
             fields: ['*'],
