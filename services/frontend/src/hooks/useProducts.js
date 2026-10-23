@@ -66,14 +66,16 @@ export function useProducts(options = {}) {
         let products = [];
 
         if (category) {
-          const categoryData = localProducts[category];
-          if (categoryData) {
-            products = categoryData.products.map(p => ({
-              ...p,
-              categorySlug: category,
-              categoryName: categoryData.title
-            }));
-          }
+          [].concat(category).forEach(slug => {
+            const categoryData = localProducts[slug];
+            if (categoryData) {
+              products.push(...categoryData.products.map(p => ({
+                ...p,
+                categorySlug: slug,
+                categoryName: categoryData.title
+              })));
+            }
+          });
         } else {
           // Get all products
           Object.entries(localProducts).forEach(([slug, data]) => {

@@ -15,7 +15,7 @@ async function getPerfumeCategoryId() {
     if (PERFUME_CATEGORY_ID) return PERFUME_CATEGORY_ID;
     try {
         const result = await db.query(
-            "SELECT id FROM categories WHERE slug = 'perfume' LIMIT 1"
+            "SELECT id FROM categories WHERE slug IN ('colonias', 'perfume') ORDER BY slug = 'colonias' DESC LIMIT 1"
         );
         if (result.rows.length > 0) {
             PERFUME_CATEGORY_ID = result.rows[0].id;

@@ -115,7 +115,8 @@ function Perfume() {
   const [quizLoading, setQuizLoading] = useState(false)
 
   // Fetch products
-  const { data: productsData, isLoading } = useProductsByCategory('perfume')
+  // Fragrances are imported under the 'colonias' slug; 'perfume' is the older name.
+  const { data: productsData, isLoading } = useProductsByCategory(['colonias', 'perfume'])
 
   // Sync URL params
   useEffect(() => {
