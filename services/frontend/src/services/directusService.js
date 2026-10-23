@@ -145,7 +145,8 @@ function translateSort(sort) {
 }
 
 export async function fetchProducts(options = {}) {
-  const { category, brand, featured, limit = 25, page = 1, sort = 'sortOrder:asc' } = options;
+  // limit -1 = every matching product; category pages show a whole category at once.
+  const { category, brand, featured, limit = -1, page = 1, sort = 'sortOrder:asc' } = options;
 
   const params = {
     fields: PRODUCT_LIST_FIELDS,
@@ -154,7 +155,8 @@ export async function fetchProducts(options = {}) {
     sort: translateSort(sort),
     meta: 'filter_count',
   };
-  if (category) params['filter[category_id][slug][_eq]'] = category;
+  if (Array.isArray(category)) params['filter[category_id][slug][_in]'] = category.join(',');
+  else if (category) params['filter[category_id][slug][_eq]'] = category;
   if (brand) params['filter[brand_id][slug][_eq]'] = brand;
   if (featured !== undefined) params['filter[featured][_eq]'] = featured;
 
@@ -167,9 +169,9 @@ export async function fetchProducts(options = {}) {
       products: data.data.map(transformProduct),
       pagination: {
         page,
-        pageSize: limit,
+        pageSize: limit > 0 ? limit : total,
         total,
-        pageCount: Math.ceil(total / limit) || 1,
+        pageCount: limit > 0 ? Math.ceil(total / limit) || 1 : 1,
       },
     };
   } catch (e) {
