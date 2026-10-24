@@ -1,0 +1,577 @@
+<title>Requisitos Unistyles</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+:root{
+  --paper:#F7F7F4; --surface:#FFFFFF; --sunk:#EFF1EF;
+  --ink:#0C1A1B; --ink-2:#31474A; --muted:#5A6B6C; --rule:#DCE2E0;
+  --accent:#0B6E66; --accent-soft:#E2F0ED; --accent-ink:#064F49;
+  --bad:#A63A2E; --bad-soft:#F6E5E2;
+  --warn:#8F6310; --warn-soft:#F6EEDC;
+  --ok:#2F6B46; --ok-soft:#E3F0E7;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+  --measure:68ch;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0C1415; --surface:#121E1F; --sunk:#0A1112;
+    --ink:#E7EEEC; --ink-2:#B4C6C5; --muted:#849796; --rule:#24393A;
+    --accent:#4FBFB2; --accent-soft:#11302E; --accent-ink:#8FD8CE;
+    --bad:#E2897C; --bad-soft:#2E1917;
+    --warn:#D6AC5C; --warn-soft:#2B2313;
+    --ok:#7CC49A; --ok-soft:#14261C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0C1415; --surface:#121E1F; --sunk:#0A1112;
+  --ink:#E7EEEC; --ink-2:#B4C6C5; --muted:#849796; --rule:#24393A;
+  --accent:#4FBFB2; --accent-soft:#11302E; --accent-ink:#8FD8CE;
+  --bad:#E2897C; --bad-soft:#2E1917;
+  --warn:#D6AC5C; --warn-soft:#2B2313;
+  --ok:#7CC49A; --ok-soft:#14261C;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--serif);font-size:17px;line-height:1.62;margin:0}
+.wrap{display:grid;grid-template-columns:1fr;max-width:1240px;margin:0 auto;padding:0 20px}
+@media(min-width:1080px){.wrap{grid-template-columns:232px minmax(0,1fr);gap:48px;padding:0 32px}}
+nav.toc{display:none}
+@media(min-width:1080px){
+  nav.toc{display:block;position:sticky;top:0;align-self:start;max-height:100vh;overflow-y:auto;
+          padding:44px 0 40px;font-family:var(--sans);font-size:13px;line-height:1.45}
+  nav.toc .toc-h{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+  nav.toc a{display:flex;gap:9px;padding:5px 0;color:var(--ink-2);text-decoration:none}
+  nav.toc a:hover{color:var(--accent)}
+  nav.toc a b{font-variant-numeric:tabular-nums;font-weight:600;color:var(--muted);min-width:14px}
+}
+main{padding:44px 0 96px;min-width:0}
+.col{max-width:var(--measure)}
+h1{font-family:var(--sans);font-weight:700;font-size:clamp(30px,4.4vw,44px);line-height:1.08;letter-spacing:-.02em;margin:0 0 14px;text-wrap:balance}
+h2{font-family:var(--sans);font-weight:600;font-size:25px;line-height:1.2;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
+h3{font-family:var(--sans);font-weight:600;font-size:18px;margin:34px 0 8px;text-wrap:balance}
+h4{font-family:var(--sans);font-weight:600;font-size:14.5px;margin:24px 0 6px;color:var(--ink-2)}
+p{margin:0 0 15px}
+a{color:var(--accent-ink)}
+strong{font-weight:600}
+code{font-family:var(--mono);font-size:.855em;background:var(--sunk);padding:.1em .34em;border-radius:3px;
+     border:1px solid var(--rule);word-break:break-word}
+.lede{font-size:19.5px;line-height:1.55;color:var(--ink-2)}
+ul,ol{margin:0 0 15px;padding-left:1.15em}
+li{margin:0 0 7px}
+li::marker{color:var(--muted)}
+header.top{padding:52px 0 34px;border-bottom:2px solid var(--ink);margin-bottom:34px}
+.eyebrow{font-family:var(--sans);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink);margin:0 0 16px;font-weight:600}
+.meta{font-family:var(--sans);font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:22px}
+.meta span{white-space:nowrap}
+section{padding:46px 0 8px;border-top:1px solid var(--rule);margin-top:32px}
+section:first-of-type{border-top:0;margin-top:0;padding-top:0}
+.pnum{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent);letter-spacing:.06em;display:block;margin-bottom:9px}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:14px 18px;margin:20px 0;
+      font-family:var(--sans);font-size:14.5px;line-height:1.55;border-radius:0 4px 4px 0;max-width:var(--measure)}
+.note.bad{border-color:var(--bad);background:var(--bad-soft)}
+.note.warn{border-color:var(--warn);background:var(--warn-soft)}
+.note.ok{border-color:var(--ok);background:var(--ok-soft)}
+.note p{margin:0 0 8px}
+.note p:last-child{margin:0}
+.note.wide{max-width:none}
+pre.code{font-family:var(--mono);font-size:13px;line-height:1.6;background:var(--surface);color:var(--ink);
+     border:1px solid var(--rule);border-radius:5px;padding:15px 17px;overflow-x:auto;margin:18px 0}
+pre.code .c{color:var(--muted)}
+pre.code .k{color:var(--accent-ink);font-weight:600}
+pre.code .r{color:var(--bad);font-weight:600}
+.tablewrap{overflow-x:auto;margin:20px 0;border:1px solid var(--rule);border-radius:5px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-family:var(--sans);font-size:13.5px}
+th{text-align:left;font-weight:600;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+   padding:11px 14px;border-bottom:1px solid var(--rule);white-space:nowrap;background:var(--sunk)}
+td{padding:10px 14px;border-bottom:1px solid var(--rule);vertical-align:top;line-height:1.45}
+tr:last-child td{border-bottom:0}
+td.num,td.rid{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;font-size:12.5px;color:var(--accent-ink);font-weight:500}
+td code{font-size:.9em}
+figure{margin:26px 0}
+figure svg{max-width:100%;height:auto;display:block}
+figcaption{font-family:var(--sans);font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5;max-width:var(--measure)}
+.pill{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.04em;padding:2px 7px;border-radius:3px;white-space:nowrap;display:inline-block}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.epic{display:flex;align-items:baseline;gap:12px;margin:38px 0 4px;padding-bottom:8px;border-bottom:2px solid var(--ink)}
+.epic .letter{font-family:var(--mono);font-size:19px;font-weight:600;color:var(--accent)}
+.epic h3{margin:0;font-size:19px}
+.us{border:1px solid var(--rule);border-radius:5px;background:var(--surface);margin:14px 0;overflow:hidden}
+.us>.hd{padding:12px 17px;background:var(--sunk);border-bottom:1px solid var(--rule);
+        display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.us>.hd .id{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent);white-space:nowrap}
+.us>.hd .txt{font-family:var(--sans);font-size:14.5px;font-weight:500;flex:1;min-width:220px;line-height:1.45}
+.us>.bd{padding:14px 17px 6px;font-family:var(--sans);font-size:14px;line-height:1.55}
+.us>.bd p{margin:0 0 10px}
+.gherkin{font-family:var(--mono);font-size:12.5px;line-height:1.7;background:var(--paper);border:1px solid var(--rule);
+         border-left:3px solid var(--accent);border-radius:0 4px 4px 0;padding:11px 15px;margin:10px 0;overflow-x:auto}
+.gherkin b{color:var(--accent-ink);font-weight:600}
+footer.end{border-top:2px solid var(--ink);margin-top:56px;padding:24px 0 0;font-family:var(--sans);font-size:13px;color:var(--muted);max-width:var(--measure)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+<nav class="toc">
+  <div class="toc-h">Contenido</div>
+  <a href="#hallazgo"><b>!</b><span>El hallazgo</span></a>
+  <a href="#p1"><b>1</b><span>Actores</span></a>
+  <a href="#p2"><b>2</b><span>Glosario</span></a>
+  <a href="#p3"><b>3</b><span>Reglas de negocio</span></a>
+  <a href="#p4"><b>4</b><span>Requisitos</span></a>
+  <a href="#p5"><b>5</b><span>No funcionales</span></a>
+  <a href="#p6"><b>6</b><span>User stories</span></a>
+  <a href="#p7"><b>7</b><span>Trazabilidad</span></a>
+  <a href="#p8"><b>8</b><span>La serie</span></a>
+</nav>
+
+<main>
+<header class="top">
+  <p class="eyebrow">Unistyles Curaçao · Research 1 de 6</p>
+  <h1>Requisitos, reglas y user stories del sistema completo</h1>
+  <p class="lede col">Qué debe hacer la tienda, quién lo necesita, qué regla lo gobierna y qué línea de código lo implementa — verificado contra el repositorio y contra producción, no contra la memoria.</p>
+  <div class="meta">
+    <span>19 sep 2026</span>
+    <span>28 páginas · 71 endpoints · 19 tablas</span>
+    <span>Base: auditoría de código + pruebas en vivo</span>
+  </div>
+</header>
+
+<section id="hallazgo">
+<span class="pnum">ANTES DE EMPEZAR</span>
+<h2>El hallazgo que reordena la lista de prioridades</h2>
+<p class="col">Esta investigación encontró, en su primera hora, un defecto que cambia el estado real del proyecto. Va primero porque ninguna otra prioridad tiene sentido hasta que se arregle.</p>
+
+<p class="col">El frontend tiene <strong>dos clientes de API</strong>. Uno correcto y uno roto, y el correcto no lo usa nadie.</p>
+
+<pre class="code"><span class="c">// services/frontend/src/utils/api.js — el cliente correcto</span>
+const API = import.meta.env.<span class="k">VITE_API_URL</span>;        <span class="c">← apunta a api.unistylescuracao.com</span>
+<span class="c">// Importado por: NADIE. Cero archivos. Es código muerto.</span>
+
+<span class="c">// Lo que de verdad hace el sitio, 23 veces en 10 archivos:</span>
+await fetch(<span class="r">'/api/auth/me'</span>, ...)          <span class="c">// contexts/AuthContext.jsx:26</span>
+await fetch(<span class="r">'/api/orders'</span>, ...)            <span class="c">// pages/Checkout.jsx:111</span>
+await fetch(<span class="r">'/api/payments/sentoo'</span>, ...)   <span class="c">// pages/Checkout.jsx:151</span>
+await fetch(<span class="r">'/api/admin/stats'</span>, ...)       <span class="c">// pages/Admin.jsx:48</span>
+await fetch(<span class="r">'/api/delivery/zones'</span>)        <span class="c">// hooks/useDeliveryZones.js:13</span></pre>
+
+<p class="col">Una ruta relativa se resuelve contra el dominio que sirve la página. En producción eso es <code>unistylescuracao.com</code>, que es nginx sirviendo el frontend — no la API, que vive en <code>api.unistylescuracao.com</code>. Y como es una SPA, nginx responde a cualquier ruta desconocida con el <code>index.html</code>:</p>
+
+<pre class="code"><span class="c">$ curl -s -o /dev/null -w "%{http_code} %{content_type}" \
+    https://unistylescuracao.com/api/products</span>
+<span class="r">200 text/html</span>     <span class="c">← no es un 404: es la página de inicio disfrazada de API</span></pre>
+
+<p class="col">Peor que un error limpio. El código hace <code>if (response.ok)</code>, recibe <code>200</code>, entra en la rama del éxito y revienta al intentar <code>response.json()</code> sobre HTML. En <code>AuthContext</code> eso cae en un <code>catch</code> que restaura la sesión desde <code>localStorage</code> sin validarla, así que el fallo es <em>silencioso</em>.</p>
+
+<div class="note bad wide">
+<p><b>Consecuencia, verificada en producción hoy:</b> registro, inicio de sesión, restauración de sesión, carrito de usuaria registrada, cupones, creación de pedido, pago con Sentoo, seguimiento, perfil, panel de administración y cálculo de zonas de envío <b>no funcionan en el sitio publicado</b>. El catálogo sí se ve, porque es lo único que se pide directamente a Directus. <b>La tienda se ve pero no vende.</b></p>
+</div>
+
+<p class="col">Esto también explica un síntoma anterior: el paquete publicado no contenía ninguna referencia a <code>api.unistylescuracao.com</code>. No era solo que faltara la variable <code>VITE_API_URL</code> al compilar — es que el código no la lee en 23 de sus 25 llamadas.</p>
+
+<h4>Arreglo</h4>
+<p class="col">Sustituir las 23 llamadas por el cliente que ya existe, o —más rápido y sin tocar 10 archivos— añadir en nginx del frontend un <em>proxy</em> de <code>/api/</code> hacia el backend. La segunda opción tiene una ventaja real: las cookies y el token viajan en el mismo origen, y desaparece el CORS. La primera es más limpia de razonar. Decide una; la que no se puede dejar es la de hoy.</p>
+
+<div class="tablewrap">
+<table>
+<thead><tr><th>Opción</th><th>Qué se toca</th><th>A favor</th><th>En contra</th></tr></thead>
+<tbody>
+<tr><td><strong>A · Proxy en nginx</strong></td><td>Un bloque <code>location /api/</code> en la config del frontend</td><td>Un solo cambio; mismo origen; sin CORS; el código queda igual</td><td>Acopla frontend y API al mismo dominio</td></tr>
+<tr><td><strong>B · Usar <code>utils/api.js</code></strong></td><td>23 llamadas en 10 archivos + recompilar con <code>VITE_API_URL</code></td><td>Separación limpia; el cliente ya está escrito</td><td>Más superficie de cambio; hay que configurar CORS</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="p1">
+<span class="pnum">PARTE 1</span>
+<h2>Actores y lo que cada uno viene a hacer</h2>
+<p class="col">Un requisito sin actor es una opinión. Estos son los cuatro que existen de verdad en Unistyles, con el trabajo que vienen a resolver.</p>
+
+<div class="tablewrap">
+<table>
+<thead><tr><th>Actor</th><th>Quién es</th><th>A qué viene</th><th>Dónde vive en el código</th></tr></thead>
+<tbody>
+<tr><td><strong>Visitante</strong></td><td>Llega de Instagram o WhatsApp, sin cuenta</td><td>Ver si tienen su talla y cuánto cuesta el envío a su barrio</td><td>Catálogo público, carrito en Redis, checkout de invitada</td></tr>
+<tr><td><strong>Clienta</strong></td><td>Registrada, compra recurrente</td><td>Repetir compra sin volver a escribir su dirección; seguir su pedido</td><td><code>users</code>, <code>addresses</code>, <code>carts</code>, <code>orders</code></td></tr>
+<tr><td><strong>Dueña</strong></td><td>Paula</td><td>Publicar productos, ver pedidos, cobrar, avisar por WhatsApp</td><td>Directus + <code>/api/admin/*</code> + <code>users.is_admin</code></td></tr>
+<tr><td><strong>Sistemas externos</strong></td><td>Sentoo, WhatsApp Cloud API, SMTP</td><td>Confirmar pagos, entregar mensajes</td><td><code>/api/payments/sentoo/webhook</code>, <code>/api/whatsapp/webhook</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note warn">
+<p><b>Un actor que el código inventó y no existe:</b> <code>pages/Admin.jsx</code> comprueba <code>user.role !== 'admin'</code>, pero la tabla <code>users</code> no tiene columna <code>role</code> — ni en <code>init.sql</code>, ni en <code>init.v2.sql</code>, ni en ninguna migración. Tiene <code>is_admin BOOLEAN</code>. Además <code>routes/auth.js:295</code> hace <code>SELECT ... role ... FROM users</code>, que en esa base lanza «la columna no existe». Son dos modelos de autorización distintos en el mismo sistema, y ninguno de los dos funciona.</p>
+</div>
+</section>
+
+<section id="p2">
+<span class="pnum">PARTE 2</span>
+<h2>Glosario: el lenguaje del dominio</h2>
+<p class="col">Un término, un significado, el mismo en la conversación, en el código y en la base. Cuando esto se salta, aparecen los <code>bank</code> contra <code>bank_transfer</code> y los <code>role</code> contra <code>is_admin</code>.</p>
+
+<div class="tablewrap">
+<table>
+<thead><tr><th>Término</th><th>Significa exactamente</th><th>No confundir con</th></tr></thead>
+<tbody>
+<tr><td><strong>Producto</strong></td><td>La ficha del catálogo: nombre, marca, descripción, foto. Vive en Directus. 285 hoy.</td><td>Variante. Un producto no se vende: se vende una variante suya.</td></tr>
+<tr><td><strong>Variante</strong></td><td>La combinación concreta talla + color, con su stock y su SKU. Solo la tienen los 33 brasieres.</td><td>Producto. Es lo que de verdad sale del almacén.</td></tr>
+<tr><td><strong>SKU</strong></td><td>Código único de una variante. Hoy <code>BRA-001</code>; debería codificar marca, referencia, talla y color.</td><td><code>ref</code>, que es el código del proveedor (<code>REF 011473</code>) y se repite entre variantes.</td></tr>
+<tr><td><strong>Referencia</strong></td><td>El código del fabricante, impreso en la etiqueta.</td><td>SKU. La referencia la pone Leonisa; el SKU lo pones tú.</td></tr>
+<tr><td><strong>Carrito</strong></td><td>Selección aún no pagada. En Redis si es invitada, en <code>carts</code> si hay sesión.</td><td>Pedido. Un carrito cambia de precio; un pedido no.</td></tr>
+<tr><td><strong>Pedido</strong></td><td>El documento congelado: precios, dirección y artículos tal como estaban al pagar.</td><td>Carrito. Un pedido nunca se recalcula.</td></tr>
+<tr><td><strong>Zona</strong></td><td>Una de las tres áreas de reparto de Curaçao, con su tarifa y su umbral de envío gratis.</td><td>Dirección. La dirección <em>cae</em> en una zona.</td></tr>
+<tr><td><strong>Estado del pedido</strong></td><td>Dónde está el paquete: <code>pending</code>, <code>confirmed</code>, <code>shipped</code>, <code>delivered</code>, <code>cancelled</code>.</td><td>Estado del pago, que es otra columna y otra máquina de estados.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="p3">
+<span class="pnum">PARTE 3</span>
+<h2>Reglas de negocio</h2>
+<p class="col">Las reglas son anteriores al código y le sobreviven. Cada una lleva su identificador para poder citarla desde un requisito, una prueba o un <code>CHECK</code>. La columna final dice dónde se hace cumplir hoy — y «en ningún sitio» es una respuesta que aparece siete veces.</p>
+
+<div class="tablewrap">
+<table>
+<thead><tr><th>ID</th><th>Regla</th><th>Se hace cumplir en</th></tr></thead>
+<tbody>
+<tr><td class="rid">RN-01</td><td>Se puede comprar sin cuenta, pero siempre debe quedar un teléfono o un correo de contacto.</td><td><span class="pill warn">Solo en el código</span> falta el <code>CHECK</code></td></tr>
+<tr><td class="rid">RN-02</td><td>Un correo identifica a una sola clienta, sin distinguir mayúsculas.</td><td><span class="pill warn">Parcial</span> <code>UNIQUE</code> sí, sin <code>CITEXT</code></td></tr>
+<tr><td class="rid">RN-03</td><td>No se puede vender más unidades de las que hay en existencia.</td><td><span class="pill ok">Base</span> <code>FOR UPDATE</code> en <code>orders.js</code></td></tr>
+<tr><td class="rid">RN-04</td><td>Si el producto tiene variantes, el stock que manda es el de la variante.</td><td><span class="pill bad">En ningún sitio</span> se descuenta del producto</td></tr>
+<tr><td class="rid">RN-05</td><td>El precio y la dirección del pedido se congelan al pagar.</td><td><span class="pill ok">Base</span> snapshot en <code>order_items</code></td></tr>
+<tr><td class="rid">RN-06</td><td>El envío es gratis a partir del umbral de la zona de entrega.</td><td><span class="pill warn">Tres fuentes</span> discrepan entre sí</td></tr>
+<tr><td class="rid">RN-07</td><td>Un cupón de bienvenida se usa una sola vez por clienta.</td><td><span class="pill bad">En ningún sitio</span></td></tr>
+<tr><td class="rid">RN-08</td><td>Cancelar un pedido devuelve el stock y libera el cupón.</td><td><span class="pill warn">Solo el stock</span></td></tr>
+<tr><td class="rid">RN-09</td><td>Nadie reseña el mismo producto dos veces.</td><td><span class="pill warn">Solo en el código</span> con carrera</td></tr>
+<tr><td class="rid">RN-10</td><td>Una reseña se publica solo tras aprobación.</td><td><span class="pill ok">Base</span> <code>is_approved</code></td></tr>
+<tr><td class="rid">RN-11</td><td>El estado de un pago lo dicta el proveedor, nunca el webhook recibido.</td><td><span class="pill ok">Código</span> re-consulta a Sentoo</td></tr>
+<tr><td class="rid">RN-12</td><td>Cada cambio de estado de un pedido queda registrado con su hora.</td><td><span class="pill bad">En ningún sitio</span> falta la tabla</td></tr>
+<tr><td class="rid">RN-13</td><td>El total siempre es subtotal + envío − descuento.</td><td><span class="pill bad">En ningún sitio</span> falta el <code>CHECK</code></td></tr>
+<tr><td class="rid">RN-14</td><td>Solo la dueña ve el panel de administración.</td><td><span class="pill bad">Roto</span> compara con una columna inexistente</td></tr>
+<tr><td class="rid">RN-15</td><td>El catálogo se edita únicamente en Directus.</td><td><span class="pill warn">Convención</span> hay 3 copias más</td></tr>
+<tr><td class="rid">RN-16</td><td>Los precios están en florines (XCG) con el impuesto ya incluido.</td><td><span class="pill ok">Decisión</span> documentada</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="p4">
+<span class="pnum">PARTE 4</span>
+<h2>Requisitos funcionales</h2>
+<p class="col">Todo lo que el sistema hace o debe hacer, agrupado en once épicas. El estado no es una estimación: sale de leer el archivo que lo implementa y, donde se podía, de probarlo contra el sitio publicado.</p>
+<p class="col"><span class="pill ok">LISTO</span> funciona · <span class="pill warn">PARCIAL</span> existe con hueco conocido · <span class="pill bad">ROTO</span> hay código pero no funciona · sin marca: no existe.</p>
+
+<div class="epic"><span class="letter">A</span><h3>Catálogo y descubrimiento</h3></div>
+<div class="tablewrap">
+<table>
+<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<tbody>
+<tr><td class="rid">RF-A1</td><td>Mostrar el catálogo por categoría, con foto, precio y marca</td><td><span class="pill ok">LISTO</span></td><td><code>Category.jsx</code> → Directus</td></tr>
+<tr><td class="rid">RF-A2</td><td>Mostrar la ficha de un producto con galería, talla, color y descripción</td><td><span class="pill ok">LISTO</span></td><td><code>Product.jsx</code></td></tr>
+<tr><td class="rid">RF-A3</td><td>Buscar productos por nombre</td><td><span class="pill ok">LISTO</span></td><td><code>Search.jsx</code>, <code>searchProducts()</code></td></tr>
+<tr><td class="rid">RF-A4</td><td>Filtrar por marca, color, talla y precio</td><td><span class="pill warn">PARCIAL</span></td><td>Filtros sobre texto libre: no agrupan bien</td></tr>
+<tr><td class="rid">RF-A5</td><td>Mostrar disponibilidad por talla y color</td><td><span class="pill bad">ROTO</span></td><td>Las 77 variantes nunca se cargaron a la base</td></tr>
+<tr><td class="rid">RF-A6</td><td>Ofrecer un cuestionario de perfume y de piel que recomiende productos</td><td><span class="pill ok">LISTO</span></td><td><code>/api/perfumes/quiz</code>, <code>/api/skincare/quiz</code></td></tr>
+<tr><td class="rid">RF-A7</td><td>Guardar una lista de deseos</td><td><span class="pill warn">PARCIAL</span></td><td><code>localStorage</code>: se pierde al cambiar de móvil</td></tr>
+<tr><td class="rid">RF-A8</td><td>Seguir funcionando si el CMS no responde</td><td><span class="pill warn">PARCIAL</span></td><td>Respaldo en <code>productData.js</code>, desactualizado</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="epic"><span class="letter">B</span><h3>Cuenta y sesión</h3></div>
+<div class="tablewrap">
+<table>
+<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<tbody>
+<tr><td class="rid">RF-B1</td><td>Permitir registro con correo y contraseña</td><td><span class="pill bad">ROTO</span></td><td>Endpoint correcto; el frontend llama a una ruta relativa</td></tr>
+<tr><td class="rid">RF-B2</td><td>Iniciar sesión y mantenerla al recargar</td><td><span class="pill bad">ROTO</span></td><td><code>/api/auth/me</code>: ruta relativa + columna <code>role</code> inexistente</td></tr>
+<tr><td class="rid">RF-B3</td><td>Cerrar sesión invalidando el token</td><td><span class="pill ok">LISTO</span></td><td>Lista negra en Redis con caducidad</td></tr>
+<tr><td class="rid">RF-B4</td><td>Recuperar la contraseña por correo</td><td><span class="pill warn">PARCIAL</span></td><td>Código listo; depende de SMTP sin configurar</td></tr>
+<tr><td class="rid">RF-B5</td><td>Verificar el correo tras el registro</td><td><span class="pill warn">PARCIAL</span></td><td>Igual: falta SMTP</td></tr>
+<tr><td class="rid">RF-B6</td><td>Guardar una libreta de direcciones</td><td><span class="pill ok">LISTO</span></td><td><code>/api/users/addresses</code></td></tr>
+<tr><td class="rid">RF-B7</td><td>Ver el historial de pedidos</td><td><span class="pill bad">ROTO</span></td><td><code>Profile.jsx:54</code>, ruta relativa</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="epic"><span class="letter">C</span><h3>Carrito</h3></div>
+<div class="tablewrap">
+<table>
+<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<tbody>
+<tr><td class="rid">RF-C1</td><td>Añadir, cambiar cantidad y quitar artículos</td><td><span class="pill ok">LISTO</span></td><td><code>cartStore.js</code> + <code>/api/cart</code></td></tr>
+<tr><td class="rid">RF-C2</td><td>Conservar el carrito de una invitada entre visitas</td><td><span class="pill ok">LISTO</span></td><td>Redis con <code>X-Cart-Id</code></td></tr>
+<tr><td class="rid">RF-C3</td><td>Fundir el carrito de invitada al iniciar sesión</td><td><span class="pill warn">PARCIAL</span></td><td><code>/api/cart/merge</code> existe; no se llama al entrar</td></tr>
+<tr><td class="rid">RF-C4</td><td>Distinguir en el carrito la talla y el color elegidos</td><td><span class="pill bad">ROTO</span></td><td>Sin variantes cargadas, el carrito guarda texto libre</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="epic"><span class="letter">D</span><h3>Entrega en Curaçao</h3></div>
+<div class="tablewrap">
+<table>
+<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<tbody>
+<tr><td class="rid">RF-D1</td><td>Ofrecer las tres zonas de reparto con su tarifa</td><td><span class="pill bad">ROTO</span></td><td><code>useDeliveryZones.js:13</code>, ruta relativa</td></tr>
+<tr><td class="rid">RF-D2</td><td>Deducir la zona desde el barrio que escribe la clienta</td><td><span class="pill warn">PARCIAL</span></td><td>Los barrios nunca se sembraron en <code>delivery_zones</code></td></tr>
+<tr><td class="rid">RF-D3</td><td>Aplicar envío gratis por encima del umbral de la zona</td><td><span class="pill warn">PARCIAL</span></td><td>El umbral vive en tres sitios distintos</td></tr>
+<tr><td class="rid">RF-D4</td><td>Autocompletar la dirección</td><td><span class="pill ok">LISTO</span></td><td><code>AddressAutocomplete.jsx</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="epic"><span class="letter">E</span><h3>Checkout y pedido</h3></div>
+<div class="tablewrap">
+<table>
+<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<tbody>
+<tr><td class="rid">RF-E1</td><td>Cobrar sin obligar a crear cuenta</td><td><span class="pill bad">ROTO</span></td><td>Backend listo; <code>Checkout.jsx:111</code> ruta relativa</td></tr>
+<tr><td class="rid">RF-E2</td><td>Crear el pedido en una transacción con bloqueo de stock</td><td><span class="pill ok">LISTO</span></td><td><code>orders.js</code>, <code>SELECT … FOR UPDATE</code></td></tr>
+<tr><td class="rid">RF-E3</td><td>Congelar precio, talla, color y dirección en el pedido</td><td><span class="pill ok">LISTO</span></td><td>Snapshot en <code>order_items</code></td></tr>
+<tr><td class="rid">RF-E4</td><td>Aplicar un cupón y validar sus condiciones</td><td><span class="pill warn">PARCIAL</span></td><td>Sin control de canje por persona <span class="rid">RN-07</span></td></tr>
+<tr><td class="rid">RF-E5</td><td>Generar un número de pedido único</td><td><span class="pill warn">PARCIAL</span></td><td><code>RANDOM()</code>: puede colisionar y tumbar el pago</td></tr>
+<tr><td class="rid">RF-E6</td><td>Permitir cancelar y devolver el stock</td><td><span class="pill warn">PARCIAL</span></td><td>Devuelve stock, no libera el cupón</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="epic"><span class="letter">F</span><h3>Pagos</h3></div>
+<div class="tablewrap">
+<table>
+<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<tbody>
+<tr><td class="rid">RF-F1</td><td>Cobrar con tarjeta a través de Sentoo</td><td><span class="pill bad">ROTO</span></td><td><code>Checkout.jsx:151</code> ruta relativa; faltan credenciales</td></tr>
+<tr><td class="rid">RF-F2</td><td>Aceptar transferencia bancaria</td><td><span class="pill bad">ROTO</span></td><td>El front manda <code>bank</code>, el back espera <code>bank_transfer</code>; y el número de cuenta es <code>XXXX-XXXX</code></td></tr>
+<tr><td class="rid">RF-F3</td><td>Aceptar pago contra entrega</td><td><span class="pill ok">LISTO</span></td><td><code>/api/payments/cod</code></td></tr>
+<tr><td class="rid">RF-F4</td><td>Confirmar el pago re-consultando al proveedor, no fiándose del webhook</td><td><span class="pill ok">LISTO</span></td><td><code>payments.js</code> <span class="rid">RN-11</span></td></tr>
+<tr><td class="rid">RF-F5</td><td>Ignorar un webhook repetido sin duplicar el cobro</td><td><span class="pill warn">PARCIAL</span></td><td>Falta el índice único que lo garantiza</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="epic"><span class="letter">G</span><h3>Post-venta</h3></div>
+<div class="tablewrap">
+<table>
+<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<tbody>
+<tr><td class="rid">RF-G1</td><td>Consultar un pedido por su número, sin sesión</td><td><span class="pill bad">ROTO</span></td><td><code>TrackOrder.jsx</code> ruta relativa</td></tr>
+<tr><td class="rid">RF-G2</td><td>Mostrar la línea de tiempo del pedido con horas</td><td><span class="pill bad">ROTO</span></td><td>No existe <code>order_status_history</code> <span class="rid">RN-12</span></td></tr>
+<tr><td class="rid">RF-G3</td><td>Dejar una reseña con estrellas</td><td><span class="pill bad">ROTO</span></td><td>Choque de tipos: <code>product_id</code> UUID contra entero</td></tr>
+<tr><td class="rid">RF-G4</td><td>Mostrar solo reseñas aprobadas</td><td><span class="pill ok">LISTO</span></td><td><code>is_approved</code> en la consulta</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="epic"><span class="letter">H</span><h3>Administración</h3></div>
+<div class="tablewrap">
+<table>
+<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<tbody>
+<tr><td class="rid">RF-H1</td><td>Dar acceso al panel solo a la dueña</td><td><span class="pill bad">ROTO</span></td><td>Compara con <code>user.role</code>, columna inexistente <span class="rid">RN-14</span></td></tr>
+<tr><td class="rid">RF-H2</td><td>Listar y cambiar el estado de los pedidos</td><td><span class="pill bad">ROTO</span></td><td>Endpoints listos; <code>Admin.jsx</code> ruta relativa</td></tr>
+<tr><td class="rid">RF-H3</td><td>Ver ventas, pedidos y clientas del periodo</td><td><span class="pill bad">ROTO</span></td><td><code>/api/admin/stats</code></td></tr>
+<tr><td class="rid">RF-H4</td><td>Publicar y retirar productos del catálogo</td><td><span class="pill ok">LISTO</span></td><td>Directus, <code>cms.unistylescuracao.com</code></td></tr>
+<tr><td class="rid">RF-H5</td><td>Gestionar el stock por talla</td><td><span class="pill bad">ROTO</span></td><td><code>/api/variants</code> existe y la base está vacía</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="epic"><span class="letter">I</span><h3>Comunicaciones</h3></div>
+<div class="tablewrap">
+<table>
+<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<tbody>
+<tr><td class="rid">RF-I1</td><td>Abrir WhatsApp con el pedido escrito desde el carrito</td><td><span class="pill ok">LISTO</span></td><td><code>utils/whatsapp.js</code>, sin API: enlace directo</td></tr>
+<tr><td class="rid">RF-I2</td><td>Avisar por WhatsApp cuando cambia el estado del pedido</td><td><span class="pill warn">PARCIAL</span></td><td>Webhook listo; faltan credenciales de Meta</td></tr>
+<tr><td class="rid">RF-I3</td><td>Suscribir al boletín desde el pie de página</td><td><span class="pill warn">PARCIAL</span></td><td>Guarda en la base; no hay envío</td></tr>
+<tr><td class="rid">RF-I4</td><td>Enviar el correo de confirmación del pedido</td><td><span class="pill warn">PARCIAL</span></td><td>Depende de SMTP sin configurar</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="epic"><span class="letter">J</span><h3>Contenido</h3></div>
+<div class="tablewrap">
+<table>
+<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<tbody>
+<tr><td class="rid">RF-J1</td><td>Editar portada, páginas legales y datos del negocio sin tocar código</td><td><span class="pill ok">LISTO</span></td><td>Directus: <code>homepage</code>, <code>pages</code>, <code>business_settings</code></td></tr>
+<tr><td class="rid">RF-J2</td><td>Mostrar las páginas legales: términos, privacidad, envíos, FAQ</td><td><span class="pill ok">LISTO</span></td><td>4 páginas del frontend</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="epic"><span class="letter">K</span><h3>Infraestructura</h3></div>
+<div class="tablewrap">
+<table>
+<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<tbody>
+<tr><td class="rid">RF-K1</td><td>Servir la tienda en <code>unistylescuracao.com</code></td><td><span class="pill ok">LISTO</span></td><td>Coolify, respuesta 200</td></tr>
+<tr><td class="rid">RF-K2</td><td>Servir la API en <code>api.unistylescuracao.com</code></td><td><span class="pill ok">LISTO</span></td><td><code>/health</code> responde <code>healthy</code></td></tr>
+<tr><td class="rid">RF-K3</td><td>Servir el CMS en <code>cms.unistylescuracao.com</code></td><td><span class="pill ok">LISTO</span></td><td>Directus 11, 285 productos</td></tr>
+<tr><td class="rid">RF-K4</td><td>Que el frontend hable con la API publicada</td><td><span class="pill bad">ROTO</span></td><td>El hallazgo de la primera sección</td></tr>
+<tr><td class="rid">RF-K5</td><td>Hacer copia de seguridad diaria de la base</td><td><span class="pill warn">PARCIAL</span></td><td>Coolify lo ofrece; sin verificar restauración</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="p5">
+<span class="pnum">PARTE 5</span>
+<h2>Requisitos no funcionales</h2>
+<p class="col">Los que nadie pide y todos notan cuando faltan. Cada uno con un número que se pueda comprobar: un requisito no funcional sin cifra no es un requisito, es un deseo.</p>
+
+<div class="tablewrap">
+<table>
+<thead><tr><th>ID</th><th>Requisito</th><th>Meta medible</th><th>Hoy</th></tr></thead>
+<tbody>
+<tr><td class="rid">RNF-01</td><td>La ficha de producto carga rápido en móvil con datos de Curaçao</td><td>LCP &lt; 2,5 s en 4G</td><td><span class="pill warn">Sin medir</span></td></tr>
+<tr><td class="rid">RNF-02</td><td>La tienda funciona en móvil</td><td>Todo el flujo de compra a 360 px</td><td><span class="pill ok">Diseñado así</span></td></tr>
+<tr><td class="rid">RNF-03</td><td>Las contraseñas se guardan cifradas</td><td>bcrypt, coste 12</td><td><span class="pill ok">LISTO</span></td></tr>
+<tr><td class="rid">RNF-04</td><td>Nunca se almacenan datos de tarjeta</td><td>Cero campos de tarjeta; los cobra Sentoo</td><td><span class="pill ok">LISTO</span></td></tr>
+<tr><td class="rid">RNF-05</td><td>La API resiste intentos de fuerza bruta</td><td>Límite por IP en login y pago</td><td><span class="pill ok">LISTO</span> <code>express-rate-limit</code></td></tr>
+<tr><td class="rid">RNF-06</td><td>Un fallo del CMS no tumba la tienda</td><td>El catálogo cae al respaldo local</td><td><span class="pill warn">PARCIAL</span> respaldo viejo</td></tr>
+<tr><td class="rid">RNF-07</td><td>Ningún secreto vive en el repositorio</td><td>Cero credenciales en git</td><td><span class="pill ok">LISTO</span> tras añadir al <code>.gitignore</code></td></tr>
+<tr><td class="rid">RNF-08</td><td>Los servicios se reinician por separado</td><td>Caer uno no arrastra a los demás</td><td><span class="pill ok">LISTO</span> 5 recursos en Coolify</td></tr>
+<tr><td class="rid">RNF-09</td><td>La base se puede restaurar</td><td>Ensayo de restauración superado</td><td><span class="pill bad">Nunca probado</span></td></tr>
+<tr><td class="rid">RNF-10</td><td>La tienda habla el idioma de la clienta</td><td>Español, con papiamento pendiente de decidir</td><td><span class="pill warn">Mezclado</span> hay textos en inglés</td></tr>
+<tr><td class="rid">RNF-11</td><td>El sitio es accesible</td><td>Contraste AA, navegable con teclado</td><td><span class="pill warn">Sin auditar</span></td></tr>
+<tr><td class="rid">RNF-12</td><td>Hay pruebas automáticas del flujo de compra</td><td>Al menos el camino crítico cubierto</td><td><span class="pill bad">Cero pruebas</span></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="p6">
+<span class="pnum">PARTE 6</span>
+<h2>User stories con criterios de aceptación</h2>
+<p class="col">Las de las épicas críticas, en el formato que se puede convertir en prueba automática sin reescribirlo. Cada criterio está redactado para responder sí o no, nunca «más o menos».</p>
+
+<div class="us">
+<div class="hd"><span class="id">US-01</span><span class="txt">Como visitante quiero comprar sin crear cuenta, para no perder tiempo en un formulario.</span><span class="pill bad">ROTO</span></div>
+<div class="bd">
+<div class="gherkin"><b>Dado</b> que tengo artículos en el carrito y no he iniciado sesión<br><b>Cuando</b> completo el checkout con mi nombre, teléfono y dirección<br><b>Entonces</b> el pedido se crea con <code>user_id</code> nulo<br><b>Y</b> el pedido guarda mi teléfono y mi correo<br><b>Y</b> recibo un número de pedido con el que consultarlo después</div>
+<p><strong>Cubre</strong> <span class="rid">RF-E1</span> <span class="rid">RN-01</span> · <strong>Bloqueado por</strong> las rutas relativas y por la falta del <code>CHECK</code> de contacto.</p>
+</div>
+</div>
+
+<div class="us">
+<div class="hd"><span class="id">US-02</span><span class="txt">Como clienta quiero elegir mi talla y ver si hay existencias, para no comprar algo que no me van a poder enviar.</span><span class="pill bad">ROTO</span></div>
+<div class="bd">
+<div class="gherkin"><b>Dado</b> un brasier con variantes de talla y color<br><b>Cuando</b> abro su ficha<br><b>Entonces</b> veo solo las combinaciones que existen<br><b>Y</b> las agotadas aparecen deshabilitadas, no ocultas<br><b>Y</b> al añadirlo al carrito se guarda la variante, no el texto de la talla</div>
+<p><strong>Cubre</strong> <span class="rid">RF-A5</span> <span class="rid">RF-C4</span> <span class="rid">RN-04</span> · <strong>Bloqueado por</strong> las 77 variantes sin cargar y el vocabulario de tallas sin normalizar.</p>
+</div>
+</div>
+
+<div class="us">
+<div class="hd"><span class="id">US-03</span><span class="txt">Como clienta quiero saber cuánto cuesta el envío a mi barrio antes de pagar, para no llevarme sorpresas.</span><span class="pill bad">ROTO</span></div>
+<div class="bd">
+<div class="gherkin"><b>Dado</b> que estoy en el checkout<br><b>Cuando</b> escribo mi barrio<br><b>Entonces</b> el sistema deduce mi zona y muestra la tarifa<br><b>Y</b> si mi subtotal supera el umbral de esa zona, el envío pasa a cero<br><b>Y</b> el total mostrado coincide con el que se cobra</div>
+<p><strong>Cubre</strong> <span class="rid">RF-D1</span> <span class="rid">RF-D2</span> <span class="rid">RF-D3</span> <span class="rid">RN-06</span> · <strong>Bloqueado por</strong> ruta relativa, barrios sin sembrar y tres fuentes del umbral.</p>
+</div>
+</div>
+
+<div class="us">
+<div class="hd"><span class="id">US-04</span><span class="txt">Como clienta quiero pagar con tarjeta y que el pedido solo se confirme si el pago se aprobó de verdad.</span><span class="pill bad">ROTO</span></div>
+<div class="bd">
+<div class="gherkin"><b>Dado</b> un pedido pendiente de pago<br><b>Cuando</b> pago en la pasarela de Sentoo<br><b>Entonces</b> el backend vuelve a preguntar el estado a Sentoo antes de confirmar<br><b>Y</b> si llega dos veces el mismo aviso, el pedido no se duplica<br><b>Y</b> si el pago falla, el stock vuelve a estar disponible</div>
+<p><strong>Cubre</strong> <span class="rid">RF-F1</span> <span class="rid">RF-F4</span> <span class="rid">RF-F5</span> <span class="rid">RN-11</span> · La lógica del servidor está bien; falla la llamada del navegador y faltan credenciales.</p>
+</div>
+</div>
+
+<div class="us">
+<div class="hd"><span class="id">US-05</span><span class="txt">Como clienta quiero seguir mi pedido con su número, para saber cuándo llega sin escribir por WhatsApp.</span><span class="pill bad">ROTO</span></div>
+<div class="bd">
+<div class="gherkin"><b>Dado</b> que tengo un número de pedido<br><b>Cuando</b> lo introduzco en la página de seguimiento<br><b>Entonces</b> veo el estado actual<br><b>Y</b> veo cuándo pasó por cada estado anterior, con fecha y hora<br><b>Y</b> no necesito haber iniciado sesión</div>
+<p><strong>Cubre</strong> <span class="rid">RF-G1</span> <span class="rid">RF-G2</span> <span class="rid">RN-12</span> · La página existe desde hace meses y no tiene datos que mostrar: falta la tabla de historial.</p>
+</div>
+</div>
+
+<div class="us">
+<div class="hd"><span class="id">US-06</span><span class="txt">Como dueña quiero ver mis pedidos y cambiarles el estado, para trabajar sin abrir la base de datos.</span><span class="pill bad">ROTO</span></div>
+<div class="bd">
+<div class="gherkin"><b>Dado</b> que inicio sesión con mi cuenta de administradora<br><b>Cuando</b> entro en <code>/admin</code><br><b>Entonces</b> veo ventas, pedidos y clientas<br><b>Y</b> puedo pasar un pedido a «enviado»<br><b>Y</b> ese cambio queda registrado con la hora<br><b>Y</b> una clienta normal que escriba <code>/admin</code> es devuelta al inicio</div>
+<p><strong>Cubre</strong> <span class="rid">RF-H1</span> <span class="rid">RF-H2</span> <span class="rid">RF-H3</span> <span class="rid">RN-14</span> · <strong>Bloqueado por</strong> dos modelos de autorización incompatibles: <code>role</code> contra <code>is_admin</code>.</p>
+</div>
+</div>
+
+<div class="us">
+<div class="hd"><span class="id">US-07</span><span class="txt">Como dueña quiero que el cupón de bienvenida se use una sola vez por clienta, para no regalar margen.</span><span class="pill bad">ROTO</span></div>
+<div class="bd">
+<div class="gherkin"><b>Dado</b> un cupón marcado como «solo primer pedido»<br><b>Cuando</b> una clienta que ya lo usó intenta aplicarlo otra vez<br><b>Entonces</b> el sistema lo rechaza<br><b>Y</b> si su pedido se cancela, el uso se libera y puede volver a aplicarlo<br><b>Y</b> puedo ver cuánto descuento repartió cada código</div>
+<p><strong>Cubre</strong> <span class="rid">RF-E4</span> <span class="rid">RN-07</span> <span class="rid">RN-08</span> · <strong>Bloqueado por</strong> la ausencia de <code>coupon_redemptions</code>.</p>
+</div>
+</div>
+
+<div class="us">
+<div class="hd"><span class="id">US-08</span><span class="txt">Como dueña quiero publicar y retirar productos yo misma, sin pedirle nada a nadie.</span><span class="pill ok">LISTO</span></div>
+<div class="bd">
+<div class="gherkin"><b>Dado</b> que entro en el CMS<br><b>Cuando</b> creo, edito o retiro un producto<br><b>Entonces</b> el cambio se ve en la tienda sin recompilar nada<br><b>Y</b> no hace falta tocar SQL ni ningún archivo del repositorio</div>
+<p><strong>Cubre</strong> <span class="rid">RF-H4</span> <span class="rid">RF-J1</span> <span class="rid">RN-15</span> · Funciona. La única condición es no volver a editar <code>productData.js</code> a mano.</p>
+</div>
+</div>
+</section>
+
+<section id="p7">
+<span class="pnum">PARTE 7</span>
+<h2>Matriz de trazabilidad</h2>
+<p class="col">La herramienta que convierte todo lo anterior en algo navegable: de un requisito llegas a la página, al endpoint, a la tabla y a la prueba que lo cubre. Es también la forma de detectar código que no sirve a ningún requisito — y requisitos que no tienen código.</p>
+
+<div class="tablewrap">
+<table>
+<thead><tr><th>Requisito</th><th>Página</th><th>Endpoint</th><th>Tabla</th><th>Regla</th><th>Prueba</th></tr></thead>
+<tbody>
+<tr><td class="rid">RF-A1</td><td><code>Category.jsx</code></td><td>Directus <code>/items/products</code></td><td><code>products</code></td><td>RN-15</td><td><span class="pill bad">falta</span></td></tr>
+<tr><td class="rid">RF-A5</td><td><code>Product.jsx</code></td><td><code>GET /api/variants/product/:id</code></td><td><code>product_variants</code></td><td>RN-04</td><td><span class="pill bad">falta</span></td></tr>
+<tr><td class="rid">RF-B2</td><td><code>AuthContext.jsx</code></td><td><code>GET /api/auth/me</code></td><td><code>users</code></td><td>RN-02</td><td><span class="pill bad">falta</span></td></tr>
+<tr><td class="rid">RF-C2</td><td><code>cartStore.js</code></td><td><code>GET /api/cart</code></td><td>Redis</td><td>—</td><td><span class="pill bad">falta</span></td></tr>
+<tr><td class="rid">RF-D1</td><td><code>Checkout.jsx</code></td><td><code>GET /api/delivery/zones</code></td><td><code>delivery_zones</code></td><td>RN-06</td><td><span class="pill bad">falta</span></td></tr>
+<tr><td class="rid">RF-E1</td><td><code>Checkout.jsx</code></td><td><code>POST /api/orders</code></td><td><code>orders</code>, <code>order_items</code></td><td>RN-01, RN-03, RN-05</td><td><span class="pill bad">falta</span></td></tr>
+<tr><td class="rid">RF-E4</td><td><code>Checkout.jsx</code></td><td><code>POST /api/coupons/apply</code></td><td><code>coupons</code></td><td>RN-07</td><td><span class="pill bad">falta</span></td></tr>
+<tr><td class="rid">RF-F1</td><td><code>PaymentCallback.jsx</code></td><td><code>POST /api/payments/sentoo</code></td><td><code>payments</code></td><td>RN-11</td><td><span class="pill bad">falta</span></td></tr>
+<tr><td class="rid">RF-G1</td><td><code>TrackOrder.jsx</code></td><td><code>GET /api/orders/track/:n</code></td><td><code>orders</code></td><td>RN-12</td><td><span class="pill bad">falta</span></td></tr>
+<tr><td class="rid">RF-G3</td><td><code>Product.jsx</code></td><td><code>POST /api/reviews</code></td><td><code>reviews</code></td><td>RN-09, RN-10</td><td><span class="pill bad">falta</span></td></tr>
+<tr><td class="rid">RF-H2</td><td><code>Admin.jsx</code></td><td><code>PUT /api/admin/orders/:id</code></td><td><code>orders</code></td><td>RN-12, RN-14</td><td><span class="pill bad">falta</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note bad">
+<p><b>La columna que habla sola.</b> Cero pruebas automáticas en todo el proyecto, incluido el camino que mueve dinero. No es un reproche: es la consecuencia de no haber tenido nunca una lista de requisitos contra la que escribirlas. Ahora la hay, y cada fila de esta tabla es una prueba que se puede escribir hoy.</p>
+</div>
+
+<h3>Código sin requisito</h3>
+<p class="col">El otro uso de la matriz: lo que sobra. Detectado en esta pasada — <code>utils/api.js</code>, cliente completo sin un solo importador; <code>data/productData.js.backup-1777484894</code>, copia de copia; y dos implementaciones paralelas del carrito, <code>services/cartService.js</code> y <code>stores/cartStore.js</code>. Cada una es deuda que alguien leerá algún día creyendo que está viva.</p>
+</section>
+
+<section id="p8">
+<span class="pnum">PARTE 8</span>
+<h2>La serie: seis documentos</h2>
+<p class="col">Así queda repartida la investigación. Este es el primero; el quinto ya existe. Cada uno responde una pregunta distinta y ninguno repite al otro.</p>
+
+<div class="tablewrap">
+<table>
+<thead><tr><th>#</th><th>Documento</th><th>Responde</th><th>Estado</th></tr></thead>
+<tbody>
+<tr><td class="num">1</td><td><strong>Requisitos, reglas y user stories</strong></td><td>Qué debe hacer el sistema y quién lo necesita</td><td><span class="pill ok">Este documento</span></td></tr>
+<tr><td class="num">2</td><td><strong>Mapa del código</strong></td><td>Cada carpeta y archivo: qué hace, quién lo llama, qué pasa si se borra</td><td>Siguiente</td></tr>
+<tr><td class="num">3</td><td><strong>Arquitectura del sistema</strong></td><td>Los cinco servicios, el despliegue en Coolify, las integraciones y los diagramas de secuencia</td><td>Pendiente</td></tr>
+<tr><td class="num">4</td><td><strong>Pruebas y calidad</strong></td><td>Qué probar, en qué orden, con qué herramienta; la matriz de trazabilidad convertida en suite</td><td>Pendiente</td></tr>
+<tr><td class="num">5</td><td><strong>Base de datos</strong></td><td>El método de diseño, el diagnóstico y el runbook del paso 0 al final</td><td><span class="pill ok">Publicado</span></td></tr>
+<tr><td class="num">6</td><td><strong>Plan de lanzamiento</strong></td><td>El orden real de ejecución, con dependencias y criterio de «terminado»</td><td>Pendiente</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Si solo se pudiera arreglar una cosa</h3>
+<p class="col">Las rutas relativas <span class="rid">RF-K4</span>. No porque sea el defecto más grave de diseño, sino porque desbloquea de golpe veinte requisitos que ya están programados y hoy no llegan a ejecutarse: registro, sesión, carrito con cuenta, cupones, pedido, pago, seguimiento, perfil, panel y zonas de envío. Es el cambio con mayor distancia entre esfuerzo y efecto de todo el proyecto.</p>
+
+<p class="col">Después, por este orden: el modelo de autorización <span class="rid">RN-14</span>, porque sin panel no se opera la tienda; el esquema v2 con las variantes cargadas <span class="rid">RN-04</span>, porque sin él no se puede vender una talla; y las credenciales que faltan, que no son programación sino trámite — Sentoo, SMTP, WhatsApp y el número de cuenta bancaria real.</p>
+</section>
+
+<footer class="end">
+<p>Unistyles Curaçao · Research 1 de 6 · 19 de septiembre de 2026. Estados verificados leyendo el repositorio y probando <code>unistylescuracao.com</code>, <code>api.unistylescuracao.com</code> y <code>cms.unistylescuracao.com</code> el mismo día. Documento hermano: el de base de datos, research 5 de 6.</p>
+</footer>
+</main>
+</div>

@@ -1,0 +1,19 @@
+# ===========================================================================
+# FRONTEND — Variables de CONSTRUCCIÓN (Build-time)  — recurso SEPARADO
+# ===========================================================================
+# Tipo de recurso en Coolify:  "Application" desde el repositorio Git.
+#   - Base Directory:  /services/frontend
+#   - Dockerfile:      Dockerfile
+#
+# ¡OJO! Estas NO van en "Environment Variables" normales.
+# Van en  Coolify → recurso "unistyles-frontend" → "Build" →
+#         "Build-time Environment Variables"  (o márcalas "Is Build Variable").
+#
+# ¿Por qué? Vite (el constructor de la tienda) "hornea" estas URLs DENTRO
+# del paquete al construir. Si no están en tiempo de construcción, la tienda
+# carga pero se queda girando ("loading…") porque no sabe dónde está la API.
+# ===========================================================================
+
+VITE_API_URL=https://api.unistylescuracao.com
+VITE_DIRECTUS_URL=https://cms.unistylescuracao.com
+VITE_USE_CMS=true

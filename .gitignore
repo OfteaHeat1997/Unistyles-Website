@@ -48,3 +48,11 @@ backups/
 # Anchored with leading slash so it does NOT match frontend/public/images/
 /images/
 .vercel
+
+# Secretos locales de Coolify (NUNCA subir al repo)
+env for coolify
+COOLIFY-SECRETOS-*.txt
+*.secrets.txt
+
+# Fotos originales del inventario (1,5 GB) — se copian a mano, no van al repo
+/archive/images/
