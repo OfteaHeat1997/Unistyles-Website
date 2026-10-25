@@ -1,4 +1,5 @@
-<title>Esquema Unistyles v2</title>
+<html lang="en">
+<title>Unistyles Schema v2</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
 <style>
 :root{
@@ -128,37 +129,37 @@ footer.end{border-top:2px solid var(--ink);margin-top:56px;padding:24px 0 0;font
 
 <div class="wrap">
 <nav class="toc">
-  <div class="toc-h">Contenido</div>
-  <a href="#p0"><b>0</b><span>El método</span></a>
-  <a href="#p1"><b>1</b><span>Requisitos</span></a>
-  <a href="#p2"><b>2</b><span>Modelo conceptual</span></a>
-  <a href="#p3"><b>3</b><span>Modelo lógico</span></a>
-  <a href="#p4"><b>4</b><span>Modelo físico</span></a>
-  <a href="#p5"><b>5</b><span>Diagnóstico real</span></a>
-  <a href="#p6"><b>6</b><span>Front → back → BD</span></a>
+  <div class="toc-h">Contents</div>
+  <a href="#p0"><b>0</b><span>The method</span></a>
+  <a href="#p1"><b>1</b><span>Requirements</span></a>
+  <a href="#p2"><b>2</b><span>Conceptual model</span></a>
+  <a href="#p3"><b>3</b><span>Logical model</span></a>
+  <a href="#p4"><b>4</b><span>Physical model</span></a>
+  <a href="#p5"><b>5</b><span>Real diagnosis</span></a>
+  <a href="#p6"><b>6</b><span>Front → back → DB</span></a>
   <a href="#p7"><b>7</b><span>Runbook 0 → final</span></a>
-  <a href="#p8"><b>8</b><span>Operación</span></a>
+  <a href="#p8"><b>8</b><span>Operations</span></a>
 </nav>
 
 <main>
 <header class="top">
-  <p class="eyebrow">Unistyles Curaçao · Diseño de base de datos</p>
-  <h1>Cómo se diseña la base de datos de una tienda real</h1>
-  <p class="lede col">El método profesional, fase por fase, aplicado a tus 285 productos, tus 71 endpoints y las 19 tablas que hoy están vivas en Coolify. Termina con el runbook del paso 0 al paso final.</p>
+  <p class="eyebrow">Unistyles Curaçao · Database design</p>
+  <h1>How the database of a real shop is designed</h1>
+  <p class="lede col">The professional method, phase by phase, applied to your 285 products, your 71 endpoints and the 19 tables that are live in Coolify today. It ends with the runbook from step 0 to the final step.</p>
   <div class="meta">
-    <span>19 sep 2026</span>
+    <span>19 Sep 2026</span>
     <span>PostgreSQL 16 · Directus 11 · Express 4</span>
-    <span>Datos verificados en producción hoy</span>
+    <span>Data verified in production today</span>
   </div>
 </header>
 
 <section id="p0">
-<span class="pnum">PARTE 0</span>
-<h2>El método</h2>
-<p class="col">Diseñar una base de datos para un cliente no empieza escribiendo <code>CREATE TABLE</code>. Empieza tres fases antes. El orden importa porque cada fase produce el insumo de la siguiente, y saltarse una es exactamente lo que produce bases como la que tienes hoy: tablas correctas una por una, incoherentes en conjunto.</p>
+<span class="pnum">PART 0</span>
+<h2>The method</h2>
+<p class="col">Designing a database for a client does not start by writing <code>CREATE TABLE</code>. It starts three phases earlier. The order matters because each phase produces the input for the next, and skipping one is exactly what produces databases like the one you have today: tables that are correct one by one, inconsistent as a whole.</p>
 
 <figure>
-<svg viewBox="0 0 900 190" role="img" aria-label="Las seis fases del diseño de una base de datos, de requisitos a operación, con un bucle de evolución que vuelve del final al modelo lógico">
+<svg viewBox="0 0 900 190" role="img" aria-label="The six phases of database design, from requirements to operations, with an evolution loop that returns from the end to the logical model">
   <defs>
     <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <polygon points="0,0 10,5 0,10" fill="currentColor"/>
@@ -173,18 +174,18 @@ footer.end{border-top:2px solid var(--ink);margin-top:56px;padding:24px 0 0;font
       <rect x="616" y="46" width="126" height="58" rx="4"/>
     </g>
     <rect x="768" y="46" width="124" height="58" rx="4" fill="none" stroke="#0B6E66" stroke-width="2.2"/>
-    <text x="71"  y="70" text-anchor="middle" font-weight="600">Requisitos</text>
-    <text x="71"  y="88" text-anchor="middle" font-size="11" opacity="0.72">reglas del negocio</text>
+    <text x="71"  y="70" text-anchor="middle" font-weight="600">Requirements</text>
+    <text x="71"  y="88" text-anchor="middle" font-size="11" opacity="0.72">business rules</text>
     <text x="223" y="70" text-anchor="middle" font-weight="600">Conceptual</text>
-    <text x="223" y="88" text-anchor="middle" font-size="11" opacity="0.72">entidades</text>
-    <text x="375" y="70" text-anchor="middle" font-weight="600">Lógico</text>
-    <text x="375" y="88" text-anchor="middle" font-size="11" opacity="0.72">normalización</text>
-    <text x="527" y="70" text-anchor="middle" font-weight="600">Físico</text>
-    <text x="527" y="88" text-anchor="middle" font-size="11" opacity="0.72">tipos, claves</text>
-    <text x="679" y="70" text-anchor="middle" font-weight="600">Migración</text>
-    <text x="679" y="88" text-anchor="middle" font-size="11" opacity="0.72">datos reales</text>
-    <text x="830" y="70" text-anchor="middle" font-weight="600" fill="#0B6E66">Operación</text>
-    <text x="830" y="88" text-anchor="middle" font-size="11" fill="#0B6E66" opacity="0.85">backup, evolución</text>
+    <text x="223" y="88" text-anchor="middle" font-size="11" opacity="0.72">entities</text>
+    <text x="375" y="70" text-anchor="middle" font-weight="600">Logical</text>
+    <text x="375" y="88" text-anchor="middle" font-size="11" opacity="0.72">normalisation</text>
+    <text x="527" y="70" text-anchor="middle" font-weight="600">Physical</text>
+    <text x="527" y="88" text-anchor="middle" font-size="11" opacity="0.72">types, keys</text>
+    <text x="679" y="70" text-anchor="middle" font-weight="600">Migration</text>
+    <text x="679" y="88" text-anchor="middle" font-size="11" opacity="0.72">real data</text>
+    <text x="830" y="70" text-anchor="middle" font-weight="600" fill="#0B6E66">Operations</text>
+    <text x="830" y="88" text-anchor="middle" font-size="11" fill="#0B6E66" opacity="0.85">backup, evolution</text>
     <g stroke="currentColor" stroke-width="1.4" marker-end="url(#ar)">
       <line x1="136" y1="75" x2="156" y2="75"/>
       <line x1="288" y1="75" x2="308" y2="75"/>
@@ -194,360 +195,360 @@ footer.end{border-top:2px solid var(--ink);margin-top:56px;padding:24px 0 0;font
     </g>
     <path d="M 830 108 L 830 152 L 375 152 L 375 110" fill="none" stroke="#0B6E66" stroke-width="1.4"
           stroke-dasharray="5 4" marker-end="url(#ar)"/>
-    <text x="602" y="168" text-anchor="middle" font-size="11.5" fill="#0B6E66">cada cambio del negocio vuelve aquí, nunca al físico</text>
-    <text x="8" y="26" font-size="11" letter-spacing="0.1em" opacity="0.6">FLUJO DE DISEÑO</text>
+    <text x="602" y="168" text-anchor="middle" font-size="11.5" fill="#0B6E66">every business change comes back here, never to the physical model</text>
+    <text x="8" y="26" font-size="11" letter-spacing="0.1em" opacity="0.6">DESIGN FLOW</text>
   </g>
 </svg>
-<figcaption>Las seis fases. La flecha punteada es la que casi nadie dibuja y la que define si una base envejece bien: un requisito nuevo entra por el modelo lógico y baja, no se parchea directamente en la tabla.</figcaption>
+<figcaption>The six phases. The dotted arrow is the one almost nobody draws and the one that decides whether a database ages well: a new requirement enters through the logical model and flows down; it is not patched directly into the table.</figcaption>
 </figure>
 
 <ol class="phases">
-  <li><span class="n">0</span><span><span class="t">Requisitos</span><span class="d">Entrevistas con el cliente y lectura del negocio. Salida: una lista de <strong>reglas</strong> en lenguaje humano, no tablas. «Un cupón de bienvenida se usa una sola vez por cliente». «El domicilio se congela cuando se paga».<em>Herramientas: entrevista estructurada, event storming, diccionario de datos.</em></span></span></li>
-  <li><span class="n">1</span><span><span class="t">Modelo conceptual</span><span class="d">Entidades y relaciones, sin tipos ni claves. ¿Qué cosas existen y cómo se relacionan? Se dibuja, se enseña al cliente, se corrige en la pizarra — es la fase más barata de equivocarse.<em>Herramientas: diagrama entidad-relación (pata de gallo), listado de entidades.</em></span></span></li>
-  <li><span class="n">2</span><span><span class="t">Modelo lógico</span><span class="d">Claves primarias y foráneas, cardinalidades, normalización hasta 3FN, y las desnormalizaciones <strong>deliberadas</strong> (en comercio: los snapshots del pedido).<em>Herramientas: 1FN/2FN/3FN, diseño dirigido por consultas.</em></span></span></li>
-  <li><span class="n">3</span><span><span class="t">Modelo físico</span><span class="d">Motor concreto, tipos exactos, restricciones <code>CHECK</code>, índices, secuencias, triggers. Aquí y solo aquí se escribe SQL.<em>Herramientas: DDL, plan de índices, <code>EXPLAIN ANALYZE</code>.</em></span></span></li>
-  <li><span class="n">4</span><span><span class="t">Migración y semillas</span><span class="d">Llevar los datos reales del cliente al esquema nuevo: perfilado, limpieza, carga, verificación de conteos. Nunca «lo paso a mano».<em>Herramientas: perfilado de datos, scripts idempotentes, conteos de control.</em></span></span></li>
-  <li><span class="n">5</span><span><span class="t">Operación</span><span class="d">Copias de seguridad probadas, migraciones versionadas, monitorización de consultas lentas. Una base sin restauración probada no está en producción, está en riesgo.<em>Herramientas: <code>pg_dump</code>, tabla <code>schema_migrations</code>, ensayo de restauración.</em></span></span></li>
+  <li><span class="n">0</span><span><span class="t">Requirements</span><span class="d">Interviews with the client and study of the business. Output: a list of <strong>rules</strong> in human language, not tables. “A welcome coupon is used only once per customer.” “The delivery address is frozen when payment is made.”<em>Tools: structured interview, event storming, data dictionary.</em></span></span></li>
+  <li><span class="n">1</span><span><span class="t">Conceptual model</span><span class="d">Entities and relationships, without types or keys. What things exist and how do they relate? It is drawn, shown to the client and corrected on the whiteboard — it is the cheapest phase in which to be wrong.<em>Tools: entity-relationship diagram (crow's foot), entity list.</em></span></span></li>
+  <li><span class="n">2</span><span><span class="t">Logical model</span><span class="d">Primary and foreign keys, cardinalities, normalisation up to 3NF, and <strong>deliberate</strong> denormalisations (in commerce: the order snapshots).<em>Tools: 1NF/2NF/3NF, query-driven design.</em></span></span></li>
+  <li><span class="n">3</span><span><span class="t">Physical model</span><span class="d">Specific engine, exact types, <code>CHECK</code> constraints, indexes, sequences, triggers. Here and only here is SQL written.<em>Tools: DDL, index plan, <code>EXPLAIN ANALYZE</code>.</em></span></span></li>
+  <li><span class="n">4</span><span><span class="t">Migration and seeds</span><span class="d">Bringing the client's real data into the new schema: profiling, cleaning, loading, verifying counts. Never “I'll move it over by hand”.<em>Tools: data profiling, idempotent scripts, control counts.</em></span></span></li>
+  <li><span class="n">5</span><span><span class="t">Operations</span><span class="d">Tested backups, versioned migrations, slow-query monitoring. A database without a tested restore is not in production, it is at risk.<em>Tools: <code>pg_dump</code>, <code>schema_migrations</code> table, restore drill.</em></span></span></li>
 </ol>
 
-<h3>Los métodos, uno por uno</h3>
-<p class="col">Esto es lo que pediste: las técnicas concretas, con qué hacen y cuándo se usan. Cada una se aplica a tu tienda más abajo.</p>
+<h3>The methods, one by one</h3>
+<p class="col">This is what you asked for: the concrete techniques, what they do and when they are used. Each one is applied to your shop further down.</p>
 
 <div class="tablewrap">
 <table>
-<thead><tr><th>Método</th><th>Para qué sirve</th><th>Dónde se usa en Unistyles</th></tr></thead>
+<thead><tr><th>Method</th><th>What it is for</th><th>Where it is used at Unistyles</th></tr></thead>
 <tbody>
-<tr><td><strong>Entrevista estructurada</strong></td><td>Extraer reglas del negocio que el cliente da por obvias y nunca dice solas.</td><td>«¿El envío gratis se calcula antes o después del cupón?» — cambia la fórmula de <code>orders.total</code>.</td></tr>
-<tr><td><strong>Diccionario de datos</strong></td><td>Un renglón por campo: nombre, tipo, obligatorio, dominio de valores, quién lo escribe.</td><td>Es lo que falta hoy: nadie definió que <code>size</code> solo admite un conjunto cerrado.</td></tr>
-<tr><td><strong>Diagrama entidad-relación</strong></td><td>Ver cardinalidades y huecos antes de escribir SQL.</td><td>Parte 2. Revela que <code>reviews</code> no tiene camino a <code>products</code>.</td></tr>
-<tr><td><strong>Normalización 1FN–3FN</strong></td><td>Eliminar datos repetidos y valores múltiples en una celda.</td><td>Parte 3. Tu campo <code>color: "BEIGE, BLANCO, BERDE"</code> viola la primera forma normal.</td></tr>
-<tr><td><strong>Desnormalización deliberada</strong></td><td>Congelar a propósito lo que no debe cambiar con el tiempo.</td><td>El precio y la dirección del pedido. Tu esquema ya lo hace bien.</td></tr>
-<tr><td><strong>Diseño dirigido por consultas</strong></td><td>Escribir las 20 preguntas que el negocio le hará a la base y validar el esquema contra ellas.</td><td>Parte 3. «¿Cuántos brasieres beige 38B quedan?» hoy no tiene respuesta.</td></tr>
-<tr><td><strong>Perfilado de datos</strong></td><td>Contar valores distintos, nulos y rarezas antes de migrar.</td><td>Parte 5. Así aparecieron <code>BERDE</code>, <code>BEIBE</code> y <code>368C</code>.</td></tr>
-<tr><td><strong>Reglas → restricciones</strong></td><td>Traducir cada regla de negocio a <code>CHECK</code>, <code>UNIQUE</code> o <code>FOREIGN KEY</code>.</td><td>Parte 4. «Un cupón, un cliente, una vez» se vuelve un índice único.</td></tr>
-<tr><td><strong>Vocabulario controlado</strong></td><td>Tablas de consulta para atributos que se filtran (talla, color).</td><td>Parte 3. Convierte 24 cadenas de talla en 10 tallas reales.</td></tr>
-<tr><td><strong>Migraciones versionadas</strong></td><td>Cada cambio es un archivo numerado, aplicado una vez, registrado.</td><td>Ya tienes <code>database/migrate.js</code> y la tabla <code>schema_migrations</code>. No se usa.</td></tr>
+<tr><td><strong>Structured interview</strong></td><td>Extract business rules the client takes for granted and never states unprompted.</td><td>“Is free delivery calculated before or after the coupon?” — it changes the formula for <code>orders.total</code>.</td></tr>
+<tr><td><strong>Data dictionary</strong></td><td>One line per field: name, type, required, value domain, who writes it.</td><td>This is what is missing today: nobody defined that <code>size</code> only accepts a closed set.</td></tr>
+<tr><td><strong>Entity-relationship diagram</strong></td><td>See cardinalities and gaps before writing SQL.</td><td>Part 2. It reveals that <code>reviews</code> has no path to <code>products</code>.</td></tr>
+<tr><td><strong>Normalisation 1NF–3NF</strong></td><td>Eliminate repeated data and multiple values in one cell.</td><td>Part 3. Your field <code>color: "BEIGE, BLANCO, BERDE"</code> violates first normal form.</td></tr>
+<tr><td><strong>Deliberate denormalisation</strong></td><td>Freeze on purpose what must not change over time.</td><td>The order's price and address. Your schema already does this well.</td></tr>
+<tr><td><strong>Query-driven design</strong></td><td>Write down the 20 questions the business will ask the database and validate the schema against them.</td><td>Part 3. “How many beige 38B bras are left?” has no answer today.</td></tr>
+<tr><td><strong>Data profiling</strong></td><td>Count distinct values, nulls and oddities before migrating.</td><td>Part 5. That is how <code>BERDE</code>, <code>BEIBE</code> and <code>368C</code> turned up.</td></tr>
+<tr><td><strong>Rules → constraints</strong></td><td>Translate each business rule into a <code>CHECK</code>, <code>UNIQUE</code> or <code>FOREIGN KEY</code>.</td><td>Part 4. “One coupon, one customer, once” becomes a unique index.</td></tr>
+<tr><td><strong>Controlled vocabulary</strong></td><td>Lookup tables for attributes that are filtered on (size, colour).</td><td>Part 3. Turns 24 size strings into 10 real sizes.</td></tr>
+<tr><td><strong>Versioned migrations</strong></td><td>Each change is a numbered file, applied once, recorded.</td><td>You already have <code>database/migrate.js</code> and the <code>schema_migrations</code> table. It is not used.</td></tr>
 </tbody>
 </table>
 </div>
 </section>
 
 <section id="p1">
-<span class="pnum">PARTE 1 · PASO 0</span>
-<h2>Requisitos: las preguntas que se le hacen al cliente</h2>
-<p class="col">El paso 0 real. Para Unistyles la clienta eres tú misma, lo cual es más difícil, no más fácil: las reglas que tienes en la cabeza no están escritas en ninguna parte y el código lleva meses adivinándolas.</p>
+<span class="pnum">PART 1 · STEP 0</span>
+<h2>Requirements: the questions you ask the client</h2>
+<p class="col">The real step 0. For Unistyles the client is you, which makes it harder, not easier: the rules in your head are not written down anywhere and the code has spent months guessing them.</p>
 
-<h4>Las nueve preguntas que definen un comercio electrónico</h4>
+<h4>The nine questions that define an e-commerce business</h4>
 <div class="tablewrap">
 <table>
-<thead><tr><th style="width:38%">Pregunta al cliente</th><th>Qué decide en el esquema</th><th>Respuesta en Unistyles</th></tr></thead>
+<thead><tr><th style="width:38%">Question to the client</th><th>What it decides in the schema</th><th>Answer at Unistyles</th></tr></thead>
 <tbody>
-<tr><td>¿Se puede comprar sin crear cuenta?</td><td>Si <code>orders.user_id</code> admite nulo y si hay que guardar contacto suelto.</td><td>Sí. <code>user_id</code> nulo + <code>CHECK</code> de contacto obligatorio.</td></tr>
-<tr><td>¿El mismo artículo se vende en variantes?</td><td>Si el stock vive en el producto o en la variante. Es la decisión más cara de cambiar después.</td><td>Sí, brasieres por talla y color. <strong>33 de 285</strong> productos.</td></tr>
-<tr><td>¿Qué pasa con el precio si sube mañana?</td><td>Si el pedido guarda una copia o una referencia.</td><td>Copia congelada en <code>order_items</code>.</td></tr>
-<tr><td>¿Quién puede cambiar el estado de un pedido y queda rastro?</td><td>Si existe una tabla de historial.</td><td>Falta. <code>TrackOrder.jsx</code> existe y no tiene nada que mostrar.</td></tr>
-<tr><td>¿Un cupón es por persona, por pedido o global?</td><td>Si hace falta una tabla de canjes.</td><td>Por persona. Hoy no se controla: <code>WELCOME10</code> es infinito.</td></tr>
-<tr><td>¿Cómo se calcula el envío?</td><td>Tabla de zonas, o un número quemado en el código.</td><td>Tres zonas de Curaçao con umbral de envío gratis.</td></tr>
-<tr><td>¿Hay impuestos separados en la factura?</td><td>Si el pedido necesita columnas de impuesto.</td><td>No. El OB va incluido en el precio de estante.</td></tr>
-<tr><td>¿Cuántos roles de persona hay?</td><td>Un booleano o un sistema de roles.</td><td>Dos: clienta y dueña. <code>users.is_admin</code> basta.</td></tr>
-<tr><td>¿Quién edita el catálogo y desde dónde?</td><td>Si el catálogo vive en el CMS o en SQL. <strong>Define toda la arquitectura.</strong></td><td>Tú, desde Directus. Por eso el catálogo no está en <code>init.sql</code>.</td></tr>
+<tr><td>Can people buy without creating an account?</td><td>Whether <code>orders.user_id</code> accepts null and whether standalone contact details must be stored.</td><td>Yes. Null <code>user_id</code> + mandatory contact <code>CHECK</code>.</td></tr>
+<tr><td>Is the same item sold in variants?</td><td>Whether stock lives on the product or on the variant. It is the most expensive decision to change later.</td><td>Yes, bras by size and colour. <strong>33 of 285</strong> products.</td></tr>
+<tr><td>What happens to the price if it goes up tomorrow?</td><td>Whether the order stores a copy or a reference.</td><td>Frozen copy in <code>order_items</code>.</td></tr>
+<tr><td>Who can change an order's status, and is there a trail?</td><td>Whether a history table exists.</td><td>Missing. <code>TrackOrder.jsx</code> exists and has nothing to show.</td></tr>
+<tr><td>Is a coupon per person, per order or global?</td><td>Whether a redemptions table is needed.</td><td>Per person. Not enforced today: <code>WELCOME10</code> is unlimited.</td></tr>
+<tr><td>How is delivery calculated?</td><td>A zones table, or a number hard-coded in the code.</td><td>Three Curaçao zones with a free-delivery threshold.</td></tr>
+<tr><td>Are taxes shown separately on the invoice?</td><td>Whether the order needs tax columns.</td><td>No. OB is included in the shelf price.</td></tr>
+<tr><td>How many user roles are there?</td><td>A boolean or a role system.</td><td>Two: customer and owner. <code>users.is_admin</code> is enough.</td></tr>
+<tr><td>Who edits the catalogue, and from where?</td><td>Whether the catalogue lives in the CMS or in SQL. <strong>It defines the whole architecture.</strong></td><td>You, from Directus. That is why the catalogue is not in <code>init.sql</code>.</td></tr>
 </tbody>
 </table>
 </div>
 
 <div class="note">
-<p><b>La regla del paso 0:</b> una respuesta que no sabes todavía no se resuelve «dejándolo flexible». Se resuelve preguntando. Un campo «por si acaso» es una decisión aplazada que alguien tomará mal dentro de seis meses.</p>
+<p><b>The step 0 rule:</b> an answer you don't know yet is not solved by “leaving it flexible”. It is solved by asking. A “just in case” field is a postponed decision that someone will get wrong six months from now.</p>
 </div>
 
-<h4>De regla hablada a restricción escrita</h4>
-<p class="col">Este es el ejercicio central del método, y el que separa una base de aficionado de una profesional. Cada frase del cliente tiene que terminar en algo que la base <strong>impide</strong>, no en algo que el código recuerda comprobar.</p>
+<h4>From spoken rule to written constraint</h4>
+<p class="col">This is the central exercise of the method, and the one that separates an amateur database from a professional one. Every sentence from the client must end up as something the database <strong>prevents</strong>, not something the code remembers to check.</p>
 
 <div class="tablewrap">
 <table>
-<thead><tr><th style="width:44%">Lo que dice el cliente</th><th>Lo que se escribe</th></tr></thead>
+<thead><tr><th style="width:44%">What the client says</th><th>What gets written</th></tr></thead>
 <tbody>
-<tr><td>«El correo no se repite.»</td><td><code>email CITEXT UNIQUE NOT NULL</code></td></tr>
-<tr><td>«Nadie califica un producto dos veces.»</td><td><code>UNIQUE INDEX (product_id, user_id) WHERE user_id IS NOT NULL</code></td></tr>
-<tr><td>«Un pedido no puede quedar sin forma de contacto.»</td><td><code>CHECK (user_id IS NOT NULL OR (email IS NOT NULL AND phone IS NOT NULL))</code></td></tr>
-<tr><td>«El total tiene que cuadrar.»</td><td><code>CHECK (total = subtotal + delivery_fee - discount)</code></td></tr>
-<tr><td>«Los estados del pedido son estos cinco.»</td><td><code>CHECK (status IN ('pending','confirmed','shipped','delivered','cancelled'))</code></td></tr>
-<tr><td>«El descuento nunca supera el subtotal.»</td><td><code>CHECK (discount &lt;= subtotal)</code></td></tr>
+<tr><td>“Emails are never repeated.”</td><td><code>email CITEXT UNIQUE NOT NULL</code></td></tr>
+<tr><td>“Nobody rates a product twice.”</td><td><code>UNIQUE INDEX (product_id, user_id) WHERE user_id IS NOT NULL</code></td></tr>
+<tr><td>“An order cannot be left without a way to contact the customer.”</td><td><code>CHECK (user_id IS NOT NULL OR (email IS NOT NULL AND phone IS NOT NULL))</code></td></tr>
+<tr><td>“The total has to add up.”</td><td><code>CHECK (total = subtotal + delivery_fee - discount)</code></td></tr>
+<tr><td>“The order statuses are these five.”</td><td><code>CHECK (status IN ('pending','confirmed','shipped','delivered','cancelled'))</code></td></tr>
+<tr><td>“The discount never exceeds the subtotal.”</td><td><code>CHECK (discount &lt;= subtotal)</code></td></tr>
 </tbody>
 </table>
 </div>
-<p class="col">La diferencia práctica: una regla en el código se salta si alguien escribe directo en la base, si hay dos procesos a la vez, o si mañana se añade otro endpoint. Una regla en la base no se salta nunca.</p>
+<p class="col">The practical difference: a rule in the code gets skipped if someone writes directly to the database, if two processes run at once, or if another endpoint is added tomorrow. A rule in the database is never skipped.</p>
 </section>
 
 <section id="p2">
-<span class="pnum">PARTE 2</span>
-<h2>Modelo conceptual: qué cosas existen</h2>
-<p class="col">Sin tipos, sin claves. Solo las entidades y cómo se tocan. Si este dibujo está mal, todo lo demás está mal y no se nota hasta producción.</p>
+<span class="pnum">PART 2</span>
+<h2>Conceptual model: what things exist</h2>
+<p class="col">No types, no keys. Just the entities and how they touch. If this drawing is wrong, everything else is wrong and it won't show until production.</p>
 
 <pre class="mermaid">
 erDiagram
-    USERS ||--o{ ORDERS : "hace"
-    USERS ||--o{ ADDRESSES : "guarda"
-    USERS ||--o| CARTS : "tiene"
-    USERS ||--o{ REVIEWS : "escribe"
-    USERS ||--o{ COUPON_REDEMPTIONS : "canjea"
-    ORDERS ||--|{ ORDER_ITEMS : "contiene"
-    ORDERS ||--o{ PAYMENTS : "recibe"
-    ORDERS ||--o{ ORDER_STATUS_HISTORY : "registra"
-    ORDERS ||--o| COUPON_REDEMPTIONS : "aplica"
-    ORDERS }o--|| DELIVERY_ZONES : "se entrega en"
-    COUPONS ||--o{ COUPON_REDEMPTIONS : "se canjea en"
-    PRODUCTS ||--o{ PRODUCT_VARIANTS : "se vende como"
-    PRODUCTS ||--o{ ORDER_ITEMS : "se compra en"
-    PRODUCTS ||--o{ REVIEWS : "recibe"
-    PRODUCTS }o--|| CATEGORIES : "pertenece a"
-    PRODUCTS }o--o| BRANDS : "es de"
-    PRODUCT_VARIANTS ||--o{ ORDER_ITEMS : "identifica"
-    ADDRESSES }o--|| DELIVERY_ZONES : "cae en"
+    USERS ||--o{ ORDERS : "places"
+    USERS ||--o{ ADDRESSES : "saves"
+    USERS ||--o| CARTS : "has"
+    USERS ||--o{ REVIEWS : "writes"
+    USERS ||--o{ COUPON_REDEMPTIONS : "redeems"
+    ORDERS ||--|{ ORDER_ITEMS : "contains"
+    ORDERS ||--o{ PAYMENTS : "receives"
+    ORDERS ||--o{ ORDER_STATUS_HISTORY : "logs"
+    ORDERS ||--o| COUPON_REDEMPTIONS : "applies"
+    ORDERS }o--|| DELIVERY_ZONES : "is delivered in"
+    COUPONS ||--o{ COUPON_REDEMPTIONS : "is redeemed in"
+    PRODUCTS ||--o{ PRODUCT_VARIANTS : "is sold as"
+    PRODUCTS ||--o{ ORDER_ITEMS : "is bought in"
+    PRODUCTS ||--o{ REVIEWS : "receives"
+    PRODUCTS }o--|| CATEGORIES : "belongs to"
+    PRODUCTS }o--o| BRANDS : "is made by"
+    PRODUCT_VARIANTS ||--o{ ORDER_ITEMS : "identifies"
+    ADDRESSES }o--|| DELIVERY_ZONES : "falls in"
 </pre>
 
-<p class="col">Dos lecturas rápidas de este diagrama:</p>
+<p class="col">Two quick readings of this diagram:</p>
 <ul class="col">
-<li><code>PRODUCTS</code>, <code>CATEGORIES</code> y <code>BRANDS</code> son de Directus. Todo lo demás es SQL tuyo. Es una sola base con <strong>dos dueños</strong>, y esa frontera hay que respetarla en los dos sentidos.</li>
-<li><code>ORDER_ITEMS</code> cuelga de <code>PRODUCTS</code> <em>y</em> de <code>PRODUCT_VARIANTS</code>. Ese doble vínculo es lo que hoy está roto por un choque de tipos, y es la razón de que no puedas saber qué talla se vendió.</li>
+<li><code>PRODUCTS</code>, <code>CATEGORIES</code> and <code>BRANDS</code> belong to Directus. Everything else is your own SQL. It is a single database with <strong>two owners</strong>, and that boundary must be respected in both directions.</li>
+<li><code>ORDER_ITEMS</code> hangs off <code>PRODUCTS</code> <em>and</em> <code>PRODUCT_VARIANTS</code>. That double link is what is broken today by a type clash, and it is the reason you cannot tell which size was sold.</li>
 </ul>
 
 <div class="note warn">
-<p><b>El error conceptual más común en tiendas:</b> tratar el pedido como un puntero al catálogo. Un pedido no <em>apunta</em> a un producto de 110 florines: guarda que <em>ese día</em> costó 110. Si el precio sube y el pedido lo lee por referencia, el histórico de ventas se reescribe solo. Tu esquema ya congela nombre, SKU, precio, talla y color en <code>order_items</code> — eso está bien hecho y no hay que tocarlo.</p>
+<p><b>The most common conceptual mistake in shops:</b> treating the order as a pointer to the catalogue. An order does not <em>point</em> to a 110-guilder product: it records that <em>on that day</em> it cost 110. If the price goes up and the order reads it by reference, the sales history rewrites itself. Your schema already freezes name, SKU, price, size and colour in <code>order_items</code> — that is done well and should not be touched.</p>
 </div>
 </section>
 <section id="p3">
-<span class="pnum">PARTE 3</span>
-<h2>Modelo lógico: normalización, con tus datos</h2>
-<p class="col">La normalización se explica siempre con ejemplos de juguete. Aquí no hace falta: tu catálogo tiene los tres incumplimientos clásicos, y cada uno produce un síntoma que ya estás viendo.</p>
+<span class="pnum">PART 3</span>
+<h2>Logical model: normalisation, with your data</h2>
+<p class="col">Normalisation is always explained with toy examples. There is no need here: your catalogue has the three classic violations, and each one produces a symptom you are already seeing.</p>
 
-<h3>1FN — una celda, un valor</h3>
-<p class="col">Así está hoy un brasier en <code>database/seed-data.json</code>, y así se cargó a Directus:</p>
-<pre class="code"><span class="c">// El producto padre, tal cual está hoy</span>
+<h3>1NF — one cell, one value</h3>
+<p class="col">This is how a bra looks today in <code>database/seed-data.json</code>, and how it was loaded into Directus:</p>
+<pre class="code"><span class="c">// The parent product, exactly as it is today</span>
 {
   "ref":   "REF 011473",
   "name":  "Leonisa Bra",
   "price": 110,
-  "color": <span class="k">"BEIGE, BLANCO, BERDE, GRIS, NEGRO"</span>,   <span class="c">← cinco valores en una celda</span>
-  "size":  <span class="k">"38B, 40 B, 38C, 36B, 36 B, 34 B"</span>,      <span class="c">← seis valores en una celda</span>
+  "color": <span class="k">"BEIGE, BLANCO, BERDE, GRIS, NEGRO"</span>,   <span class="c">← five values in one cell</span>
+  "size":  <span class="k">"38B, 40 B, 38C, 36B, 36 B, 34 B"</span>,      <span class="c">← six values in one cell</span>
   "stockQuantity": 9
 }</pre>
-<p class="col">Una celda con lista de valores rompe la primera forma normal. La consecuencia no es teórica:</p>
+<p class="col">A cell holding a list of values breaks first normal form. The consequence is not theoretical:</p>
 <ul class="col">
-<li>No puedes filtrar «color = negro» sin <code>LIKE '%NEGRO%'</code>, que además casa con <code>BEIGE ESTAMPADO NEGRO</code>.</li>
-<li>No puedes contar cuántos productos hay en beige.</li>
-<li><code>stockQuantity: 9</code> no dice nada útil: ¿nueve de qué talla?</li>
+<li>You cannot filter “colour = black” without <code>LIKE '%NEGRO%'</code>, which also matches <code>BEIGE ESTAMPADO NEGRO</code>.</li>
+<li>You cannot count how many products come in beige.</li>
+<li><code>stockQuantity: 9</code> says nothing useful: nine of which size?</li>
 </ul>
-<p class="col">La forma correcta ya existe en tu esquema y se llama <code>product_variants</code>: una fila por combinación real de talla y color, cada una con su propio stock y su propio SKU. El producto padre conserva lo que es verdad para todas las variantes (nombre, marca, descripción, imagen) y nada más.</p>
+<p class="col">The correct form already exists in your schema and is called <code>product_variants</code>: one row per real size and colour combination, each with its own stock and its own SKU. The parent product keeps what is true for all variants (name, brand, description, image) and nothing else.</p>
 
-<h3>2FN y 3FN — cada dato donde le toca</h3>
-<p class="col">Segunda forma normal: ningún campo depende solo de una parte de la clave. Tercera: ningún campo depende de otro campo que no sea la clave. En la práctica, para una tienda, se resume en una pregunta: <strong>¿este dato cambia por su cuenta o cambia porque cambió otro?</strong></p>
+<h3>2NF and 3NF — every piece of data where it belongs</h3>
+<p class="col">Second normal form: no field depends on only part of the key. Third: no field depends on another field that is not the key. In practice, for a shop, it boils down to one question: <strong>does this piece of data change on its own, or does it change because something else changed?</strong></p>
 <div class="tablewrap">
 <table>
-<thead><tr><th>Dato</th><th>Dónde está hoy</th><th>Dónde va</th><th>Por qué</th></tr></thead>
+<thead><tr><th>Data</th><th>Where it is today</th><th>Where it goes</th><th>Why</th></tr></thead>
 <tbody>
-<tr><td>Nombre de la marca</td><td>Texto <code>"Leonisa"</code> repetido en cada producto</td><td><code>brands.name</code> + <code>products.brand_id</code></td><td>Si se corrige el nombre, se corrige en un sitio y no en 133 filas.</td></tr>
-<tr><td>Stock de una talla</td><td><code>products.stock_quantity</code> y <code>product_variants.stock_quantity</code></td><td>Solo en la variante; el del producto se calcula</td><td>Dos números que dicen ser el mismo siempre acaban discrepando.</td></tr>
-<tr><td>Coste del envío</td><td><code>constants.js</code>, tabla <code>settings</code> y Directus</td><td><code>delivery_zones</code></td><td>Tres fuentes, tres respuestas posibles a la misma pregunta.</td></tr>
-<tr><td>Precio pagado</td><td>Copiado en <code>order_items</code></td><td><strong>Se queda ahí</strong></td><td>Desnormalización a propósito: un histórico no se reescribe.</td></tr>
+<tr><td>Brand name</td><td>Text <code>"Leonisa"</code> repeated on every product</td><td><code>brands.name</code> + <code>products.brand_id</code></td><td>If the name is corrected, it is corrected in one place, not in 133 rows.</td></tr>
+<tr><td>Stock for a size</td><td><code>products.stock_quantity</code> and <code>product_variants.stock_quantity</code></td><td>Only on the variant; the product's is calculated</td><td>Two numbers that claim to be the same always end up disagreeing.</td></tr>
+<tr><td>Delivery cost</td><td><code>constants.js</code>, <code>settings</code> table and Directus</td><td><code>delivery_zones</code></td><td>Three sources, three possible answers to the same question.</td></tr>
+<tr><td>Price paid</td><td>Copied into <code>order_items</code></td><td><strong>Stays there</strong></td><td>Denormalisation on purpose: history is not rewritten.</td></tr>
 </tbody>
 </table>
 </div>
 
 <div class="note">
-<p><b>Cuándo NO normalizar.</b> Normalizar es la regla; congelar es la excepción, y es deliberada. En un pedido se congela: nombre del producto, SKU, precio unitario, talla, color, imagen y la dirección completa de entrega. Todo lo demás se referencia. La prueba para decidir: <em>si el dato original cambiara mañana, ¿el documento viejo debería cambiar también?</em> Si la respuesta es no, se congela.</p>
+<p><b>When NOT to normalise.</b> Normalising is the rule; freezing is the exception, and it is deliberate. In an order, the following are frozen: product name, SKU, unit price, size, colour, image and the full delivery address. Everything else is referenced. The test for deciding: <em>if the original data changed tomorrow, should the old document change too?</em> If the answer is no, it gets frozen.</p>
 </div>
 
-<h3>Diseño dirigido por consultas</h3>
-<p class="col">Antes de dar por bueno un esquema se escriben las preguntas que el negocio va a hacer, y se comprueba que cada una se responde con una consulta razonable. Las tuyas:</p>
+<h3>Query-driven design</h3>
+<p class="col">Before accepting a schema, you write down the questions the business is going to ask, and check that each can be answered with a reasonable query. Yours:</p>
 <div class="tablewrap">
 <table>
-<thead><tr><th style="width:52%">Pregunta del negocio</th><th>Hoy</th><th>Con el esquema v2</th></tr></thead>
+<thead><tr><th style="width:52%">Business question</th><th>Today</th><th>With schema v2</th></tr></thead>
 <tbody>
-<tr><td>¿Cuánto vendí este mes?</td><td><span class="pill ok">Sí</span></td><td><span class="pill ok">Sí</span></td></tr>
-<tr><td>¿Cuántos brasieres beige talla 38B me quedan?</td><td><span class="pill bad">No</span> la talla es texto libre</td><td><span class="pill ok">Sí</span></td></tr>
-<tr><td>¿Qué talla se vende más?</td><td><span class="pill bad">No</span> el pedido no guarda la variante</td><td><span class="pill ok">Sí</span></td></tr>
-<tr><td>¿Cuándo pasó este pedido a «enviado»?</td><td><span class="pill bad">No</span> no hay historial</td><td><span class="pill ok">Sí</span></td></tr>
-<tr><td>¿Esta clienta ya usó el cupón de bienvenida?</td><td><span class="pill bad">No</span></td><td><span class="pill ok">Sí</span></td></tr>
-<tr><td>¿Cuánto descuento regalé con cada código?</td><td><span class="pill bad">No</span> se guarda el importe, no el cupón</td><td><span class="pill ok">Sí</span></td></tr>
-<tr><td>¿Qué productos nunca se han vendido?</td><td><span class="pill warn">Frágil</span> sin clave foránea hay huérfanos</td><td><span class="pill ok">Sí</span></td></tr>
+<tr><td>How much did I sell this month?</td><td><span class="pill ok">Yes</span></td><td><span class="pill ok">Yes</span></td></tr>
+<tr><td>How many beige size 38B bras do I have left?</td><td><span class="pill bad">No</span> size is free text</td><td><span class="pill ok">Yes</span></td></tr>
+<tr><td>Which size sells most?</td><td><span class="pill bad">No</span> the order does not store the variant</td><td><span class="pill ok">Yes</span></td></tr>
+<tr><td>When did this order move to “shipped”?</td><td><span class="pill bad">No</span> there is no history</td><td><span class="pill ok">Yes</span></td></tr>
+<tr><td>Has this customer already used the welcome coupon?</td><td><span class="pill bad">No</span></td><td><span class="pill ok">Yes</span></td></tr>
+<tr><td>How much discount did I give away with each code?</td><td><span class="pill bad">No</span> the amount is stored, not the coupon</td><td><span class="pill ok">Yes</span></td></tr>
+<tr><td>Which products have never sold?</td><td><span class="pill warn">Fragile</span> without a foreign key there are orphans</td><td><span class="pill ok">Yes</span></td></tr>
 </tbody>
 </table>
 </div>
-<p class="col">Cinco de siete preguntas del negocio no tienen respuesta hoy. Eso, y no la estética del SQL, es la medida de si una base está bien diseñada.</p>
+<p class="col">Five of the seven business questions have no answer today. That, and not how pretty the SQL is, is the measure of whether a database is well designed.</p>
 </section>
 
 <section id="p4">
-<span class="pnum">PARTE 4</span>
-<h2>Modelo físico: tipos, claves y restricciones</h2>
-<p class="col">Ahora sí se escribe SQL. Las decisiones de esta fase son las que más tarde cuesta revertir, así que cada una tiene un motivo.</p>
+<span class="pnum">PART 4</span>
+<h2>Physical model: types, keys and constraints</h2>
+<p class="col">Now SQL does get written. The decisions in this phase are the hardest to reverse later, so each one has a reason.</p>
 
-<h3>Elección de tipos</h3>
+<h3>Choosing types</h3>
 <div class="tablewrap">
 <table>
-<thead><tr><th>Para</th><th>Tipo</th><th>Motivo</th></tr></thead>
+<thead><tr><th>For</th><th>Type</th><th>Reason</th></tr></thead>
 <tbody>
-<tr><td>Dinero</td><td><code>DECIMAL(10,2)</code></td><td><code>FLOAT</code> pierde céntimos. En una tienda eso es un descuadre contable, no un redondeo.</td></tr>
-<tr><td>Identificador de clienta o pedido</td><td><code>UUID</code></td><td>No revela cuántas clientas tienes ni se adivina desde fuera.</td></tr>
-<tr><td>Identificador de producto</td><td><code>INTEGER</code></td><td>Lo impone Directus. No se pelea con el CMS: se acepta y se usa igual en todas las claves foráneas.</td></tr>
-<tr><td>Correo electrónico</td><td><code>CITEXT</code></td><td>Compara sin distinguir mayúsculas. <code>Ana@x.com</code> y <code>ana@x.com</code> son la misma persona.</td></tr>
-<tr><td>Fechas</td><td><code>TIMESTAMPTZ</code></td><td>Con zona horaria siempre. Curaçao es UTC−4 y el servidor está en Misuri.</td></tr>
-<tr><td>Dirección del pedido</td><td><code>JSONB</code></td><td>Es una foto, no una relación. Indexable con GIN si algún día hace falta.</td></tr>
-<tr><td>Estados</td><td><code>VARCHAR</code> + <code>CHECK</code></td><td>Añadir un estado es un <code>ALTER TABLE</code>. Con tipo <code>ENUM</code> es una operación mucho más incómoda de revertir.</td></tr>
+<tr><td>Money</td><td><code>DECIMAL(10,2)</code></td><td><code>FLOAT</code> loses cents. In a shop that is an accounting mismatch, not a rounding detail.</td></tr>
+<tr><td>Customer or order identifier</td><td><code>UUID</code></td><td>Does not reveal how many customers you have and cannot be guessed from outside.</td></tr>
+<tr><td>Product identifier</td><td><code>INTEGER</code></td><td>Imposed by Directus. You don't fight the CMS: you accept it and use the same type in every foreign key.</td></tr>
+<tr><td>Email</td><td><code>CITEXT</code></td><td>Case-insensitive comparison. <code>Ana@x.com</code> and <code>ana@x.com</code> are the same person.</td></tr>
+<tr><td>Dates</td><td><code>TIMESTAMPTZ</code></td><td>Always with time zone. Curaçao is UTC−4 and the server is in Missouri.</td></tr>
+<tr><td>Order address</td><td><code>JSONB</code></td><td>It is a snapshot, not a relationship. Indexable with GIN if it is ever needed.</td></tr>
+<tr><td>Statuses</td><td><code>VARCHAR</code> + <code>CHECK</code></td><td>Adding a status is an <code>ALTER TABLE</code>. With an <code>ENUM</code> type it is a much more awkward operation to reverse.</td></tr>
 </tbody>
 </table>
 </div>
 
-<h3>El ciclo de vida del pedido</h3>
-<p class="col">Los estados no son una lista de palabras: son una máquina con transiciones permitidas. Dibujarla es lo que permite escribir el <code>CHECK</code> y saber qué transiciones debe rechazar la API.</p>
+<h3>The order lifecycle</h3>
+<p class="col">Statuses are not a list of words: they are a machine with permitted transitions. Drawing it is what makes it possible to write the <code>CHECK</code> and to know which transitions the API must reject.</p>
 <pre class="mermaid">
 stateDiagram-v2
-    [*] --> pending: checkout crea el pedido
-    pending --> confirmed: pago aprobado
-    pending --> cancelled: sin pagar / clienta cancela
-    confirmed --> shipped: sale a reparto
-    confirmed --> cancelled: se anula antes de salir
-    shipped --> delivered: entregado en mano
+    [*] --> pending: checkout creates the order
+    pending --> confirmed: payment approved
+    pending --> cancelled: unpaid / customer cancels
+    confirmed --> shipped: out for delivery
+    confirmed --> cancelled: voided before dispatch
+    shipped --> delivered: handed over
     delivered --> [*]
     cancelled --> [*]
     note right of cancelled
-        devuelve stock
-        libera el cupón
+        returns stock
+        releases the coupon
     end note
 </pre>
-<p class="col">De este dibujo salen tres cosas concretas: el <code>CHECK</code> de <code>orders.status</code>, las filas que escribe <code>order_status_history</code> en cada flecha, y la regla de que <code>delivered</code> y <code>cancelled</code> son terminales — nada vuelve de ahí.</p>
+<p class="col">Three concrete things come out of this drawing: the <code>CHECK</code> on <code>orders.status</code>, the rows that <code>order_status_history</code> writes on each arrow, and the rule that <code>delivered</code> and <code>cancelled</code> are terminal — nothing comes back from them.</p>
 
-<h3>Índices: el mínimo que hace falta</h3>
-<p class="col">Un índice se pone cuando una consulta real lo necesita, no «por si acaso»: cada índice ralentiza las escrituras y ocupa disco. Los que tu tienda sí necesita:</p>
-<pre class="code"><span class="c">-- Búsquedas por clave natural (login, seguimiento de pedido)</span>
+<h3>Indexes: the minimum needed</h3>
+<p class="col">An index is added when a real query needs it, not “just in case”: every index slows down writes and takes disk space. The ones your shop does need:</p>
+<pre class="code"><span class="c">-- Lookups by natural key (login, order tracking)</span>
 <span class="k">CREATE UNIQUE INDEX</span> ON users (email);
 <span class="k">CREATE UNIQUE INDEX</span> ON orders (order_number);
 
-<span class="c">-- Listados: "mis pedidos", de más nuevo a más viejo</span>
+<span class="c">-- Listings: "my orders", newest first</span>
 <span class="k">CREATE INDEX</span> ON orders (user_id, created_at <span class="k">DESC</span>);
 
-<span class="c">-- Índice parcial: solo indexa lo que se consulta públicamente</span>
+<span class="c">-- Partial index: only indexes what is queried publicly</span>
 <span class="k">CREATE INDEX</span> ON reviews (product_id) <span class="k">WHERE</span> is_approved = <span class="k">TRUE</span>;
 
-<span class="c">-- Reglas de negocio que además aceleran</span>
+<span class="c">-- Business rules that also speed things up</span>
 <span class="k">CREATE UNIQUE INDEX</span> ON reviews (product_id, user_id) <span class="k">WHERE</span> user_id <span class="k">IS NOT NULL</span>;
 <span class="k">CREATE UNIQUE INDEX</span> ON product_variants (product_id, size, color);
 
-<span class="c">-- Búsqueda por texto del catálogo</span>
+<span class="c">-- Full-text search over the catalogue</span>
 <span class="k">CREATE INDEX</span> ON products <span class="k">USING GIN</span> (name gin_trgm_ops);</pre>
-<p class="col">Los dos índices únicos de arriba no son optimizaciones: son las reglas «una reseña por persona y producto» y «una variante por talla y color» convertidas en algo que la base garantiza aunque dos peticiones lleguen en el mismo milisegundo.</p>
+<p class="col">The two unique indexes above are not optimisations: they are the rules “one review per person and product” and “one variant per size and colour” turned into something the database guarantees even if two requests arrive in the same millisecond.</p>
 </section>
 
 <section id="p5">
-<span class="pnum">PARTE 5</span>
-<h2>Diagnóstico: qué hay realmente en tu base hoy</h2>
-<p class="col">Perfilado de datos, ejecutado hoy contra producción y contra <code>database/seed-data.json</code>. Esto es el método de la Parte 0 aplicado antes de tocar nada — nunca se migra sin perfilar primero.</p>
+<span class="pnum">PART 5</span>
+<h2>Diagnosis: what is really in your database today</h2>
+<p class="col">Data profiling, run today against production and against <code>database/seed-data.json</code>. This is the Part 0 method applied before touching anything — you never migrate without profiling first.</p>
 
 <dl class="kv">
-  <dt>Productos en Directus</dt><dd><strong>285</strong> <span class="pill ok">catálogo intacto</span></dd>
-  <dt>Tablas en la base</dt><dd>19 propias + 20 de sistema de Directus</dd>
-  <dt>Esquema aplicado</dt><dd><code>database/init.sql</code> (v1) <span class="pill warn">el antiguo</span></dd>
-  <dt>Endpoints del backend</dt><dd>71, en 16 archivos de rutas</dd>
-  <dt>Páginas del frontend</dt><dd>28</dd>
-  <dt>Productos con variantes</dt><dd>33 de 285 — solo los brasieres</dd>
+  <dt>Products in Directus</dt><dd><strong>285</strong> <span class="pill ok">catalogue intact</span></dd>
+  <dt>Tables in the database</dt><dd>19 of our own + 20 Directus system tables</dd>
+  <dt>Schema applied</dt><dd><code>database/init.sql</code> (v1) <span class="pill warn">the old one</span></dd>
+  <dt>Backend endpoints</dt><dd>71, across 16 route files</dd>
+  <dt>Frontend pages</dt><dd>28</dd>
+  <dt>Products with variants</dt><dd>33 of 285 — only the bras</dd>
 </dl>
 
-<h3>El problema de los SKU y las «cosas raras»</h3>
-<p class="col">Tenías razón. Estas son las 24 cadenas distintas de talla que hay en tus datos, para lo que en realidad son unas diez tallas:</p>
+<h3>The SKU problem and the “weird stuff”</h3>
+<p class="col">You were right. These are the 24 distinct size strings in your data, for what are really about ten sizes:</p>
 <pre class="code">38B · 40 B · 38C · 36B · 36 B · 34 B · 38 B · 38 C · <span class="k">368C</span> · 40C
 36  B · 38  B · 36 C · 40 C · 40  B · 40  D · 40 D · 34  B · 40B
 S · M · L · XL · XXL</pre>
 <ul class="col">
-<li><code>38B</code>, <code>38 B</code> y <code>38&nbsp;&nbsp;B</code> son la misma talla escrita de tres formas. Para la base son tres tallas distintas.</li>
-<li><code>368C</code> es un dedazo que nadie detectó porque el campo admite cualquier texto.</li>
-<li>Tallas de brasier (<code>34B</code>) y de faja (<code>S</code>, <code>XL</code>) conviven en la misma columna. Son dos sistemas de medida diferentes.</li>
+<li><code>38B</code>, <code>38 B</code> and <code>38&nbsp;&nbsp;B</code> are the same size written three ways. To the database they are three different sizes.</li>
+<li><code>368C</code> is a typo nobody caught because the field accepts any text.</li>
+<li>Bra sizes (<code>34B</code>) and shapewear sizes (<code>S</code>, <code>XL</code>) coexist in the same column. They are two different sizing systems.</li>
 </ul>
-<p class="col">Y los colores:</p>
+<p class="col">And the colours:</p>
 <pre class="code">BEIGE · BLANCO · <span class="k">BERDE</span> · GRIS · NEGRO · BEIGE  ESTAMPADO · CAFE PRINT
 ROJO · <span class="k">BEIGE STAMPADO</span> · ORANGE · <span class="k">BEIBE</span> · DARK RED · MANDARIN
-HABANO · ESTAMPADO ROSADO · <span class="k">(vacío)</span> · BLACK</pre>
+HABANO · ESTAMPADO ROSADO · <span class="k">(empty)</span> · BLACK</pre>
 <ul class="col">
-<li><code>BERDE</code> es VERDE. <code>BEIBE</code> es BEIGE. <code>BEIGE STAMPADO</code> y <code>BEIGE&nbsp;&nbsp;ESTAMPADO</code> son el mismo color, escrito mal de dos maneras.</li>
-<li><code>NEGRO</code> y <code>BLACK</code> conviven. <code>ROJO</code>, <code>DARK RED</code> y <code>MANDARIN</code> también.</li>
-<li>Hay un color <strong>vacío</strong>: una variante sin color, que la base aceptó sin protestar.</li>
+<li><code>BERDE</code> is VERDE (green). <code>BEIBE</code> is BEIGE. <code>BEIGE STAMPADO</code> and <code>BEIGE&nbsp;&nbsp;ESTAMPADO</code> are the same colour, misspelled in two ways.</li>
+<li><code>NEGRO</code> and <code>BLACK</code> coexist. So do <code>ROJO</code>, <code>DARK RED</code> and <code>MANDARIN</code>.</li>
+<li>There is an <strong>empty</strong> colour: a variant with no colour, which the database accepted without complaint.</li>
 </ul>
-<p class="col">Los SKU son <code>BRA-001</code> a <code>BRA-077</code>, numerados de corrido. Son únicos, eso está bien, pero no codifican nada: por el SKU no se sabe el producto, ni la talla, ni el color. Si mañana insertas un brasier en medio, la numeración deja de tener orden.</p>
+<p class="col">The SKUs are <code>BRA-001</code> to <code>BRA-077</code>, numbered consecutively. They are unique, which is good, but they encode nothing: from the SKU you cannot tell the product, the size or the colour. If tomorrow you insert a bra in the middle, the numbering loses its order.</p>
 
 <div class="note bad">
-<p><b>La causa raíz es una sola:</b> talla y color son texto libre. Un campo de texto libre que luego se usa para filtrar, contar o agrupar siempre termina así — no por descuido, sino porque nada impide lo contrario. La solución profesional no es «tener más cuidado al escribir»: es un <strong>vocabulario controlado</strong>, una tabla de tallas y una de colores, y que la variante apunte a ellas.</p>
+<p><b>There is a single root cause:</b> size and colour are free text. A free-text field that is later used to filter, count or group always ends up like this — not through carelessness, but because nothing prevents it. The professional solution is not “be more careful when typing”: it is a <strong>controlled vocabulary</strong>, a sizes table and a colours table, with the variant pointing to them.</p>
 </div>
 
-<h4>Cómo se arregla</h4>
-<pre class="code"><span class="c">-- Vocabulario controlado: el conjunto cerrado de tallas válidas</span>
+<h4>How to fix it</h4>
+<pre class="code"><span class="c">-- Controlled vocabulary: the closed set of valid sizes</span>
 <span class="k">CREATE TABLE</span> sizes (
     code        <span class="k">VARCHAR</span>(8) <span class="k">PRIMARY KEY</span>,   <span class="c">-- '38B', 'XL'</span>
     system      <span class="k">VARCHAR</span>(12) <span class="k">NOT NULL</span>       <span class="c">-- 'bra' | 'apparel'</span>
                 <span class="k">CHECK</span> (system <span class="k">IN</span> ('bra','apparel')),
-    sort_order  <span class="k">INTEGER</span> <span class="k">NOT NULL</span>              <span class="c">-- para que S &lt; M &lt; L en los listados</span>
+    sort_order  <span class="k">INTEGER</span> <span class="k">NOT NULL</span>              <span class="c">-- so that S &lt; M &lt; L in listings</span>
 );
 
 <span class="k">CREATE TABLE</span> colors (
     code        <span class="k">VARCHAR</span>(24) <span class="k">PRIMARY KEY</span>,  <span class="c">-- 'BEIGE'</span>
     label_es    <span class="k">VARCHAR</span>(40) <span class="k">NOT NULL</span>,
-    hex         <span class="k">CHAR</span>(7)                     <span class="c">-- para el selector de color de la ficha</span>
+    hex         <span class="k">CHAR</span>(7)                     <span class="c">-- for the colour picker on the product page</span>
 );
 
-<span class="c">-- La variante ya no admite texto inventado</span>
+<span class="c">-- The variant no longer accepts made-up text</span>
 <span class="k">ALTER TABLE</span> product_variants
     <span class="k">ADD CONSTRAINT</span> fk_variant_size  <span class="k">FOREIGN KEY</span> (size)  <span class="k">REFERENCES</span> sizes(code),
     <span class="k">ADD CONSTRAINT</span> fk_variant_color <span class="k">FOREIGN KEY</span> (color) <span class="k">REFERENCES</span> colors(code);
 
-<span class="c">-- SKU con significado: marca-referencia-talla-color</span>
-<span class="c">-- LEO-011473-38B-BEI  en vez de  BRA-001</span></pre>
-<p class="col">A partir de esa clave foránea, <code>BERDE</code> deja de poder existir: la base rechaza la fila. Y el selector de tallas del frontend se puede poblar desde la tabla en vez de sacar valores únicos de un texto libre.</p>
+<span class="c">-- Meaningful SKU: brand-reference-size-colour</span>
+<span class="c">-- LEO-011473-38B-BEI  instead of  BRA-001</span></pre>
+<p class="col">Once that foreign key is in place, <code>BERDE</code> can no longer exist: the database rejects the row. And the frontend's size picker can be populated from the table instead of extracting unique values from free text.</p>
 
-<h3>Los defectos estructurales</h3>
-<p class="col">Estos ya estaban documentados en <code>docs/DATABASE_ARCHITECTURE.md</code> y siguen vivos en producción. Los seis que rompen algo hoy:</p>
+<h3>The structural defects</h3>
+<p class="col">These were already documented in <code>docs/DATABASE_ARCHITECTURE.md</code> and are still live in production. The six that break something today:</p>
 <div class="tablewrap">
 <table>
-<thead><tr><th>#</th><th>Defecto</th><th>Qué se rompe</th></tr></thead>
+<thead><tr><th>#</th><th>Defect</th><th>What breaks</th></tr></thead>
 <tbody>
-<tr><td class="num">1</td><td><code>reviews.product_id</code> es <code>UUID</code>, la API manda entero</td><td>Ninguna reseña se guarda. Verificado hoy: la petición devuelve error 500.</td></tr>
-<tr><td class="num">2</td><td><code>order_items.variant_id</code> es <code>INTEGER</code>, <code>product_variants.id</code> es <code>UUID</code></td><td>La talla comprada nunca queda ligada al pedido. Una devolución es adivinar.</td></tr>
-<tr><td class="num">3</td><td>Stock en dos sitios a la vez</td><td>Vender un 34B baja el total del producto, nunca el de la talla. El inventario por talla se desvía para siempre.</td></tr>
-<tr><td class="num">4</td><td>El frontend manda <code>bank</code>, el backend espera <code>bank_transfer</code></td><td>Elegir transferencia bancaria en el pago devuelve un error de validación.</td></tr>
-<tr><td class="num">5</td><td>Número de pedido generado con <code>RANDOM()</code></td><td>Diez mil combinaciones por día contra una restricción <code>UNIQUE</code>. Una colisión tumba el pago de una clienta real.</td></tr>
-<tr><td class="num">6</td><td>Sin registro de canje de cupones</td><td><code>WELCOME10</code>, que es «10 % en tu primer pedido», se puede usar infinitas veces.</td></tr>
+<tr><td class="num">1</td><td><code>reviews.product_id</code> is <code>UUID</code>, the API sends an integer</td><td>No review is ever saved. Verified today: the request returns a 500 error.</td></tr>
+<tr><td class="num">2</td><td><code>order_items.variant_id</code> is <code>INTEGER</code>, <code>product_variants.id</code> is <code>UUID</code></td><td>The purchased size is never linked to the order. A return becomes guesswork.</td></tr>
+<tr><td class="num">3</td><td>Stock in two places at once</td><td>Selling a 34B lowers the product's total, never the size's. Per-size inventory drifts forever.</td></tr>
+<tr><td class="num">4</td><td>The frontend sends <code>bank</code>, the backend expects <code>bank_transfer</code></td><td>Choosing bank transfer at payment returns a validation error.</td></tr>
+<tr><td class="num">5</td><td>Order number generated with <code>RANDOM()</code></td><td>Ten thousand combinations per day against a <code>UNIQUE</code> constraint. A collision breaks a real customer's payment.</td></tr>
+<tr><td class="num">6</td><td>No record of coupon redemptions</td><td><code>WELCOME10</code>, which is “10% off your first order”, can be used an unlimited number of times.</td></tr>
 </tbody>
 </table>
 </div>
 
-<h3>El catálogo vive en cuatro sitios</h3>
-<p class="col">Esta es la otra mitad del problema, y la que te afecta cada vez que quieres quitar o añadir un producto.</p>
+<h3>The catalogue lives in four places</h3>
+<p class="col">This is the other half of the problem, and the one that affects you every time you want to remove or add a product.</p>
 
 <figure>
-<svg viewBox="0 0 880 300" role="img" aria-label="Cuatro copias del catálogo de 285 productos y quién lee cada una: Directus, un archivo local del frontend, el JSON semilla y el backend por SQL">
+<svg viewBox="0 0 880 300" role="img" aria-label="Four copies of the 285-product catalogue and who reads each one: Directus, a local frontend file, the seed JSON and the backend via SQL">
   <defs>
     <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <polygon points="0,0 10,5 0,10" fill="currentColor"/>
     </marker>
   </defs>
   <g font-family="IBM Plex Sans, sans-serif" font-size="12.5" fill="currentColor">
-    <text x="6" y="20" font-size="11" letter-spacing="0.1em" opacity="0.6">CUATRO COPIAS DE LOS MISMOS 285 PRODUCTOS</text>
+    <text x="6" y="20" font-size="11" letter-spacing="0.1em" opacity="0.6">FOUR COPIES OF THE SAME 285 PRODUCTS</text>
 
     <rect x="6" y="44" width="182" height="54" rx="4" fill="none" stroke="currentColor" stroke-width="1.4"/>
-    <text x="97" y="66" text-anchor="middle" font-weight="600">Navegador</text>
-    <text x="97" y="84" text-anchor="middle" font-size="11" opacity="0.72">28 páginas React</text>
+    <text x="97" y="66" text-anchor="middle" font-weight="600">Browser</text>
+    <text x="97" y="84" text-anchor="middle" font-size="11" opacity="0.72">28 React pages</text>
 
     <rect x="6" y="184" width="182" height="54" rx="4" fill="none" stroke="currentColor" stroke-width="1.4"/>
-    <text x="97" y="206" text-anchor="middle" font-weight="600">API Express</text>
+    <text x="97" y="206" text-anchor="middle" font-weight="600">Express API</text>
     <text x="97" y="224" text-anchor="middle" font-size="11" opacity="0.72">71 endpoints</text>
 
     <rect x="330" y="40" width="210" height="62" rx="4" fill="none" stroke="#0B6E66" stroke-width="2.2"/>
     <text x="435" y="64" text-anchor="middle" font-weight="600" fill="#0B6E66">Directus · products</text>
-    <text x="435" y="82" text-anchor="middle" font-size="11" fill="#0B6E66" opacity="0.85">285 filas · la fuente real</text>
+    <text x="435" y="82" text-anchor="middle" font-size="11" fill="#0B6E66" opacity="0.85">285 rows · the real source</text>
 
     <rect x="330" y="124" width="210" height="52" rx="4" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="5 4" opacity="0.75"/>
     <text x="435" y="145" text-anchor="middle" font-size="12" opacity="0.8">data/productData.js</text>
-    <text x="435" y="162" text-anchor="middle" font-size="11" opacity="0.6">4 042 líneas · copia fría</text>
+    <text x="435" y="162" text-anchor="middle" font-size="11" opacity="0.6">4,042 lines · cold copy</text>
 
     <rect x="330" y="196" width="210" height="52" rx="4" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="5 4" opacity="0.75"/>
     <text x="435" y="217" text-anchor="middle" font-size="12" opacity="0.8">database/seed-data.json</text>
-    <text x="435" y="234" text-anchor="middle" font-size="11" opacity="0.6">285 · con las variantes</text>
+    <text x="435" y="234" text-anchor="middle" font-size="11" opacity="0.6">285 · with the variants</text>
 
     <rect x="330" y="266" width="210" height="28" rx="4" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="5 4" opacity="0.6"/>
     <text x="435" y="285" text-anchor="middle" font-size="11.5" opacity="0.7">productData.js.backup-1777484894</text>
@@ -557,46 +558,46 @@ HABANO · ESTAMPADO ROSADO · <span class="k">(vacío)</span> · BLACK</pre>
       <path d="M 188 82 C 250 82, 260 145, 326 148"/>
       <path d="M 188 206 C 250 206, 300 100, 326 92" stroke="#0B6E66" stroke-width="1.8"/>
     </g>
-    <text x="256" y="58" text-anchor="middle" font-size="11" fill="#0B6E66">lee el catálogo</text>
-    <text x="252" y="126" text-anchor="middle" font-size="11" opacity="0.7">si el CMS falla</text>
-    <text x="243" y="175" text-anchor="middle" font-size="11" fill="#0B6E66">lee por SQL</text>
+    <text x="256" y="58" text-anchor="middle" font-size="11" fill="#0B6E66">reads the catalogue</text>
+    <text x="252" y="126" text-anchor="middle" font-size="11" opacity="0.7">if the CMS fails</text>
+    <text x="243" y="175" text-anchor="middle" font-size="11" fill="#0B6E66">reads via SQL</text>
 
-    <text x="700" y="64" font-size="11.5" opacity="0.8">Editas aquí y se ve al instante.</text>
-    <text x="700" y="148" font-size="11.5" opacity="0.8">Editas aquí: no cambia nada</text>
-    <text x="700" y="164" font-size="11.5" opacity="0.8">hasta recompilar el frontend.</text>
-    <text x="700" y="224" font-size="11.5" opacity="0.8">Solo se usa al repoblar.</text>
-    <text x="700" y="285" font-size="11.5" opacity="0.6">Bórralo.</text>
+    <text x="700" y="64" font-size="11.5" opacity="0.8">Edit here and it shows instantly.</text>
+    <text x="700" y="148" font-size="11.5" opacity="0.8">Edit here: nothing changes</text>
+    <text x="700" y="164" font-size="11.5" opacity="0.8">until the frontend is rebuilt.</text>
+    <text x="700" y="224" font-size="11.5" opacity="0.8">Only used when reseeding.</text>
+    <text x="700" y="285" font-size="11.5" opacity="0.6">Delete it.</text>
   </g>
 </svg>
-<figcaption>El navegador pide el catálogo directamente a Directus; la API lo lee por SQL de la misma tabla. Esas dos flechas están bien. Las copias punteadas son las que se quedan viejas en silencio y hacen que «ya borré ese producto» no sea cierto en todas partes.</figcaption>
+<figcaption>The browser requests the catalogue directly from Directus; the API reads it via SQL from the same table. Those two arrows are fine. The dotted copies are the ones that silently go stale and make “I already deleted that product” untrue in some places.</figcaption>
 </figure>
 
 <div class="note ok">
-<p><b>Regla para el día a día:</b> productos, categorías y marcas se editan <strong>solo</strong> en <code>cms.unistylescuracao.com</code>. Nunca con SQL, nunca en <code>productData.js</code>. El archivo local es solo la red de seguridad para cuando el CMS no responde, y hay que regenerarlo desde Directus, no editarlo a mano.</p>
+<p><b>Day-to-day rule:</b> products, categories and brands are edited <strong>only</strong> in <code>cms.unistylescuracao.com</code>. Never with SQL, never in <code>productData.js</code>. The local file is only the safety net for when the CMS does not respond, and it must be regenerated from Directus, not edited by hand.</p>
 </div>
 </section>
 <section id="p6">
-<span class="pnum">PARTE 6</span>
-<h2>Frontend → backend → base de datos</h2>
-<p class="col">Una base de datos no se diseña en el vacío: se diseña contra los caminos que la aplicación recorre. Estos son los tuyos, reales, sacados del código.</p>
+<span class="pnum">PART 6</span>
+<h2>Frontend → backend → database</h2>
+<p class="col">A database is not designed in a vacuum: it is designed against the paths the application follows. These are yours, real, taken from the code.</p>
 
-<h3>Quién habla con quién</h3>
+<h3>Who talks to whom</h3>
 <div class="tablewrap">
 <table>
-<thead><tr><th>Dato</th><th>El navegador lo pide a</th><th>Que lo lee de</th></tr></thead>
+<thead><tr><th>Data</th><th>The browser requests it from</th><th>Which reads it from</th></tr></thead>
 <tbody>
-<tr><td>Catálogo, categorías, marcas, páginas</td><td>Directus directamente <code>directusService.js</code></td><td><code>products</code>, <code>categories</code>, <code>brands</code></td></tr>
-<tr><td>Registro, sesión, perfil</td><td>API Express <code>utils/api.js</code></td><td><code>users</code>, <code>addresses</code> + Redis</td></tr>
-<tr><td>Carrito</td><td>API Express <code>cartService.js</code></td><td><code>carts</code> con sesión, Redis si es invitada</td></tr>
-<tr><td>Pedido, pago, seguimiento</td><td>API Express</td><td><code>orders</code>, <code>order_items</code>, <code>payments</code></td></tr>
-<tr><td>Zonas y coste de envío</td><td>API Express <code>useDeliveryZones.js</code></td><td><code>delivery_zones</code></td></tr>
+<tr><td>Catalogue, categories, brands, pages</td><td>Directus directly <code>directusService.js</code></td><td><code>products</code>, <code>categories</code>, <code>brands</code></td></tr>
+<tr><td>Sign-up, session, profile</td><td>Express API <code>utils/api.js</code></td><td><code>users</code>, <code>addresses</code> + Redis</td></tr>
+<tr><td>Cart</td><td>Express API <code>cartService.js</code></td><td><code>carts</code> when logged in, Redis for guests</td></tr>
+<tr><td>Order, payment, tracking</td><td>Express API</td><td><code>orders</code>, <code>order_items</code>, <code>payments</code></td></tr>
+<tr><td>Zones and delivery cost</td><td>Express API <code>useDeliveryZones.js</code></td><td><code>delivery_zones</code></td></tr>
 </tbody>
 </table>
 </div>
-<p class="col">La frontera es limpia y conviene mantenerla así: <strong>el contenido lo sirve el CMS, el dinero lo sirve la API.</strong> Nada que mueva dinero pasa por Directus, y el navegador nunca escribe en el catálogo.</p>
+<p class="col">The boundary is clean and it is worth keeping it that way: <strong>content is served by the CMS, money is served by the API.</strong> Nothing that moves money goes through Directus, and the browser never writes to the catalogue.</p>
 
-<h3>El camino crítico: una compra</h3>
-<p class="col">Es la transacción que no puede fallar. Aquí está lo que hace hoy <code>services/backend/src/routes/orders.js</code>, con el bloqueo de filas incluido.</p>
+<h3>The critical path: a purchase</h3>
+<p class="col">It is the transaction that cannot fail. Here is what <code>services/backend/src/routes/orders.js</code> does today, row locking included.</p>
 <pre class="mermaid">
 sequenceDiagram
     autonumber
@@ -604,42 +605,42 @@ sequenceDiagram
     participant A as API /api/orders
     participant D as PostgreSQL
     participant S as Sentoo
-    C->>A: POST pedido (artículos, dirección, cupón)
+    C->>A: POST order (items, address, coupon)
     A->>D: BEGIN
     A->>D: SELECT ... FROM products FOR UPDATE
-    Note over A,D: bloquea las filas: dos clientas<br/>no compran la misma última unidad
-    A->>D: valida cupón FOR UPDATE
+    Note over A,D: locks the rows: two customers<br/>can't buy the same last unit
+    A->>D: validate coupon FOR UPDATE
     A->>D: INSERT orders + order_items
     A->>D: UPDATE stock
     A->>D: COMMIT
-    A-->>C: pedido creado
+    A-->>C: order created
     C->>A: POST /api/payments/sentoo
-    A->>S: crea la transacción
-    S-->>C: redirige a la pasarela
-    S->>A: webhook del pago
-    A->>S: vuelve a consultar el estado real
-    Note over A,S: nunca se cree el webhook:<br/>se re-consulta al proveedor
+    A->>S: create the transaction
+    S-->>C: redirect to the gateway
+    S->>A: payment webhook
+    A->>S: re-query the real status
+    Note over A,S: never trust the webhook:<br/>re-query the provider
     A->>D: UPDATE payment_status
 </pre>
-<p class="col">Dos cosas de este diagrama ya están bien resueltas en tu código y merece la pena que las reconozcas, porque son precisamente las que se suelen hacer mal: el bloqueo <code>FOR UPDATE</code> antes de descontar stock, y que el webhook de pago no se crea nunca a ciegas sino que se vuelve a preguntar al proveedor. Lo que falta es lo de alrededor: el registro del canje del cupón y la fila de historial de estado.</p>
+<p class="col">Two things in this diagram are already handled well in your code and deserve recognition, because they are precisely the ones usually done badly: the <code>FOR UPDATE</code> lock before deducting stock, and the fact that the payment webhook is never trusted blindly — the provider is asked again. What is missing is what surrounds them: the coupon redemption record and the status history row.</p>
 </section>
 
 <section id="p7">
-<span class="pnum">PARTE 7</span>
-<h2>Runbook: del paso 0 al paso final</h2>
-<p class="col">Los pasos exactos para dejar la base como debe estar. Todo se ejecuta desde <strong>Coolify → recurso <code>unistyles-postgres</code> → Terminal</strong>, salvo donde se diga otra cosa. El orden no es negociable: cada paso asume el anterior.</p>
+<span class="pnum">PART 7</span>
+<h2>Runbook: from step 0 to the final step</h2>
+<p class="col">The exact steps to get the database into the shape it should be in. Everything is run from <strong>Coolify → resource <code>unistyles-postgres</code> → Terminal</strong>, unless stated otherwise. The order is non-negotiable: each step assumes the previous one.</p>
 
 <div class="step">
-<div class="hd"><span class="sn">PASO 0</span><span class="st">Copia de seguridad antes de tocar nada</span></div>
+<div class="hd"><span class="sn">STEP 0</span><span class="st">Back up before touching anything</span></div>
 <div class="bd">
 <pre class="code">pg_dump -U unistyles -d unistyles_db -F c -f /tmp/unistyles-$(date +%F).dump
 ls -lh /tmp/unistyles-*.dump</pre>
-<p class="why">Si el archivo no aparece o pesa unos pocos kilobytes, <strong>detente</strong>. Sin copia verificada no se sigue. Esto no es ceremonia: ya perdiste esta base una vez en un redespliegue.</p>
+<p class="why">If the file does not appear or is only a few kilobytes, <strong>stop</strong>. Without a verified backup, you do not continue. This is not ceremony: you have already lost this database once in a redeploy.</p>
 </div>
 </div>
 
 <div class="step">
-<div class="hd"><span class="sn">PASO 1</span><span class="st">Perfilar: ¿hay datos reales que conservar?</span></div>
+<div class="hd"><span class="sn">STEP 1</span><span class="st">Profile: is there real data to keep?</span></div>
 <div class="bd">
 <pre class="code">psql -U unistyles -d unistyles_db -c "select 'users' t,count(*) from users
  union all select 'orders',count(*) from orders
@@ -648,102 +649,102 @@ ls -lh /tmp/unistyles-*.dump</pre>
  union all select 'reviews',count(*) from reviews
  union all select 'product_variants',count(*) from product_variants
  union all select 'products',count(*) from products order by 1"</pre>
-<p class="why">Decide la rama: si todo está en cero menos <code>products</code>, el camino es limpio (paso 2A). Si hay pedidos o clientas reales, hay que migrar con <code>ALTER</code> y conservar (paso 2B).</p>
+<p class="why">This decides the branch: if everything is zero except <code>products</code>, the path is clean (step 2A). If there are real orders or customers, you must migrate with <code>ALTER</code> and preserve them (step 2B).</p>
 </div>
 </div>
 
 <div class="step">
-<div class="hd"><span class="sn">PASO 2A</span><span class="st">Base vacía — recrear con el esquema v2</span></div>
+<div class="hd"><span class="sn">STEP 2A</span><span class="st">Empty database — recreate with schema v2</span></div>
 <div class="bd">
-<pre class="code"><span class="c"># 1. Publicar init.v2.sql a GitHub (hoy solo existe en tu portátil)</span>
-git add database/init.v2.sql && git commit -m "feat(db): esquema v2" && git push
+<pre class="code"><span class="c"># 1. Publish init.v2.sql to GitHub (today it only exists on your laptop)</span>
+git add database/init.v2.sql && git commit -m "feat(db): schema v2" && git push
 
-<span class="c"># 2. En el Terminal de Postgres: borrar SOLO las tablas del backend</span>
-<span class="c">#    Las tablas directus_* y el catálogo NO se tocan.</span>
+<span class="c"># 2. In the Postgres Terminal: drop ONLY the backend tables</span>
+<span class="c">#    The directus_* tables and the catalogue are NOT touched.</span>
 psql -U unistyles -d unistyles_db -c "DROP TABLE IF EXISTS
   whatsapp_messages, settings, newsletter_subscribers, reviews,
   product_variants, coupons, payments, order_items, orders,
   carts, addresses, users CASCADE"
 
-<span class="c"># 3. Crear el esquema nuevo</span>
+<span class="c"># 3. Create the new schema</span>
 wget -qO- https://raw.githubusercontent.com/OfteaHeat1997/Unistyles-Website/master/database/init.v2.sql \
   | psql -U unistyles -d unistyles_db</pre>
-<p class="why">El <code>DROP</code> lista las tablas en orden inverso a sus dependencias y usa <code>CASCADE</code> para las claves foráneas. <strong>No incluye ninguna tabla de Directus</strong> — tus 285 productos no se tocan.</p>
+<p class="why">The <code>DROP</code> lists the tables in reverse dependency order and uses <code>CASCADE</code> for the foreign keys. <strong>It does not include any Directus table</strong> — your 285 products are not touched.</p>
 </div>
 </div>
 
 <div class="step">
-<div class="hd"><span class="sn">PASO 2B</span><span class="st">Con datos — migrar sin perder nada</span></div>
+<div class="hd"><span class="sn">STEP 2B</span><span class="st">With data — migrate without losing anything</span></div>
 <div class="bd">
-<p>Si el paso 1 mostró pedidos reales, el camino es una migración numerada en <code>database/migrations/005_schema_v2.sql</code> con los <code>ALTER</code> equivalentes. Dímelo y te la escribo: son unos veinte enunciados y hay que ordenarlos con cuidado, porque cambiar el tipo de <code>reviews.product_id</code> exige vaciar o convertir las filas existentes primero.</p>
-<p class="why">Nunca se edita <code>init.sql</code> para arreglar una base que ya está en producción. Se escribe una migración nueva. <code>init.sql</code> describe una base recién nacida; las migraciones describen su historia.</p>
+<p>If step 1 showed real orders, the path is a numbered migration in <code>database/migrations/005_schema_v2.sql</code> with the equivalent <code>ALTER</code> statements. Tell me and I'll write it for you: it is about twenty statements and they must be ordered carefully, because changing the type of <code>reviews.product_id</code> requires emptying or converting the existing rows first.</p>
+<p class="why">You never edit <code>init.sql</code> to fix a database that is already in production. You write a new migration. <code>init.sql</code> describes a newborn database; migrations describe its history.</p>
 </div>
 </div>
 
 <div class="step">
-<div class="hd"><span class="sn">PASO 3</span><span class="st">Verificar el esquema</span></div>
+<div class="hd"><span class="sn">STEP 3</span><span class="st">Verify the schema</span></div>
 <div class="bd">
-<pre class="code"><span class="c"># Deben salir 15 tablas propias + las de Directus</span>
+<pre class="code"><span class="c"># There should be 15 of our own tables + the Directus ones</span>
 psql -U unistyles -d unistyles_db -c "\dt"
 
-<span class="c"># El defecto nº1: ahora tiene que decir integer</span>
+<span class="c"># Defect no. 1: it now has to say integer</span>
 psql -U unistyles -d unistyles_db -c "\d reviews" | grep product_id
 
-<span class="c"># Las restricciones que antes no existían</span>
+<span class="c"># The constraints that did not exist before</span>
 psql -U unistyles -d unistyles_db -c "select conname, contype from pg_constraint
   where conrelid = 'orders'::regclass order by contype"</pre>
-<p class="why">Verificar es parte del paso, no un extra. Un esquema que «se aplicó sin errores» no es lo mismo que un esquema correcto.</p>
+<p class="why">Verifying is part of the step, not an extra. A schema that “applied without errors” is not the same as a correct schema.</p>
 </div>
 </div>
 
 <div class="step">
-<div class="hd"><span class="sn">PASO 4</span><span class="st">Limpiar el vocabulario de tallas y colores</span></div>
+<div class="hd"><span class="sn">STEP 4</span><span class="st">Clean up the size and colour vocabulary</span></div>
 <div class="bd">
-<pre class="code"><span class="c"># Normalizar antes de cargar variantes: quitar espacios dobles y unificar</span>
+<pre class="code"><span class="c"># Normalise before loading variants: strip double spaces and unify</span>
 UPDATE ... SET size = regexp_replace(upper(trim(size)), '\s+', '', 'g');
 <span class="c"># 38 B → 38B · 36  B → 36B · 40 D → 40D</span>
 
-<span class="c"># Corregir a mano los que ninguna regla salva:</span>
-<span class="c">#   368C → ? (mirar la prenda física)</span>
+<span class="c"># Fix by hand the ones no rule can rescue:</span>
+<span class="c">#   368C → ? (check the physical garment)</span>
 <span class="c">#   BERDE → VERDE · BEIBE → BEIGE</span>
 <span class="c">#   BEIGE STAMPADO + BEIGE  ESTAMPADO → BEIGE ESTAMPADO</span>
 <span class="c">#   BLACK → NEGRO · DARK RED → ROJO OSCURO</span>
-<span class="c">#   la variante con color vacío: asignarle color o borrarla</span></pre>
-<p class="why">Este paso es manual y es el único que no puedo hacer por ti: hay que mirar la prenda para saber si <code>368C</code> era 36C o 38C. Hazlo una vez, bien, y las tablas <code>sizes</code>/<code>colors</code> impedirán que vuelva a pasar.</p>
+<span class="c">#   the variant with an empty colour: assign it a colour or delete it</span></pre>
+<p class="why">This step is manual and it is the only one I cannot do for you: you have to look at the garment to know whether <code>368C</code> was 36C or 38C. Do it once, properly, and the <code>sizes</code>/<code>colors</code> tables will stop it from happening again.</p>
 </div>
 </div>
 
 <div class="step">
-<div class="hd"><span class="sn">PASO 5</span><span class="st">Cargar las 77 variantes con SKU con significado</span></div>
+<div class="hd"><span class="sn">STEP 5</span><span class="st">Load the 77 variants with meaningful SKUs</span></div>
 <div class="bd">
-<pre class="code"><span class="c"># Las variantes están en seed-data.json y nunca llegaron a la base:</span>
-<span class="c"># /api/variants/product/2 devuelve una lista vacía.</span>
-node deploy/scripts/load-variants.js   <span class="c"># script a escribir en este paso</span>
+<pre class="code"><span class="c"># The variants are in seed-data.json and never made it into the database:</span>
+<span class="c"># /api/variants/product/2 returns an empty list.</span>
+node deploy/scripts/load-variants.js   <span class="c"># script to be written in this step</span>
 
-<span class="c"># SKU nuevo: MARCA-REF-TALLA-COLOR → LEO-011473-38B-BEI</span></pre>
-<p class="why">Sin este paso, los brasieres siguen vendiéndose «a granel»: una única cifra de stock para todas las tallas, que es exactamente el problema que querías resolver.</p>
+<span class="c"># New SKU: BRAND-REF-SIZE-COLOUR → LEO-011473-38B-BEI</span></pre>
+<p class="why">Without this step, bras keep being sold “in bulk”: a single stock figure for all sizes, which is exactly the problem you wanted to solve.</p>
 </div>
 </div>
 
 <div class="step">
-<div class="hd"><span class="sn">PASO 6</span><span class="st">Ajustar el backend al esquema nuevo</span></div>
+<div class="hd"><span class="sn">STEP 6</span><span class="st">Adapt the backend to the new schema</span></div>
 <div class="bd">
-<p>Cambios de código que el esquema v2 exige. Son pequeños y localizados:</p>
+<p>Code changes that schema v2 requires. They are small and localised:</p>
 <ul>
-<li><code>orders.js</code> — descontar stock de la <strong>variante</strong> cuando el artículo tiene variante, y del producto cuando no.</li>
-<li><code>orders.js</code> — insertar una fila en <code>order_status_history</code> en cada cambio de estado.</li>
-<li><code>orders.js</code> — registrar el canje en <code>coupon_redemptions</code> y liberarlo al cancelar.</li>
-<li><code>constants.js</code> del frontend — <code>bank</code> pasa a <code>bank_transfer</code>.</li>
-<li>Quitar la generación de número de pedido con <code>RANDOM()</code>: ahora la hace la secuencia de la base.</li>
+<li><code>orders.js</code> — deduct stock from the <strong>variant</strong> when the item has a variant, and from the product when it does not.</li>
+<li><code>orders.js</code> — insert a row into <code>order_status_history</code> on every status change.</li>
+<li><code>orders.js</code> — record the redemption in <code>coupon_redemptions</code> and release it on cancellation.</li>
+<li>Frontend <code>constants.js</code> — <code>bank</code> becomes <code>bank_transfer</code>.</li>
+<li>Remove order number generation with <code>RANDOM()</code>: the database sequence now does it.</li>
 </ul>
-<p class="why">El orden importa: primero la base, después el código. Al revés, el código escribe contra columnas que todavía no existen.</p>
+<p class="why">The order matters: database first, then code. The other way round, the code writes against columns that don't exist yet.</p>
 </div>
 </div>
 
 <div class="step">
-<div class="hd"><span class="sn">PASO 7</span><span class="st">Probar con las preguntas del negocio</span></div>
+<div class="hd"><span class="sn">STEP 7</span><span class="st">Test with the business questions</span></div>
 <div class="bd">
-<pre class="code"><span class="c">-- Las mismas preguntas de la Parte 3. Ahora tienen que responder.</span>
+<pre class="code"><span class="c">-- The same questions from Part 3. Now they have to answer.</span>
 <span class="k">SELECT</span> v.size, v.color, v.stock_quantity
   <span class="k">FROM</span> product_variants v <span class="k">JOIN</span> products p <span class="k">ON</span> p.id = v.product_id
  <span class="k">WHERE</span> p.ref = 'REF 011473';
@@ -753,52 +754,53 @@ node deploy/scripts/load-variants.js   <span class="c"># script a escribir en es
 
 <span class="k">SELECT</span> status, changed_at <span class="k">FROM</span> order_status_history
  <span class="k">WHERE</span> order_id = '...' <span class="k">ORDER BY</span> changed_at;</pre>
-<p class="why">Esta es la prueba de aceptación de una base de datos: no que las tablas existan, sino que el negocio pueda preguntar lo que necesita.</p>
+<p class="why">This is the acceptance test for a database: not that the tables exist, but that the business can ask what it needs to.</p>
 </div>
 </div>
 
 <div class="step">
-<div class="hd"><span class="sn">PASO 8</span><span class="st">Copias automáticas</span></div>
+<div class="hd"><span class="sn">STEP 8</span><span class="st">Automatic backups</span></div>
 <div class="bd">
-<p>Coolify → <code>unistyles-postgres</code> → <strong>Backups</strong> → programar diaria. Y después, lo que casi nadie hace: <strong>restaurar una copia en una base de prueba</strong> y comprobar que los datos están. Una copia que nunca se ha restaurado no se sabe si sirve.</p>
-<p class="why">Paso final y no opcional. Esta base ya se perdió una vez en un redespliegue.</p>
+<p>Coolify → <code>unistyles-postgres</code> → <strong>Backups</strong> → schedule daily. And then, what almost nobody does: <strong>restore a backup into a test database</strong> and check that the data is there. A backup that has never been restored is one you don't know works.</p>
+<p class="why">Final step, and not optional. This database has already been lost once in a redeploy.</p>
 </div>
 </div>
 </section>
 
 <section id="p8">
-<span class="pnum">PARTE 8</span>
-<h2>Operación: cómo no volver aquí</h2>
+<span class="pnum">PART 8</span>
+<h2>Operations: how not to end up here again</h2>
 
-<h3>Migraciones versionadas</h3>
-<p class="col">Ya tienes la herramienta y no se está usando: <code>database/migrate.js</code> lleva un registro en la tabla <code>schema_migrations</code> y aplica una sola vez cada archivo de <code>database/migrations/</code>. Hay cuatro migraciones escritas y sin aplicar.</p>
+<h3>Versioned migrations</h3>
+<p class="col">You already have the tool and it is not being used: <code>database/migrate.js</code> keeps a record in the <code>schema_migrations</code> table and applies each file in <code>database/migrations/</code> exactly once. There are four migrations written and not applied.</p>
 <pre class="code">database/
-  init.sql            <span class="c">← el esquema de una base recién creada. No se edita jamás</span>
-                      <span class="c">  para arreglar producción.</span>
+  init.sql            <span class="c">← the schema for a freshly created database. Never edited</span>
+                      <span class="c">  to fix production.</span>
   migrations/
-    001_...sql        <span class="c">← cada cambio posterior, numerado, aplicado una vez</span>
-    005_schema_v2.sql <span class="c">← el que falta</span>
+    001_...sql        <span class="c">← every later change, numbered, applied once</span>
+    005_schema_v2.sql <span class="c">← the missing one</span>
   migrate.js          <span class="c">← node database/migrate.js</span></pre>
 
-<h3>Las cinco reglas que mantienen sana una base de cliente</h3>
+<h3>The five rules that keep a client database healthy</h3>
 <ol class="col">
-<li><strong>Una fuente por dato.</strong> Si un dato se puede editar en dos sitios, dentro de tres meses dirán cosas distintas. Hoy tu configuración del negocio vive en tres.</li>
-<li><strong>Las reglas van en la base.</strong> Si el código es el único que las comprueba, no son reglas: son costumbres.</li>
-<li><strong>Nada de texto libre en lo que se filtra.</strong> Talla, color, estado, método de pago: conjunto cerrado, siempre.</li>
-<li><strong>El histórico se congela.</strong> Pedidos, pagos y facturas guardan copia, no referencia.</li>
-<li><strong>Cada cambio es una migración.</strong> Nunca un <code>ALTER</code> suelto escrito en una terminal que nadie vuelve a ver.</li>
+<li><strong>One source per piece of data.</strong> If a piece of data can be edited in two places, in three months they will say different things. Today your business configuration lives in three.</li>
+<li><strong>Rules go in the database.</strong> If the code is the only thing checking them, they are not rules: they are habits.</li>
+<li><strong>No free text in anything you filter on.</strong> Size, colour, status, payment method: a closed set, always.</li>
+<li><strong>History is frozen.</strong> Orders, payments and invoices store a copy, not a reference.</li>
+<li><strong>Every change is a migration.</strong> Never a stray <code>ALTER</code> typed into a terminal that nobody ever looks at again.</li>
 </ol>
 
-<h3>Qué se añade más tarde, sin rediseñar nada</h3>
-<p class="col">Un buen esquema deja crecer sin cirugía. Estas son aditivas y pueden esperar: lista de deseos en tabla en vez de <code>localStorage</code>; tabla de devoluciones cuando dejen de ser excepcionales y por WhatsApp; libro mayor de movimientos de stock cuando «¿por qué este número está mal?» se vuelva frecuente; tabla de roles cuando aparezca un tercer tipo de usuario. Ninguna obliga a tocar lo anterior — esa es justamente la señal de que el modelo está bien planteado.</p>
+<h3>What gets added later, without redesigning anything</h3>
+<p class="col">A good schema lets you grow without surgery. These are additive and can wait: a wishlist in a table instead of <code>localStorage</code>; a returns table when returns stop being exceptional and handled over WhatsApp; a stock movement ledger when “why is this number wrong?” becomes a frequent question; a roles table when a third type of user appears. None of them forces you to touch what came before — and that is precisely the sign that the model is well conceived.</p>
 
 <div class="note">
-<p><b>Lo que ya existe en el repo</b> y conviene leer junto a esto: <code>docs/DATABASE_ARCHITECTURE.md</code> tiene el diccionario completo de las 15 tablas, el DDL comentado, la estrategia de índices y el mapa de cada ruta del backend a sus tablas. <code>database/init.v2.sql</code> es la implementación, lista para ejecutar y todavía sin publicar a GitHub.</p>
+<p><b>What already exists in the repo</b> and is worth reading alongside this: <code>docs/DATABASE_ARCHITECTURE.md</code> has the complete dictionary of the 15 tables, the commented DDL, the indexing strategy and the map of each backend route to its tables. <code>database/init.v2.sql</code> is the implementation, ready to run and not yet published to GitHub.</p>
 </div>
 </section>
 
 <footer class="end">
-<p>Unistyles Curaçao · 19 de septiembre de 2026 · Cifras verificadas contra <code>cms.unistylescuracao.com</code>, <code>api.unistylescuracao.com</code> y el terminal de <code>unistyles-postgres</code> en Coolify.</p>
+<p>Unistyles Curaçao · 19 September 2026 · Figures verified against <code>cms.unistylescuracao.com</code>, <code>api.unistylescuracao.com</code> and the <code>unistyles-postgres</code> terminal in Coolify.</p>
 </footer>
 </main>
 </div>
+</html>

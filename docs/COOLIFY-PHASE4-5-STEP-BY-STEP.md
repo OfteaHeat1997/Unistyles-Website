@@ -1,36 +1,36 @@
-# Coolify — Fase 4 (Backend/API) y Fase 5 (Frontend/Tienda)
+# Coolify — Phase 4 (Backend/API) and Phase 5 (Frontend/Store)
 
-> Continuación de `docs/COOLIFY-SEPARATED-SETUP.md`.
-> Los valores reales (contraseñas, hosts internos) están en
-> **`COOLIFY-SECRETOS-produccion.txt`** (raíz del repo, NO se sube a GitHub).
+> Continuation of `docs/COOLIFY-SEPARATED-SETUP.md`.
+> The real values (passwords, internal hosts) are in
+> **`COOLIFY-SECRETOS-produccion.txt`** (repo root, NOT pushed to GitHub).
 
-## Estado comprobado el 22-ago-2026
+## Status verified on 22 Aug 2026
 
-| Servicio | Recurso en Coolify | Estado real (comprobado desde fuera) |
+| Service | Coolify resource | Actual status (checked from outside) |
 |---|---|---|
-| PostgreSQL | `unistyles-postgres` | ✅ Running (Directus se conecta a él) |
+| PostgreSQL | `unistyles-postgres` | ✅ Running (Directus connects to it) |
 | Redis | `redis-database-dzmrnt3yx4godrkflyvv5rqf` | ✅ Running |
 | Directus / CMS | `unistyles-directus` | ✅ `https://cms.unistylescuracao.com/server/health` → `{"status":"ok"}` |
-| Tienda | ¿`unistyles`? (por identificar) | ⚠️ `https://unistylescuracao.com` → 200 y muestra la tienda, pero hay que confirmar QUÉ recurso la sirve |
-| API / Backend | — | ❌ NO existe. `https://api.unistylescuracao.com` no responde (el DNS sí apunta a 157.173.193.90) |
+| Store | `unistyles`? (to be identified) | ⚠️ `https://unistylescuracao.com` → 200 and shows the store, but we need to confirm WHICH resource serves it |
+| API / Backend | — | ❌ Does NOT exist. `https://api.unistylescuracao.com` does not respond (DNS does point to 157.173.193.90) |
 
-**Conclusión:** falta la Fase 4 (backend) y confirmar/rehacer la Fase 5 (frontend).
+**Conclusion:** Phase 4 (backend) is missing, and Phase 5 (frontend) needs to be confirmed or redone.
 
 ---
 
-## Fase 4 — Backend / API  (`unistyles-backend`)
+## Phase 4 — Backend / API  (`unistyles-backend`)
 
-### 4.1 Crear el recurso
+### 4.1 Create the resource
 
-1. Coolify → proyecto **Unistyles** → entorno **production**.
+1. Coolify → project **Unistyles** → environment **production**.
 2. **+ New** → **Application** → **Public Repository**.
 3. Repository URL: `https://github.com/OfteaHeat1997/Unistyles-Website`
    · Branch: `master` → **Check repository** → **Continue**.
 4. Build Pack: **Dockerfile**.
 
-### 4.2 Configuración (pestaña *Configuration → General*)
+### 4.2 Configuration (*Configuration → General* tab)
 
-| Campo | Valor exacto |
+| Field | Exact value |
 |---|---|
 | Name | `unistyles-backend` |
 | Base Directory | `/services/backend` |
@@ -38,20 +38,20 @@
 | Ports Exposes | `3000` |
 | Domains | `https://api.unistylescuracao.com` |
 
-Guardar (**Save**) antes de seguir.
+Click **Save** before continuing.
 
-### 4.3 Variables de entorno
+### 4.3 Environment variables
 
-*Configuration → Environment Variables* → **Developer view** (pegar en bloque) →
-copiar el bloque de la sección **FASE 4 — BACKEND** de
+*Configuration → Environment Variables* → **Developer view** (paste as a block) →
+copy the block from the **FASE 4 — BACKEND** section of
 `COOLIFY-SECRETOS-produccion.txt` → **Save**.
 
-Obligatorias para que arranque (si falta una, el contenedor se apaga solo):
-`DATABASE_URL`, `REDIS_URL`, `JWT_SECRET` (mínimo 32 caracteres).
+Required for startup (if any is missing, the container shuts itself down):
+`DATABASE_URL`, `REDIS_URL`, `JWT_SECRET` (at least 32 characters).
 
-### 4.4 Desplegar
+### 4.4 Deploy
 
-**Deploy** → mirar *Logs*. Señal de éxito:
+**Deploy** → watch the *Logs*. Success signal:
 
 ```
 UNISTYLES E-COMMERCE API SERVER
@@ -59,7 +59,7 @@ Status:  Running
 Port:    3000
 ```
 
-### 4.5 Comprobar
+### 4.5 Verify
 
 ```bash
 curl https://api.unistylescuracao.com/health
@@ -68,50 +68,50 @@ curl https://api.unistylescuracao.com/health
 
 ---
 
-## Fase 4-bis — Crear las tablas del backend (¡IMPORTANTE!)
+## Phase 4-bis — Create the backend tables (IMPORTANT!)
 
-Con la base de datos gestionada de Coolify, `database/init.sql` **ya no se
-ejecuta solo** (antes lo hacía el docker-compose). Sin esto, `/health` responde
-bien pero registrarse, carrito, pedidos y pagos fallan.
+With Coolify's managed database, `database/init.sql` **no longer runs
+automatically** (docker-compose used to do it). Without this step, `/health` responds
+fine but sign-up, cart, orders and payments fail.
 
-1. Coolify → recurso **`unistyles-postgres`** → botón **Terminal**.
-2. Comprobar qué tablas hay:
+1. Coolify → resource **`unistyles-postgres`** → **Terminal** button.
+2. Check which tables exist:
 
 ```bash
 psql -U unistyles -d unistyles_db -c '\dt'
 ```
 
-- Si ya aparecen `users`, `orders`, `payments`, `carts`… → **no hagas nada más**.
-- Si sólo aparecen tablas que empiezan por `directus_` → ejecutar:
+- If `users`, `orders`, `payments`, `carts`… already appear → **do nothing else**.
+- If only tables starting with `directus_` appear → run:
 
 ```bash
 wget -qO- https://raw.githubusercontent.com/OfteaHeat1997/Unistyles-Website/master/database/init.sql | psql -U unistyles -d unistyles_db
 ```
 
-3. Volver a comprobar con el `\dt` del punto 2: deben salir 12 tablas nuevas
+3. Check again with the `\dt` from step 2: 12 new tables should appear
    (`users`, `addresses`, `orders`, `order_items`, `payments`, `carts`,
    `reviews`, `newsletter_subscribers`, `settings`, `coupons`,
    `product_variants`, `whatsapp_messages`).
 
 ---
 
-## Fase 5 — Frontend / Tienda  (`unistyles-frontend`)
+## Phase 5 — Frontend / Store  (`unistyles-frontend`)
 
-**Antes de crear nada:** averiguar qué recurso sirve hoy `unistylescuracao.com`
-(en el panel, el recurso llamado `unistyles`). Dos caminos:
+**Before creating anything:** find out which resource currently serves `unistylescuracao.com`
+(in the panel, the resource named `unistyles`). Two paths:
 
-- **Si ese recurso ya es una Application desde Git con Base Directory
-  `/services/frontend`** → sólo hay que renombrarlo a `unistyles-frontend`,
-  revisar las 3 variables de build y volver a desplegar (paso 5.2 y 5.3).
-- **Si es el bloque viejo (Docker Compose 5-en-1)** → crear el recurso nuevo
-  como abajo y apagar el viejo al final (Fase 8).
+- **If that resource is already a Git-based Application with Base Directory
+  `/services/frontend`** → just rename it to `unistyles-frontend`,
+  review the 3 build variables and redeploy (steps 5.2 and 5.3).
+- **If it is the old block (5-in-1 Docker Compose)** → create the new resource
+  as below and shut down the old one at the end (Phase 8).
 
-### 5.1 Crear el recurso
+### 5.1 Create the resource
 
-**+ New** → **Application** → **Public Repository** → mismo repo y branch
+**+ New** → **Application** → **Public Repository** → same repo and branch
 `master` → Build Pack **Dockerfile**.
 
-| Campo | Valor exacto |
+| Field | Exact value |
 |---|---|
 | Name | `unistyles-frontend` |
 | Base Directory | `/services/frontend` |
@@ -119,10 +119,10 @@ wget -qO- https://raw.githubusercontent.com/OfteaHeat1997/Unistyles-Website/mast
 | Ports Exposes | `80` |
 | Domains | `https://unistylescuracao.com` |
 
-### 5.2 Variables — ¡de BUILD, no normales!
+### 5.2 Variables — BUILD variables, not regular ones!
 
-*Environment Variables* → añadir estas 3 marcando la casilla
-**“Is Build Variable?”** en cada una:
+*Environment Variables* → add these 3, ticking the
+**“Is Build Variable?”** checkbox on each one:
 
 ```
 VITE_API_URL=https://api.unistylescuracao.com
@@ -130,19 +130,19 @@ VITE_DIRECTUS_URL=https://cms.unistylescuracao.com
 VITE_USE_CMS=true
 ```
 
-Vite las “hornea” dentro del paquete al construir. Si no están marcadas como
-build variables, la tienda carga pero se queda girando.
+Vite “bakes” them into the bundle at build time. If they are not marked as
+build variables, the store loads but keeps spinning.
 
-### 5.3 Desplegar y comprobar
+### 5.3 Deploy and verify
 
-- `https://unistylescuracao.com` → la tienda carga y muestra productos.
-- Abrir el carrito / iniciar sesión → ya no debe dar error de red
-  (eso es lo que arregla la Fase 4).
+- `https://unistylescuracao.com` → the store loads and shows products.
+- Open the cart / log in → there should no longer be a network error
+  (that is what Phase 4 fixes).
 
 ---
 
-## Después: Fases 6, 7 y 8
+## Next: Phases 6, 7 and 8
 
-- **Fase 6** — recuperar los 285 productos (`bootstrap.js` + `migrate-strapi-to-directus.js`).
-- **Fase 7** — probar las 3 URLs.
-- **Fase 8** — borrar el recurso viejo de Docker Compose y el `postgresql-database` huérfano.
+- **Phase 6** — restore the 285 products (`bootstrap.js` + `migrate-strapi-to-directus.js`).
+- **Phase 7** — test the 3 URLs.
+- **Phase 8** — delete the old Docker Compose resource and the orphaned `postgresql-database`.

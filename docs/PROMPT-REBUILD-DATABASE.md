@@ -1,161 +1,161 @@
-# Prompt: reconstruir la base de datos de Unistyles desde cero
+# Prompt: rebuild the Unistyles database from scratch
 
-> Para pegar en la IA del developer que va a rehacer la base de datos.
-> Escrito el 25-oct-2026. Repo: github.com/OfteaHeat1997/Unistyles-Website (rama `master`).
-> Copia todo lo que hay debajo de la línea.
+> To paste into the AI of the developer who will rebuild the database.
+> Written on 25 Oct 2026. Repo: github.com/OfteaHeat1997/Unistyles-Website (branch `master`).
+> Copy everything below the line.
 
 ---
 
-## Rol
+## Role
 
-Eres un software engineer senior especializado en modelado de datos, PostgreSQL y despliegue con Docker.
-Vas a ayudarme a **rediseñar e implementar desde cero la base de datos** de una tienda online real (no es un
-proyecto académico). Trabaja con el código real del repositorio. Si algo no lo puedes confirmar en el código,
-dilo explícitamente en lugar de inventarlo.
+You are a senior software engineer specialising in data modelling, PostgreSQL and Docker deployment.
+You will help me **redesign and implement the database from scratch** for a real online store (this is not an
+academic project). Work with the actual code in the repository. If you cannot confirm something in the code,
+say so explicitly instead of making it up.
 
-## 1. El negocio
+## 1. The business
 
-Unistyles Curaçao: tienda online de una dueña en Curaçao. Vende 9 categorías: bras, panties, shapewear,
-colonias (perfumes), cremas, bloqueador, desodorantes, limpieza facial y accesorios/joyería.
-Inventario actual: **285 productos**. Solo los bras tienen variantes (talla + color, 77 SKUs).
-Moneda: XCG/ANG. Pagos con **Sentoo** (pasarela local). Avisos por **WhatsApp** y email. Entregas por zonas de la isla.
+Unistyles Curaçao: an online store run by an owner in Curaçao. It sells 9 categories: bras, panties, shapewear,
+colognes (perfumes), creams, sunscreen, deodorants, facial cleansing and accessories/jewellery.
+Current inventory: **285 products**. Only bras have variants (size + colour, 77 SKUs).
+Currency: XCG/ANG. Payments via **Sentoo** (local payment gateway). Notifications via **WhatsApp** and email. Delivery by island zones.
 
-Las fuentes de verdad del inventario están **fuera del repo**: documentos Word de catálogo y fotos en Google Drive.
-Te los voy a pasar aparte. El repo tiene una versión derivada en `database/seed-data.json`.
+The sources of truth for the inventory live **outside the repo**: Word catalogue documents and photos on Google Drive.
+I will send them to you separately. The repo has a derived version in `database/seed-data.json`.
 
-## 2. Stack actual
+## 2. Current stack
 
-- **Frontend**: React + Vite, servido por nginx (`services/frontend`). Usa React Query.
-- **Backend**: Node/Express (`services/backend`). Rutas en `src/routes/*.js`; la carpeta `controllers/` está vacía.
-- **CMS**: Directus 11 (`services/directus/bootstrap.js` crea sus colecciones). **Quédate en Directus 11, no 12.**
-- **Base de datos**: PostgreSQL **16** (no 18, por compatibilidad con Directus 11). Una sola BD `unistyles_db`,
-  usuario `unistyles`, compartida entre Directus y el backend.
-- **Redis**: sesiones y caché.
-- **Infra**: un VPS en Contabo (Ubuntu 24.04, 6 cores, 11,7 GB RAM) con **Coolify v4.3.x** instalado.
-  Cloudflare delante del dominio.
+- **Frontend**: React + Vite, served by nginx (`services/frontend`). Uses React Query.
+- **Backend**: Node/Express (`services/backend`). Routes in `src/routes/*.js`; the `controllers/` folder is empty.
+- **CMS**: Directus 11 (`services/directus/bootstrap.js` creates its collections). **Stay on Directus 11, not 12.**
+- **Database**: PostgreSQL **16** (not 18, for compatibility with Directus 11). A single DB `unistyles_db`,
+  user `unistyles`, shared between Directus and the backend.
+- **Redis**: sessions and cache.
+- **Infra**: a Contabo VPS (Ubuntu 24.04, 6 cores, 11.7 GB RAM) with **Coolify v4.3.x** installed.
+  Cloudflare in front of the domain.
 
-## 3. Despliegue en Coolify: estado actual
+## 3. Coolify deployment: current status
 
-Arquitectura elegida (“Plan A”): **cada servicio es un recurso separado de Coolify**, sin docker-compose.
-El motivo es que un redeploy del compose borró el volumen de Postgres y se perdió la BD.
-Si cae un servicio, los demás siguen funcionando.
+Chosen architecture (“Plan A”): **each service is a separate Coolify resource**, with no docker-compose.
+The reason is that a redeploy of the compose stack wiped the Postgres volume and the DB was lost.
+If one service goes down, the others keep running.
 
-| Recurso | Tipo | Estado | Dominio |
+| Resource | Type | Status | Domain |
 |---|---|---|---|
-| `unistyles-postgres` | Database (postgres:16-alpine, backups automáticos) | Running | interno |
-| redis (`redis-database-dzmrnt…`) | Database | Running | interno |
-| `unistyles-directus` | App, imagen Docker, puerto 8055, volumen `/directus/uploads` | Running | cms.unistylescuracao.com |
-| backend (`unistyles--website:main-pl7f…`) | App, Dockerfile, base dir `/services/backend`, puerto 3000 | Running | api.unistylescuracao.com |
-| frontend | App, Dockerfile, base dir `/services/frontend` | Pendiente de confirmar qué recurso sirve el dominio raíz | unistylescuracao.com |
+| `unistyles-postgres` | Database (postgres:16-alpine, automatic backups) | Running | internal |
+| redis (`redis-database-dzmrnt…`) | Database | Running | internal |
+| `unistyles-directus` | App, Docker image, port 8055, volume `/directus/uploads` | Running | cms.unistylescuracao.com |
+| backend (`unistyles--website:main-pl7f…`) | App, Dockerfile, base dir `/services/backend`, port 3000 | Running | api.unistylescuracao.com |
+| frontend | App, Dockerfile, base dir `/services/frontend` | Pending: confirm which resource serves the root domain | unistylescuracao.com |
 
-Hay recursos sobrantes que se borrarán cuando todo esté en verde: el compose viejo (`unistyles--website:main-t8jw…`, Exited),
-un app `unistyles` sin identificar, un `Frontend/service` y un `Unistyles n8n`.
+There are leftover resources that will be deleted once everything is green: the old compose (`unistyles--website:main-t8jw…`, Exited),
+an unidentified `unistyles` app, a `Frontend/service` and a `Unistyles n8n`.
 
-Fases de despliegue: 1 Postgres ✅ · 2 Redis ✅ · 3 Directus ✅ · 4 backend ✅ · 4-bis tablas ✅ (con `init.sql` **v1**) ·
-**5 frontend ⏳ · 6 cargar catálogo ⏳ (a medias) · 7 verificación · 8 borrar recursos viejos**.
+Deployment phases: 1 Postgres ✅ · 2 Redis ✅ · 3 Directus ✅ · 4 backend ✅ · 4-bis tables ✅ (with `init.sql` **v1**) ·
+**5 frontend ⏳ · 6 load catalogue ⏳ (half done) · 7 verification · 8 delete old resources**.
 
-Gotchas de Coolify ya confirmados:
-- Una BD gestionada **no ejecuta** `docker-entrypoint-initdb.d`. El esquema se aplica a mano con `psql` desde el Terminal del recurso.
-- En Coolify 4.3.10+ el campo Branch queda bloqueado en `main` al crear el recurso; hay que cambiarlo a `master` después en Git Source.
-- Dominio con puerto: `api.unistylescuracao.com:3000` (la sintaxis de Coolify para enrutar al puerto del contenedor).
-- Variables de entorno de build del frontend: `VITE_API_URL`, `VITE_DIRECTUS_URL`, `VITE_USE_CMS`.
-- Los secretos **no** están en el repo (es público). Te los paso aparte. Nunca los escribas en ningún archivo versionado.
+Coolify gotchas already confirmed:
+- A managed DB **does not run** `docker-entrypoint-initdb.d`. The schema is applied manually with `psql` from the resource's Terminal.
+- In Coolify 4.3.10+ the Branch field is locked to `main` when creating the resource; you have to change it to `master` afterwards under Git Source.
+- Domain with port: `api.unistylescuracao.com:3000` (Coolify's syntax for routing to the container port).
+- Frontend build environment variables: `VITE_API_URL`, `VITE_DIRECTUS_URL`, `VITE_USE_CMS`.
+- Secrets are **not** in the repo (it is public). I will send them separately. Never write them into any versioned file.
 
-Documentación existente en el repo: `docs/COOLIFY-SEPARATED-SETUP.md`, `docs/COOLIFY-FASE4-5-PASO-A-PASO.md`,
-`deploy/separated/*.env.example`, `docs/DATABASE_ARCHITECTURE.md`, `docs/research/05-base-de-datos.html`.
+Existing documentation in the repo: `docs/COOLIFY-SEPARATED-SETUP.md`, `docs/COOLIFY-PHASE4-5-STEP-BY-STEP.md`,
+`deploy/separated/*.env.example`, `docs/DATABASE_ARCHITECTURE.md`, `docs/research/05-database.html`.
 
-## 4. Base de datos actual: por qué hay que rehacerla
+## 4. Current database: why it needs to be rebuilt
 
-Hoy hay **dos dueños de datos en la misma BD**:
-- **Directus** es dueño del catálogo: `products, categories, brands, pages, customers, business_settings, homepage, directus_files`.
-- **SQL propio** es dueño del comercio: `users, addresses, carts, orders, order_items, payments, coupons,
-  product_variants, reviews, newsletter_subscribers, settings, whatsapp_messages` (+ en v2: `delivery_zones,
+Today there are **two data owners in the same DB**:
+- **Directus** owns the catalogue: `products, categories, brands, pages, customers, business_settings, homepage, directus_files`.
+- **Custom SQL** owns commerce: `users, addresses, carts, orders, order_items, payments, coupons,
+  product_variants, reviews, newsletter_subscribers, settings, whatsapp_messages` (+ in v2: `delivery_zones,
   order_status_history, coupon_redemptions`).
 
-Defectos verificados:
-1. **Dos esquemas**: `database/init.sql` (v1, el que está aplicado en producción) y `database/init.v2.sql`
-   (v2, mejor: CHECK constraints, precios congelados en `order_items`, FKs hacia Directus añadidas al final con guardas,
-   idempotente). v2 usa `IF NOT EXISTS`, así que **no corrige tablas ya creadas por v1**.
-2. **`reviews.product_id` es UUID en v1**, pero los productos de Directus tienen id entero → `GET /api/reviews/product/:id` da 500.
-3. **La columna `users.role` no existe**, pero `routes/auth.js` (~l.295) hace `SELECT … role …` y `pages/Admin.jsx`
-   comprueba `user.role === 'admin'`. La tabla tiene `is_admin BOOLEAN`, que es lo que usa `middleware/auth.js`.
-   Resultado: `/api/auth/me` falla y el admin es inaccesible.
-4. **Variantes y stock duplicados**: `products.variants` es un campo **JSON** en Directus y además existe la tabla
-   `product_variants`, que nadie sincroniza. `products.stock_quantity` e `in_stock` también son independientes entre sí.
-5. **Talla y color son texto libre**: hay 24 cadenas de talla para unas 10 tallas reales (`38B`, `38 B`, `38  B`, typo `368C`, S/M/L mezclado con tallas de bra)
-   y colores con typos y duplicados (`BERDE`, `BEIBE`, `NEGRO` y `BLACK`, `BEIGE STAMPADO` y `BEIGE  ESTAMPADO`).
-6. **Catálogo duplicado en 4 sitios**: Directus, `frontend/src/config.js`, `frontend/src/data/productData.js`, `database/seed-data.json`.
-7. **Migraciones con número repetido**: `001_add_coupons_and_variants.sql` y `001_add_whatsapp_messages.sql`.
-8. **Cero tests** en todo el proyecto.
+Verified defects:
+1. **Two schemas**: `database/init.sql` (v1, the one applied in production) and `database/init.v2.sql`
+   (v2, better: CHECK constraints, prices frozen in `order_items`, FKs to Directus added at the end with guards,
+   idempotent). v2 uses `IF NOT EXISTS`, so it **does not fix tables already created by v1**.
+2. **`reviews.product_id` is a UUID in v1**, but Directus products have an integer id → `GET /api/reviews/product/:id` returns 500.
+3. **The `users.role` column does not exist**, but `routes/auth.js` (~l.295) does `SELECT … role …` and `pages/Admin.jsx`
+   checks `user.role === 'admin'`. The table has `is_admin BOOLEAN`, which is what `middleware/auth.js` uses.
+   Result: `/api/auth/me` fails and the admin area is inaccessible.
+4. **Duplicated variants and stock**: `products.variants` is a **JSON** field in Directus and there is also a
+   `product_variants` table that nobody syncs. `products.stock_quantity` and `in_stock` are also independent of each other.
+5. **Size and colour are free text**: there are 24 size strings for about 10 real sizes (`38B`, `38 B`, `38  B`, typo `368C`, S/M/L mixed with bra sizes)
+   and colours with typos and duplicates (`BERDE`, `BEIBE`, `NEGRO` and `BLACK`, `BEIGE STAMPADO` and `BEIGE  ESTAMPADO`).
+6. **Catalogue duplicated in 4 places**: Directus, `frontend/src/config.js`, `frontend/src/data/productData.js`, `database/seed-data.json`.
+7. **Migrations with a repeated number**: `001_add_coupons_and_variants.sql` and `001_add_whatsapp_messages.sql`.
+8. **Zero tests** across the whole project.
 
-## 5. Por qué el inventario sale mal en la web (verificado en producción el 25-oct-2026)
+## 5. Why the inventory displays incorrectly on the website (verified in production on 25 Oct 2026)
 
-Los datos en Directus cuadran con el seed (285 productos, conteos por categoría correctos). Los fallos están en cómo
-se modelaron y cómo se consultan:
+The data in Directus matches the seed (285 products, correct counts per category). The failures are in how
+it was modelled and how it is queried:
 
-- **La página de Perfumes sale vacía**: `pages/Perfume.jsx` pide la categoría `'perfume'`, pero el slug real es `colonias`.
-  `?filter[category_id][slug][_eq]=perfume` → 0 resultados. `colonias` → 133.
-- **Faltan productos en las categorías**: `fetchProducts` tiene `limit = 25` por defecto y las páginas no paginan.
-  De 33 bras se ven 25, y de 133 colonias también 25.
-- **El listado no trae stock ni variantes**: `PRODUCT_LIST_FIELDS` en `services/directusService.js` no incluye
-  `stock_quantity` ni `variants`, así que la cuadrícula no puede mostrar tallas, colores ni agotados.
-- **Stock incoherente**: 49 productos tienen `stock_quantity = 0` pero `in_stock = true`.
-- **Filtros por género vacíos**: las 133 colonias tienen `gender = 'unisex'`, así que los filtros mujer/hombre no devuelven nada.
-- **Imágenes**: los 285 productos tienen `image = null` (no hay ninguna imagen subida a Directus). Todo depende de
-  `legacy_image`, una ruta estática servida por el frontend (`/images/...`). De las 270 rutas distintas,
-  **77 no cargan en producción** (no devuelven imagen), y un producto no tiene ninguna.
-- **Nombres generados mal**: p. ej. `Leonisa BraESTAMPADOC` o `Leonisa BraSTAMPADO` (concatenación sin espacio en el script de importación).
-  Hay 16 nombres duplicados.
+- **The Perfumes page is empty**: `pages/Perfume.jsx` requests the category `'perfume'`, but the real slug is `colonias`.
+  `?filter[category_id][slug][_eq]=perfume` → 0 results. `colonias` → 133.
+- **Products are missing from categories**: `fetchProducts` has `limit = 25` by default and the pages do not paginate.
+  Of 33 bras only 25 are shown, and of 133 colognes also 25.
+- **The listing does not fetch stock or variants**: `PRODUCT_LIST_FIELDS` in `services/directusService.js` does not include
+  `stock_quantity` or `variants`, so the grid cannot show sizes, colours or out-of-stock items.
+- **Inconsistent stock**: 49 products have `stock_quantity = 0` but `in_stock = true`.
+- **Empty gender filters**: all 133 colognes have `gender = 'unisex'`, so the women/men filters return nothing.
+- **Images**: all 285 products have `image = null` (no image has been uploaded to Directus). Everything depends on
+  `legacy_image`, a static path served by the frontend (`/images/...`). Of the 270 distinct paths,
+  **77 do not load in production** (they return no image), and one product has none at all.
+- **Badly generated names**: e.g. `Leonisa BraESTAMPADOC` or `Leonisa BraSTAMPADO` (concatenation without a space in the import script).
+  There are 16 duplicate names.
 
-## 6. Lo que te pido
+## 6. What I am asking you to do
 
-### Paso 1: entender (no escribas código todavía)
-Lee primero: `database/init.sql`, `database/init.v2.sql`, `database/migrations/*`, `services/directus/bootstrap.js`,
+### Step 1: understand (do not write code yet)
+First read: `database/init.sql`, `database/init.v2.sql`, `database/migrations/*`, `services/directus/bootstrap.js`,
 `services/backend/src/routes/*.js`, `services/backend/src/middleware/auth.js`, `services/frontend/src/services/directusService.js`,
-`services/frontend/src/hooks/useProducts.js`, `database/seed-data.json` y `deploy/scripts/migrate-strapi-to-directus.js`.
-Después dame un resumen de qué tabla o colección usa cada ruta del backend y cada página del frontend.
+`services/frontend/src/hooks/useProducts.js`, `database/seed-data.json` and `deploy/scripts/migrate-strapi-to-directus.js`.
+Then give me a summary of which table or collection each backend route and each frontend page uses.
 
-### Paso 2: decisiones de arquitectura (dame tu recomendación y su porqué)
-- **¿Quién es el dueño del catálogo?** Opción A: Directus (el panel de la dueña para editar productos).
-  Opción B: tablas SQL propias, con Directus solo como panel sobre ellas. Debe existir **una sola fuente de verdad**.
-- **Variantes como tabla, no JSON**: `product_variants` con SKU único, stock por variante y precio por variante,
-  y con FK real a `products`.
-- **Vocabularios controlados**: tablas `sizes` y `colors` (o el equivalente en Directus) con FK, para que no se repitan los typos.
-- **Stock**: una sola columna y `in_stock` derivado, no almacenado aparte.
-- **Roles**: `is_admin` o `role`. Elige una y alinea backend + frontend.
-- **Imágenes**: subirlas a Directus (`directus_files`) o servirlas estáticas. Ten en cuenta que son ~900 fotos originales (1,5 GB)
-  que conviene optimizar antes.
+### Step 2: architecture decisions (give me your recommendation and why)
+- **Who owns the catalogue?** Option A: Directus (the owner's panel for editing products).
+  Option B: custom SQL tables, with Directus only as a panel on top of them. There must be **a single source of truth**.
+- **Variants as a table, not JSON**: `product_variants` with a unique SKU, per-variant stock and per-variant price,
+  and a real FK to `products`.
+- **Controlled vocabularies**: `sizes` and `colors` tables (or the Directus equivalent) with FKs, so typos are not repeated.
+- **Stock**: a single column, with `in_stock` derived rather than stored separately.
+- **Roles**: `is_admin` or `role`. Pick one and align backend + frontend.
+- **Images**: upload them to Directus (`directus_files`) or serve them statically. Bear in mind there are ~900 original photos (1.5 GB)
+  that should be optimised first.
 
-### Paso 3: diagramas (Mermaid, que se vean en GitHub)
-1. **ERD completo** del esquema nuevo (`erDiagram`): PK, FK y cardinalidades, y las tablas de Directus marcadas como tales.
-2. **Flowchart del flujo de datos del inventario** (`flowchart TD`): Word/Drive → limpieza/normalización → seed →
-   carga a la BD → Directus → API → página de la tienda.
-3. **Flowchart de despliegue en Coolify** (`flowchart LR`): Cloudflare → los 5 recursos → qué habla con qué y por qué puerto.
-4. **Secuencia del checkout** (`sequenceDiagram`): carrito → cupón → zona de entrega → pedido → Sentoo → webhook →
-   cambio de estado → WhatsApp/email, con los casos de fallo.
-5. **Diagramas de estado** (`stateDiagram-v2`) de `orders.status` y `payments.status` con los valores reales.
-6. **Flowchart del procedimiento de reconstrucción** (Paso 5).
+### Step 3: diagrams (Mermaid, so they render on GitHub)
+1. **Full ERD** of the new schema (`erDiagram`): PKs, FKs and cardinalities, with Directus tables marked as such.
+2. **Flowchart of the inventory data flow** (`flowchart TD`): Word/Drive → cleaning/normalisation → seed →
+   DB load → Directus → API → store page.
+3. **Coolify deployment flowchart** (`flowchart LR`): Cloudflare → the 5 resources → what talks to what and on which port.
+4. **Checkout sequence** (`sequenceDiagram`): cart → coupon → delivery zone → order → Sentoo → webhook →
+   status change → WhatsApp/email, including failure cases.
+5. **State diagrams** (`stateDiagram-v2`) for `orders.status` and `payments.status` with the real values.
+6. **Flowchart of the rebuild procedure** (Step 5).
 
-### Paso 4: implementación
-- Un **único** `database/schema.sql` idempotente (o migraciones numeradas sin repetir, con una herramienta real:
-  node-pg-migrate, Knex o la que recomiendes) que sustituya a `init.sql` e `init.v2.sql`.
-- Un **script de importación** reproducible que lea los catálogos limpios y cargue el inventario normalizando tallas,
-  colores y nombres. Que valide e informe de los errores en lugar de cargar basura.
-- Ajustes en el backend y el frontend que dependan del esquema: `role`/`is_admin`, `reviews.product_id`, slug de perfumes,
-  paginación, campos del listado y stock.
-- **Tests**: como mínimo, pruebas del esquema (constraints, FKs) y del import (los conteos por categoría coinciden con la fuente).
+### Step 4: implementation
+- A **single** idempotent `database/schema.sql` (or numbered migrations with no duplicates, using a real tool:
+  node-pg-migrate, Knex or whichever you recommend) that replaces `init.sql` and `init.v2.sql`.
+- A reproducible **import script** that reads the cleaned catalogues and loads the inventory, normalising sizes,
+  colours and names. It should validate and report errors instead of loading garbage.
+- Backend and frontend changes that depend on the schema: `role`/`is_admin`, `reviews.product_id`, perfumes slug,
+  pagination, listing fields and stock.
+- **Tests**: at a minimum, schema tests (constraints, FKs) and import tests (per-category counts match the source).
 
-### Paso 5: plan para aplicarlo en Coolify (sin perder datos)
-- Backup primero: `pg_dump` desde el Terminal de `unistyles-postgres` y descarga del dump.
-- Hoy no hay pedidos ni clientes reales, así que se puede hacer un **drop y recreación limpia** de las tablas del backend.
-  Confírmalo antes consultando `SELECT count(*)` en `users` y `orders`.
-- Orden exacto de comandos: esquema → bootstrap de Directus → FKs → import → verificación.
-- Checklist de verificación con URLs reales: `https://api.unistylescuracao.com/health`,
-  `https://cms.unistylescuracao.com/items/products?aggregate[count]=*`, y que cada página de categoría muestre su total real.
+### Step 5: plan for applying it in Coolify (without losing data)
+- Backup first: `pg_dump` from the `unistyles-postgres` Terminal, and download the dump.
+- There are currently no real orders or customers, so a **clean drop and recreate** of the backend tables is possible.
+  Confirm this first by running `SELECT count(*)` on `users` and `orders`.
+- Exact order of commands: schema → Directus bootstrap → FKs → import → verification.
+- Verification checklist with real URLs: `https://api.unistylescuracao.com/health`,
+  `https://cms.unistylescuracao.com/items/products?aggregate[count]=*`, and that each category page shows its real total.
 
-## 7. Reglas
-- Nada destructivo en producción sin backup verificado y sin que yo lo confirme.
-- Ningún secreto en archivos del repo. El repo es **público**.
-- PostgreSQL 16 y Directus 11. No actualizar versiones durante este trabajo.
-- Cita el archivo (y la línea) de cada afirmación sobre el código actual.
-- Si algo está a medias o no está claro, escribe **“No implementado / no claro:”** en vez de suponer.
+## 7. Rules
+- Nothing destructive in production without a verified backup and without my confirmation.
+- No secrets in repo files. The repo is **public**.
+- PostgreSQL 16 and Directus 11. Do not upgrade versions during this work.
+- Cite the file (and line) for every claim about the current code.
+- If something is half done or unclear, write **“Not implemented / unclear:”** instead of assuming.

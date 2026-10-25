@@ -1,4 +1,5 @@
-<title>Requisitos Unistyles</title>
+<html lang="en">
+<title>Unistyles Requirements</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
 <style>
 :root{
@@ -114,464 +115,465 @@ footer.end{border-top:2px solid var(--ink);margin-top:56px;padding:24px 0 0;font
 
 <div class="wrap">
 <nav class="toc">
-  <div class="toc-h">Contenido</div>
-  <a href="#hallazgo"><b>!</b><span>El hallazgo</span></a>
-  <a href="#p1"><b>1</b><span>Actores</span></a>
-  <a href="#p2"><b>2</b><span>Glosario</span></a>
-  <a href="#p3"><b>3</b><span>Reglas de negocio</span></a>
-  <a href="#p4"><b>4</b><span>Requisitos</span></a>
-  <a href="#p5"><b>5</b><span>No funcionales</span></a>
+  <div class="toc-h">Contents</div>
+  <a href="#hallazgo"><b>!</b><span>The finding</span></a>
+  <a href="#p1"><b>1</b><span>Actors</span></a>
+  <a href="#p2"><b>2</b><span>Glossary</span></a>
+  <a href="#p3"><b>3</b><span>Business rules</span></a>
+  <a href="#p4"><b>4</b><span>Requirements</span></a>
+  <a href="#p5"><b>5</b><span>Non-functional</span></a>
   <a href="#p6"><b>6</b><span>User stories</span></a>
-  <a href="#p7"><b>7</b><span>Trazabilidad</span></a>
-  <a href="#p8"><b>8</b><span>La serie</span></a>
+  <a href="#p7"><b>7</b><span>Traceability</span></a>
+  <a href="#p8"><b>8</b><span>The series</span></a>
 </nav>
 
 <main>
 <header class="top">
-  <p class="eyebrow">Unistyles Curaçao · Research 1 de 6</p>
-  <h1>Requisitos, reglas y user stories del sistema completo</h1>
-  <p class="lede col">Qué debe hacer la tienda, quién lo necesita, qué regla lo gobierna y qué línea de código lo implementa — verificado contra el repositorio y contra producción, no contra la memoria.</p>
+  <p class="eyebrow">Unistyles Curaçao · Research 1 of 6</p>
+  <h1>Requirements, rules and user stories for the whole system</h1>
+  <p class="lede col">What the shop must do, who needs it, which rule governs it and which line of code implements it — verified against the repository and against production, not against memory.</p>
   <div class="meta">
-    <span>19 sep 2026</span>
-    <span>28 páginas · 71 endpoints · 19 tablas</span>
-    <span>Base: auditoría de código + pruebas en vivo</span>
+    <span>19 Sep 2026</span>
+    <span>28 pages · 71 endpoints · 19 tables</span>
+    <span>Basis: code audit + live testing</span>
   </div>
 </header>
 
 <section id="hallazgo">
-<span class="pnum">ANTES DE EMPEZAR</span>
-<h2>El hallazgo que reordena la lista de prioridades</h2>
-<p class="col">Esta investigación encontró, en su primera hora, un defecto que cambia el estado real del proyecto. Va primero porque ninguna otra prioridad tiene sentido hasta que se arregle.</p>
+<span class="pnum">BEFORE WE START</span>
+<h2>The finding that reorders the priority list</h2>
+<p class="col">Within its first hour, this research found a defect that changes the real state of the project. It comes first because no other priority makes sense until it is fixed.</p>
 
-<p class="col">El frontend tiene <strong>dos clientes de API</strong>. Uno correcto y uno roto, y el correcto no lo usa nadie.</p>
+<p class="col">The frontend has <strong>two API clients</strong>. One correct and one broken, and nobody uses the correct one.</p>
 
-<pre class="code"><span class="c">// services/frontend/src/utils/api.js — el cliente correcto</span>
-const API = import.meta.env.<span class="k">VITE_API_URL</span>;        <span class="c">← apunta a api.unistylescuracao.com</span>
-<span class="c">// Importado por: NADIE. Cero archivos. Es código muerto.</span>
+<pre class="code"><span class="c">// services/frontend/src/utils/api.js — the correct client</span>
+const API = import.meta.env.<span class="k">VITE_API_URL</span>;        <span class="c">← points to api.unistylescuracao.com</span>
+<span class="c">// Imported by: NOBODY. Zero files. It is dead code.</span>
 
-<span class="c">// Lo que de verdad hace el sitio, 23 veces en 10 archivos:</span>
+<span class="c">// What the site actually does, 23 times across 10 files:</span>
 await fetch(<span class="r">'/api/auth/me'</span>, ...)          <span class="c">// contexts/AuthContext.jsx:26</span>
 await fetch(<span class="r">'/api/orders'</span>, ...)            <span class="c">// pages/Checkout.jsx:111</span>
 await fetch(<span class="r">'/api/payments/sentoo'</span>, ...)   <span class="c">// pages/Checkout.jsx:151</span>
 await fetch(<span class="r">'/api/admin/stats'</span>, ...)       <span class="c">// pages/Admin.jsx:48</span>
 await fetch(<span class="r">'/api/delivery/zones'</span>)        <span class="c">// hooks/useDeliveryZones.js:13</span></pre>
 
-<p class="col">Una ruta relativa se resuelve contra el dominio que sirve la página. En producción eso es <code>unistylescuracao.com</code>, que es nginx sirviendo el frontend — no la API, que vive en <code>api.unistylescuracao.com</code>. Y como es una SPA, nginx responde a cualquier ruta desconocida con el <code>index.html</code>:</p>
+<p class="col">A relative path resolves against the domain that serves the page. In production that is <code>unistylescuracao.com</code>, which is nginx serving the frontend — not the API, which lives at <code>api.unistylescuracao.com</code>. And because it is an SPA, nginx answers any unknown path with <code>index.html</code>:</p>
 
 <pre class="code"><span class="c">$ curl -s -o /dev/null -w "%{http_code} %{content_type}" \
     https://unistylescuracao.com/api/products</span>
-<span class="r">200 text/html</span>     <span class="c">← no es un 404: es la página de inicio disfrazada de API</span></pre>
+<span class="r">200 text/html</span>     <span class="c">← not a 404: it is the home page disguised as an API</span></pre>
 
-<p class="col">Peor que un error limpio. El código hace <code>if (response.ok)</code>, recibe <code>200</code>, entra en la rama del éxito y revienta al intentar <code>response.json()</code> sobre HTML. En <code>AuthContext</code> eso cae en un <code>catch</code> que restaura la sesión desde <code>localStorage</code> sin validarla, así que el fallo es <em>silencioso</em>.</p>
+<p class="col">Worse than a clean error. The code does <code>if (response.ok)</code>, gets <code>200</code>, enters the success branch and blows up when it tries <code>response.json()</code> on HTML. In <code>AuthContext</code> that lands in a <code>catch</code> that restores the session from <code>localStorage</code> without validating it, so the failure is <em>silent</em>.</p>
 
 <div class="note bad wide">
-<p><b>Consecuencia, verificada en producción hoy:</b> registro, inicio de sesión, restauración de sesión, carrito de usuaria registrada, cupones, creación de pedido, pago con Sentoo, seguimiento, perfil, panel de administración y cálculo de zonas de envío <b>no funcionan en el sitio publicado</b>. El catálogo sí se ve, porque es lo único que se pide directamente a Directus. <b>La tienda se ve pero no vende.</b></p>
+<p><b>Consequence, verified in production today:</b> sign-up, login, session restore, the logged-in customer's cart, coupons, order creation, Sentoo payment, tracking, profile, admin panel and delivery zone calculation <b>do not work on the live site</b>. The catalogue does show, because it is the only thing requested directly from Directus. <b>The shop looks fine but cannot sell.</b></p>
 </div>
 
-<p class="col">Esto también explica un síntoma anterior: el paquete publicado no contenía ninguna referencia a <code>api.unistylescuracao.com</code>. No era solo que faltara la variable <code>VITE_API_URL</code> al compilar — es que el código no la lee en 23 de sus 25 llamadas.</p>
+<p class="col">This also explains an earlier symptom: the published bundle contained no reference at all to <code>api.unistylescuracao.com</code>. It was not just that the <code>VITE_API_URL</code> variable was missing at build time — the code does not read it in 23 of its 25 calls.</p>
 
-<h4>Arreglo</h4>
-<p class="col">Sustituir las 23 llamadas por el cliente que ya existe, o —más rápido y sin tocar 10 archivos— añadir en nginx del frontend un <em>proxy</em> de <code>/api/</code> hacia el backend. La segunda opción tiene una ventaja real: las cookies y el token viajan en el mismo origen, y desaparece el CORS. La primera es más limpia de razonar. Decide una; la que no se puede dejar es la de hoy.</p>
+<h4>Fix</h4>
+<p class="col">Replace the 23 calls with the client that already exists, or —faster and without touching 10 files— add a <em>proxy</em> from <code>/api/</code> to the backend in the frontend's nginx. The second option has a real advantage: cookies and the token travel on the same origin, and CORS disappears. The first is cleaner to reason about. Pick one; the one that cannot stay is today's.</p>
 
 <div class="tablewrap">
 <table>
-<thead><tr><th>Opción</th><th>Qué se toca</th><th>A favor</th><th>En contra</th></tr></thead>
+<thead><tr><th>Option</th><th>What changes</th><th>Pros</th><th>Cons</th></tr></thead>
 <tbody>
-<tr><td><strong>A · Proxy en nginx</strong></td><td>Un bloque <code>location /api/</code> en la config del frontend</td><td>Un solo cambio; mismo origen; sin CORS; el código queda igual</td><td>Acopla frontend y API al mismo dominio</td></tr>
-<tr><td><strong>B · Usar <code>utils/api.js</code></strong></td><td>23 llamadas en 10 archivos + recompilar con <code>VITE_API_URL</code></td><td>Separación limpia; el cliente ya está escrito</td><td>Más superficie de cambio; hay que configurar CORS</td></tr>
+<tr><td><strong>A · nginx proxy</strong></td><td>One <code>location /api/</code> block in the frontend config</td><td>A single change; same origin; no CORS; the code stays as is</td><td>Couples frontend and API to the same domain</td></tr>
+<tr><td><strong>B · Use <code>utils/api.js</code></strong></td><td>23 calls in 10 files + rebuild with <code>VITE_API_URL</code></td><td>Clean separation; the client is already written</td><td>Larger change surface; CORS must be configured</td></tr>
 </tbody>
 </table>
 </div>
 </section>
 
 <section id="p1">
-<span class="pnum">PARTE 1</span>
-<h2>Actores y lo que cada uno viene a hacer</h2>
-<p class="col">Un requisito sin actor es una opinión. Estos son los cuatro que existen de verdad en Unistyles, con el trabajo que vienen a resolver.</p>
+<span class="pnum">PART 1</span>
+<h2>Actors and what each one comes to do</h2>
+<p class="col">A requirement without an actor is an opinion. These are the four that actually exist at Unistyles, with the job each comes to get done.</p>
 
 <div class="tablewrap">
 <table>
-<thead><tr><th>Actor</th><th>Quién es</th><th>A qué viene</th><th>Dónde vive en el código</th></tr></thead>
+<thead><tr><th>Actor</th><th>Who they are</th><th>What they come for</th><th>Where they live in the code</th></tr></thead>
 <tbody>
-<tr><td><strong>Visitante</strong></td><td>Llega de Instagram o WhatsApp, sin cuenta</td><td>Ver si tienen su talla y cuánto cuesta el envío a su barrio</td><td>Catálogo público, carrito en Redis, checkout de invitada</td></tr>
-<tr><td><strong>Clienta</strong></td><td>Registrada, compra recurrente</td><td>Repetir compra sin volver a escribir su dirección; seguir su pedido</td><td><code>users</code>, <code>addresses</code>, <code>carts</code>, <code>orders</code></td></tr>
-<tr><td><strong>Dueña</strong></td><td>Paula</td><td>Publicar productos, ver pedidos, cobrar, avisar por WhatsApp</td><td>Directus + <code>/api/admin/*</code> + <code>users.is_admin</code></td></tr>
-<tr><td><strong>Sistemas externos</strong></td><td>Sentoo, WhatsApp Cloud API, SMTP</td><td>Confirmar pagos, entregar mensajes</td><td><code>/api/payments/sentoo/webhook</code>, <code>/api/whatsapp/webhook</code></td></tr>
+<tr><td><strong>Visitor</strong></td><td>Arrives from Instagram or WhatsApp, no account</td><td>See whether her size is available and how much delivery to her neighbourhood costs</td><td>Public catalogue, cart in Redis, guest checkout</td></tr>
+<tr><td><strong>Customer</strong></td><td>Registered, repeat buyer</td><td>Buy again without retyping her address; track her order</td><td><code>users</code>, <code>addresses</code>, <code>carts</code>, <code>orders</code></td></tr>
+<tr><td><strong>Owner</strong></td><td>Paula</td><td>Publish products, see orders, get paid, notify via WhatsApp</td><td>Directus + <code>/api/admin/*</code> + <code>users.is_admin</code></td></tr>
+<tr><td><strong>External systems</strong></td><td>Sentoo, WhatsApp Cloud API, SMTP</td><td>Confirm payments, deliver messages</td><td><code>/api/payments/sentoo/webhook</code>, <code>/api/whatsapp/webhook</code></td></tr>
 </tbody>
 </table>
 </div>
 
 <div class="note warn">
-<p><b>Un actor que el código inventó y no existe:</b> <code>pages/Admin.jsx</code> comprueba <code>user.role !== 'admin'</code>, pero la tabla <code>users</code> no tiene columna <code>role</code> — ni en <code>init.sql</code>, ni en <code>init.v2.sql</code>, ni en ninguna migración. Tiene <code>is_admin BOOLEAN</code>. Además <code>routes/auth.js:295</code> hace <code>SELECT ... role ... FROM users</code>, que en esa base lanza «la columna no existe». Son dos modelos de autorización distintos en el mismo sistema, y ninguno de los dos funciona.</p>
+<p><b>An actor the code invented that does not exist:</b> <code>pages/Admin.jsx</code> checks <code>user.role !== 'admin'</code>, but the <code>users</code> table has no <code>role</code> column — not in <code>init.sql</code>, not in <code>init.v2.sql</code>, not in any migration. It has <code>is_admin BOOLEAN</code>. On top of that, <code>routes/auth.js:295</code> runs <code>SELECT ... role ... FROM users</code>, which on that database throws “column does not exist”. These are two different authorisation models in the same system, and neither of them works.</p>
 </div>
 </section>
 
 <section id="p2">
-<span class="pnum">PARTE 2</span>
-<h2>Glosario: el lenguaje del dominio</h2>
-<p class="col">Un término, un significado, el mismo en la conversación, en el código y en la base. Cuando esto se salta, aparecen los <code>bank</code> contra <code>bank_transfer</code> y los <code>role</code> contra <code>is_admin</code>.</p>
+<span class="pnum">PART 2</span>
+<h2>Glossary: the language of the domain</h2>
+<p class="col">One term, one meaning, the same in conversation, in the code and in the database. When this is skipped, you get <code>bank</code> versus <code>bank_transfer</code> and <code>role</code> versus <code>is_admin</code>.</p>
 
 <div class="tablewrap">
 <table>
-<thead><tr><th>Término</th><th>Significa exactamente</th><th>No confundir con</th></tr></thead>
+<thead><tr><th>Term</th><th>Means exactly</th><th>Not to be confused with</th></tr></thead>
 <tbody>
-<tr><td><strong>Producto</strong></td><td>La ficha del catálogo: nombre, marca, descripción, foto. Vive en Directus. 285 hoy.</td><td>Variante. Un producto no se vende: se vende una variante suya.</td></tr>
-<tr><td><strong>Variante</strong></td><td>La combinación concreta talla + color, con su stock y su SKU. Solo la tienen los 33 brasieres.</td><td>Producto. Es lo que de verdad sale del almacén.</td></tr>
-<tr><td><strong>SKU</strong></td><td>Código único de una variante. Hoy <code>BRA-001</code>; debería codificar marca, referencia, talla y color.</td><td><code>ref</code>, que es el código del proveedor (<code>REF 011473</code>) y se repite entre variantes.</td></tr>
-<tr><td><strong>Referencia</strong></td><td>El código del fabricante, impreso en la etiqueta.</td><td>SKU. La referencia la pone Leonisa; el SKU lo pones tú.</td></tr>
-<tr><td><strong>Carrito</strong></td><td>Selección aún no pagada. En Redis si es invitada, en <code>carts</code> si hay sesión.</td><td>Pedido. Un carrito cambia de precio; un pedido no.</td></tr>
-<tr><td><strong>Pedido</strong></td><td>El documento congelado: precios, dirección y artículos tal como estaban al pagar.</td><td>Carrito. Un pedido nunca se recalcula.</td></tr>
-<tr><td><strong>Zona</strong></td><td>Una de las tres áreas de reparto de Curaçao, con su tarifa y su umbral de envío gratis.</td><td>Dirección. La dirección <em>cae</em> en una zona.</td></tr>
-<tr><td><strong>Estado del pedido</strong></td><td>Dónde está el paquete: <code>pending</code>, <code>confirmed</code>, <code>shipped</code>, <code>delivered</code>, <code>cancelled</code>.</td><td>Estado del pago, que es otra columna y otra máquina de estados.</td></tr>
+<tr><td><strong>Product</strong></td><td>The catalogue entry: name, brand, description, photo. Lives in Directus. 285 today.</td><td>Variant. A product is not sold: one of its variants is.</td></tr>
+<tr><td><strong>Variant</strong></td><td>The specific size + colour combination, with its own stock and SKU. Only the 33 bras have them.</td><td>Product. The variant is what actually leaves the stockroom.</td></tr>
+<tr><td><strong>SKU</strong></td><td>Unique code of a variant. Today <code>BRA-001</code>; it should encode brand, reference, size and colour.</td><td><code>ref</code>, which is the supplier's code (<code>REF 011473</code>) and repeats across variants.</td></tr>
+<tr><td><strong>Reference</strong></td><td>The manufacturer's code, printed on the label.</td><td>SKU. Leonisa sets the reference; you set the SKU.</td></tr>
+<tr><td><strong>Cart</strong></td><td>A selection not yet paid for. In Redis for a guest, in <code>carts</code> when logged in.</td><td>Order. A cart's price can change; an order's cannot.</td></tr>
+<tr><td><strong>Order</strong></td><td>The frozen document: prices, address and items exactly as they were at payment.</td><td>Cart. An order is never recalculated.</td></tr>
+<tr><td><strong>Zone</strong></td><td>One of the three delivery areas in Curaçao, with its fee and its free-delivery threshold.</td><td>Address. An address <em>falls</em> within a zone.</td></tr>
+<tr><td><strong>Order status</strong></td><td>Where the parcel is: <code>pending</code>, <code>confirmed</code>, <code>shipped</code>, <code>delivered</code>, <code>cancelled</code>.</td><td>Payment status, which is a different column and a different state machine.</td></tr>
 </tbody>
 </table>
 </div>
 </section>
 
 <section id="p3">
-<span class="pnum">PARTE 3</span>
-<h2>Reglas de negocio</h2>
-<p class="col">Las reglas son anteriores al código y le sobreviven. Cada una lleva su identificador para poder citarla desde un requisito, una prueba o un <code>CHECK</code>. La columna final dice dónde se hace cumplir hoy — y «en ningún sitio» es una respuesta que aparece siete veces.</p>
+<span class="pnum">PART 3</span>
+<h2>Business rules</h2>
+<p class="col">Rules predate the code and outlive it. Each one carries an identifier so it can be cited from a requirement, a test or a <code>CHECK</code>. The last column says where it is enforced today — and “nowhere” is an answer that appears seven times.</p>
 
 <div class="tablewrap">
 <table>
-<thead><tr><th>ID</th><th>Regla</th><th>Se hace cumplir en</th></tr></thead>
+<thead><tr><th>ID</th><th>Rule</th><th>Enforced in</th></tr></thead>
 <tbody>
-<tr><td class="rid">RN-01</td><td>Se puede comprar sin cuenta, pero siempre debe quedar un teléfono o un correo de contacto.</td><td><span class="pill warn">Solo en el código</span> falta el <code>CHECK</code></td></tr>
-<tr><td class="rid">RN-02</td><td>Un correo identifica a una sola clienta, sin distinguir mayúsculas.</td><td><span class="pill warn">Parcial</span> <code>UNIQUE</code> sí, sin <code>CITEXT</code></td></tr>
-<tr><td class="rid">RN-03</td><td>No se puede vender más unidades de las que hay en existencia.</td><td><span class="pill ok">Base</span> <code>FOR UPDATE</code> en <code>orders.js</code></td></tr>
-<tr><td class="rid">RN-04</td><td>Si el producto tiene variantes, el stock que manda es el de la variante.</td><td><span class="pill bad">En ningún sitio</span> se descuenta del producto</td></tr>
-<tr><td class="rid">RN-05</td><td>El precio y la dirección del pedido se congelan al pagar.</td><td><span class="pill ok">Base</span> snapshot en <code>order_items</code></td></tr>
-<tr><td class="rid">RN-06</td><td>El envío es gratis a partir del umbral de la zona de entrega.</td><td><span class="pill warn">Tres fuentes</span> discrepan entre sí</td></tr>
-<tr><td class="rid">RN-07</td><td>Un cupón de bienvenida se usa una sola vez por clienta.</td><td><span class="pill bad">En ningún sitio</span></td></tr>
-<tr><td class="rid">RN-08</td><td>Cancelar un pedido devuelve el stock y libera el cupón.</td><td><span class="pill warn">Solo el stock</span></td></tr>
-<tr><td class="rid">RN-09</td><td>Nadie reseña el mismo producto dos veces.</td><td><span class="pill warn">Solo en el código</span> con carrera</td></tr>
-<tr><td class="rid">RN-10</td><td>Una reseña se publica solo tras aprobación.</td><td><span class="pill ok">Base</span> <code>is_approved</code></td></tr>
-<tr><td class="rid">RN-11</td><td>El estado de un pago lo dicta el proveedor, nunca el webhook recibido.</td><td><span class="pill ok">Código</span> re-consulta a Sentoo</td></tr>
-<tr><td class="rid">RN-12</td><td>Cada cambio de estado de un pedido queda registrado con su hora.</td><td><span class="pill bad">En ningún sitio</span> falta la tabla</td></tr>
-<tr><td class="rid">RN-13</td><td>El total siempre es subtotal + envío − descuento.</td><td><span class="pill bad">En ningún sitio</span> falta el <code>CHECK</code></td></tr>
-<tr><td class="rid">RN-14</td><td>Solo la dueña ve el panel de administración.</td><td><span class="pill bad">Roto</span> compara con una columna inexistente</td></tr>
-<tr><td class="rid">RN-15</td><td>El catálogo se edita únicamente en Directus.</td><td><span class="pill warn">Convención</span> hay 3 copias más</td></tr>
-<tr><td class="rid">RN-16</td><td>Los precios están en florines (XCG) con el impuesto ya incluido.</td><td><span class="pill ok">Decisión</span> documentada</td></tr>
+<tr><td class="rid">RN-01</td><td>You can buy without an account, but a contact phone number or email must always be kept.</td><td><span class="pill warn">Code only</span> the <code>CHECK</code> is missing</td></tr>
+<tr><td class="rid">RN-02</td><td>An email identifies exactly one customer, case-insensitively.</td><td><span class="pill warn">Partial</span> <code>UNIQUE</code> yes, no <code>CITEXT</code></td></tr>
+<tr><td class="rid">RN-03</td><td>You cannot sell more units than are in stock.</td><td><span class="pill ok">Database</span> <code>FOR UPDATE</code> in <code>orders.js</code></td></tr>
+<tr><td class="rid">RN-04</td><td>If the product has variants, the variant's stock is what counts.</td><td><span class="pill bad">Nowhere</span> it is deducted from the product</td></tr>
+<tr><td class="rid">RN-05</td><td>The order's price and address are frozen at payment.</td><td><span class="pill ok">Database</span> snapshot in <code>order_items</code></td></tr>
+<tr><td class="rid">RN-06</td><td>Delivery is free above the delivery zone's threshold.</td><td><span class="pill warn">Three sources</span> disagree with each other</td></tr>
+<tr><td class="rid">RN-07</td><td>A welcome coupon can be used only once per customer.</td><td><span class="pill bad">Nowhere</span></td></tr>
+<tr><td class="rid">RN-08</td><td>Cancelling an order returns the stock and releases the coupon.</td><td><span class="pill warn">Stock only</span></td></tr>
+<tr><td class="rid">RN-09</td><td>Nobody reviews the same product twice.</td><td><span class="pill warn">Code only</span> with a race condition</td></tr>
+<tr><td class="rid">RN-10</td><td>A review is published only after approval.</td><td><span class="pill ok">Database</span> <code>is_approved</code></td></tr>
+<tr><td class="rid">RN-11</td><td>A payment's status is dictated by the provider, never by the incoming webhook.</td><td><span class="pill ok">Code</span> re-queries Sentoo</td></tr>
+<tr><td class="rid">RN-12</td><td>Every status change of an order is recorded with its timestamp.</td><td><span class="pill bad">Nowhere</span> the table is missing</td></tr>
+<tr><td class="rid">RN-13</td><td>The total is always subtotal + delivery − discount.</td><td><span class="pill bad">Nowhere</span> the <code>CHECK</code> is missing</td></tr>
+<tr><td class="rid">RN-14</td><td>Only the owner sees the admin panel.</td><td><span class="pill bad">Broken</span> compares against a non-existent column</td></tr>
+<tr><td class="rid">RN-15</td><td>The catalogue is edited only in Directus.</td><td><span class="pill warn">Convention</span> there are 3 more copies</td></tr>
+<tr><td class="rid">RN-16</td><td>Prices are in guilders (XCG) with tax already included.</td><td><span class="pill ok">Decision</span> documented</td></tr>
 </tbody>
 </table>
 </div>
 </section>
 <section id="p4">
-<span class="pnum">PARTE 4</span>
-<h2>Requisitos funcionales</h2>
-<p class="col">Todo lo que el sistema hace o debe hacer, agrupado en once épicas. El estado no es una estimación: sale de leer el archivo que lo implementa y, donde se podía, de probarlo contra el sitio publicado.</p>
-<p class="col"><span class="pill ok">LISTO</span> funciona · <span class="pill warn">PARCIAL</span> existe con hueco conocido · <span class="pill bad">ROTO</span> hay código pero no funciona · sin marca: no existe.</p>
+<span class="pnum">PART 4</span>
+<h2>Functional requirements</h2>
+<p class="col">Everything the system does or must do, grouped into eleven epics. The status is not an estimate: it comes from reading the file that implements it and, where possible, from testing it against the live site.</p>
+<p class="col"><span class="pill ok">DONE</span> works · <span class="pill warn">PARTIAL</span> exists with a known gap · <span class="pill bad">BROKEN</span> code exists but does not work · no label: does not exist.</p>
 
-<div class="epic"><span class="letter">A</span><h3>Catálogo y descubrimiento</h3></div>
+<div class="epic"><span class="letter">A</span><h3>Catalogue and discovery</h3></div>
 <div class="tablewrap">
 <table>
-<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<thead><tr><th>ID</th><th>The system must…</th><th>Status</th><th>Implemented in</th></tr></thead>
 <tbody>
-<tr><td class="rid">RF-A1</td><td>Mostrar el catálogo por categoría, con foto, precio y marca</td><td><span class="pill ok">LISTO</span></td><td><code>Category.jsx</code> → Directus</td></tr>
-<tr><td class="rid">RF-A2</td><td>Mostrar la ficha de un producto con galería, talla, color y descripción</td><td><span class="pill ok">LISTO</span></td><td><code>Product.jsx</code></td></tr>
-<tr><td class="rid">RF-A3</td><td>Buscar productos por nombre</td><td><span class="pill ok">LISTO</span></td><td><code>Search.jsx</code>, <code>searchProducts()</code></td></tr>
-<tr><td class="rid">RF-A4</td><td>Filtrar por marca, color, talla y precio</td><td><span class="pill warn">PARCIAL</span></td><td>Filtros sobre texto libre: no agrupan bien</td></tr>
-<tr><td class="rid">RF-A5</td><td>Mostrar disponibilidad por talla y color</td><td><span class="pill bad">ROTO</span></td><td>Las 77 variantes nunca se cargaron a la base</td></tr>
-<tr><td class="rid">RF-A6</td><td>Ofrecer un cuestionario de perfume y de piel que recomiende productos</td><td><span class="pill ok">LISTO</span></td><td><code>/api/perfumes/quiz</code>, <code>/api/skincare/quiz</code></td></tr>
-<tr><td class="rid">RF-A7</td><td>Guardar una lista de deseos</td><td><span class="pill warn">PARCIAL</span></td><td><code>localStorage</code>: se pierde al cambiar de móvil</td></tr>
-<tr><td class="rid">RF-A8</td><td>Seguir funcionando si el CMS no responde</td><td><span class="pill warn">PARCIAL</span></td><td>Respaldo en <code>productData.js</code>, desactualizado</td></tr>
+<tr><td class="rid">RF-A1</td><td>Show the catalogue by category, with photo, price and brand</td><td><span class="pill ok">DONE</span></td><td><code>Category.jsx</code> → Directus</td></tr>
+<tr><td class="rid">RF-A2</td><td>Show a product page with gallery, size, colour and description</td><td><span class="pill ok">DONE</span></td><td><code>Product.jsx</code></td></tr>
+<tr><td class="rid">RF-A3</td><td>Search products by name</td><td><span class="pill ok">DONE</span></td><td><code>Search.jsx</code>, <code>searchProducts()</code></td></tr>
+<tr><td class="rid">RF-A4</td><td>Filter by brand, colour, size and price</td><td><span class="pill warn">PARTIAL</span></td><td>Filters over free text: they do not group properly</td></tr>
+<tr><td class="rid">RF-A5</td><td>Show availability by size and colour</td><td><span class="pill bad">BROKEN</span></td><td>The 77 variants were never loaded into the database</td></tr>
+<tr><td class="rid">RF-A6</td><td>Offer a perfume quiz and a skin quiz that recommend products</td><td><span class="pill ok">DONE</span></td><td><code>/api/perfumes/quiz</code>, <code>/api/skincare/quiz</code></td></tr>
+<tr><td class="rid">RF-A7</td><td>Save a wishlist</td><td><span class="pill warn">PARTIAL</span></td><td><code>localStorage</code>: lost when switching phones</td></tr>
+<tr><td class="rid">RF-A8</td><td>Keep working if the CMS does not respond</td><td><span class="pill warn">PARTIAL</span></td><td>Fallback in <code>productData.js</code>, out of date</td></tr>
 </tbody>
 </table>
 </div>
 
-<div class="epic"><span class="letter">B</span><h3>Cuenta y sesión</h3></div>
+<div class="epic"><span class="letter">B</span><h3>Account and session</h3></div>
 <div class="tablewrap">
 <table>
-<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<thead><tr><th>ID</th><th>The system must…</th><th>Status</th><th>Implemented in</th></tr></thead>
 <tbody>
-<tr><td class="rid">RF-B1</td><td>Permitir registro con correo y contraseña</td><td><span class="pill bad">ROTO</span></td><td>Endpoint correcto; el frontend llama a una ruta relativa</td></tr>
-<tr><td class="rid">RF-B2</td><td>Iniciar sesión y mantenerla al recargar</td><td><span class="pill bad">ROTO</span></td><td><code>/api/auth/me</code>: ruta relativa + columna <code>role</code> inexistente</td></tr>
-<tr><td class="rid">RF-B3</td><td>Cerrar sesión invalidando el token</td><td><span class="pill ok">LISTO</span></td><td>Lista negra en Redis con caducidad</td></tr>
-<tr><td class="rid">RF-B4</td><td>Recuperar la contraseña por correo</td><td><span class="pill warn">PARCIAL</span></td><td>Código listo; depende de SMTP sin configurar</td></tr>
-<tr><td class="rid">RF-B5</td><td>Verificar el correo tras el registro</td><td><span class="pill warn">PARCIAL</span></td><td>Igual: falta SMTP</td></tr>
-<tr><td class="rid">RF-B6</td><td>Guardar una libreta de direcciones</td><td><span class="pill ok">LISTO</span></td><td><code>/api/users/addresses</code></td></tr>
-<tr><td class="rid">RF-B7</td><td>Ver el historial de pedidos</td><td><span class="pill bad">ROTO</span></td><td><code>Profile.jsx:54</code>, ruta relativa</td></tr>
+<tr><td class="rid">RF-B1</td><td>Allow sign-up with email and password</td><td><span class="pill bad">BROKEN</span></td><td>Endpoint is correct; the frontend calls a relative path</td></tr>
+<tr><td class="rid">RF-B2</td><td>Log in and keep the session on reload</td><td><span class="pill bad">BROKEN</span></td><td><code>/api/auth/me</code>: relative path + non-existent <code>role</code> column</td></tr>
+<tr><td class="rid">RF-B3</td><td>Log out, invalidating the token</td><td><span class="pill ok">DONE</span></td><td>Denylist in Redis with expiry</td></tr>
+<tr><td class="rid">RF-B4</td><td>Recover the password by email</td><td><span class="pill warn">PARTIAL</span></td><td>Code ready; depends on SMTP, not configured</td></tr>
+<tr><td class="rid">RF-B5</td><td>Verify the email after sign-up</td><td><span class="pill warn">PARTIAL</span></td><td>Same: SMTP missing</td></tr>
+<tr><td class="rid">RF-B6</td><td>Keep an address book</td><td><span class="pill ok">DONE</span></td><td><code>/api/users/addresses</code></td></tr>
+<tr><td class="rid">RF-B7</td><td>View order history</td><td><span class="pill bad">BROKEN</span></td><td><code>Profile.jsx:54</code>, relative path</td></tr>
 </tbody>
 </table>
 </div>
 
-<div class="epic"><span class="letter">C</span><h3>Carrito</h3></div>
+<div class="epic"><span class="letter">C</span><h3>Cart</h3></div>
 <div class="tablewrap">
 <table>
-<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<thead><tr><th>ID</th><th>The system must…</th><th>Status</th><th>Implemented in</th></tr></thead>
 <tbody>
-<tr><td class="rid">RF-C1</td><td>Añadir, cambiar cantidad y quitar artículos</td><td><span class="pill ok">LISTO</span></td><td><code>cartStore.js</code> + <code>/api/cart</code></td></tr>
-<tr><td class="rid">RF-C2</td><td>Conservar el carrito de una invitada entre visitas</td><td><span class="pill ok">LISTO</span></td><td>Redis con <code>X-Cart-Id</code></td></tr>
-<tr><td class="rid">RF-C3</td><td>Fundir el carrito de invitada al iniciar sesión</td><td><span class="pill warn">PARCIAL</span></td><td><code>/api/cart/merge</code> existe; no se llama al entrar</td></tr>
-<tr><td class="rid">RF-C4</td><td>Distinguir en el carrito la talla y el color elegidos</td><td><span class="pill bad">ROTO</span></td><td>Sin variantes cargadas, el carrito guarda texto libre</td></tr>
+<tr><td class="rid">RF-C1</td><td>Add items, change quantity and remove items</td><td><span class="pill ok">DONE</span></td><td><code>cartStore.js</code> + <code>/api/cart</code></td></tr>
+<tr><td class="rid">RF-C2</td><td>Keep a guest's cart between visits</td><td><span class="pill ok">DONE</span></td><td>Redis with <code>X-Cart-Id</code></td></tr>
+<tr><td class="rid">RF-C3</td><td>Merge the guest cart on login</td><td><span class="pill warn">PARTIAL</span></td><td><code>/api/cart/merge</code> exists; it is not called on login</td></tr>
+<tr><td class="rid">RF-C4</td><td>Distinguish the chosen size and colour in the cart</td><td><span class="pill bad">BROKEN</span></td><td>With no variants loaded, the cart stores free text</td></tr>
 </tbody>
 </table>
 </div>
 
-<div class="epic"><span class="letter">D</span><h3>Entrega en Curaçao</h3></div>
+<div class="epic"><span class="letter">D</span><h3>Delivery in Curaçao</h3></div>
 <div class="tablewrap">
 <table>
-<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<thead><tr><th>ID</th><th>The system must…</th><th>Status</th><th>Implemented in</th></tr></thead>
 <tbody>
-<tr><td class="rid">RF-D1</td><td>Ofrecer las tres zonas de reparto con su tarifa</td><td><span class="pill bad">ROTO</span></td><td><code>useDeliveryZones.js:13</code>, ruta relativa</td></tr>
-<tr><td class="rid">RF-D2</td><td>Deducir la zona desde el barrio que escribe la clienta</td><td><span class="pill warn">PARCIAL</span></td><td>Los barrios nunca se sembraron en <code>delivery_zones</code></td></tr>
-<tr><td class="rid">RF-D3</td><td>Aplicar envío gratis por encima del umbral de la zona</td><td><span class="pill warn">PARCIAL</span></td><td>El umbral vive en tres sitios distintos</td></tr>
-<tr><td class="rid">RF-D4</td><td>Autocompletar la dirección</td><td><span class="pill ok">LISTO</span></td><td><code>AddressAutocomplete.jsx</code></td></tr>
+<tr><td class="rid">RF-D1</td><td>Offer the three delivery zones with their fees</td><td><span class="pill bad">BROKEN</span></td><td><code>useDeliveryZones.js:13</code>, relative path</td></tr>
+<tr><td class="rid">RF-D2</td><td>Infer the zone from the neighbourhood the customer types</td><td><span class="pill warn">PARTIAL</span></td><td>Neighbourhoods were never seeded into <code>delivery_zones</code></td></tr>
+<tr><td class="rid">RF-D3</td><td>Apply free delivery above the zone's threshold</td><td><span class="pill warn">PARTIAL</span></td><td>The threshold lives in three different places</td></tr>
+<tr><td class="rid">RF-D4</td><td>Autocomplete the address</td><td><span class="pill ok">DONE</span></td><td><code>AddressAutocomplete.jsx</code></td></tr>
 </tbody>
 </table>
 </div>
 
-<div class="epic"><span class="letter">E</span><h3>Checkout y pedido</h3></div>
+<div class="epic"><span class="letter">E</span><h3>Checkout and order</h3></div>
 <div class="tablewrap">
 <table>
-<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<thead><tr><th>ID</th><th>The system must…</th><th>Status</th><th>Implemented in</th></tr></thead>
 <tbody>
-<tr><td class="rid">RF-E1</td><td>Cobrar sin obligar a crear cuenta</td><td><span class="pill bad">ROTO</span></td><td>Backend listo; <code>Checkout.jsx:111</code> ruta relativa</td></tr>
-<tr><td class="rid">RF-E2</td><td>Crear el pedido en una transacción con bloqueo de stock</td><td><span class="pill ok">LISTO</span></td><td><code>orders.js</code>, <code>SELECT … FOR UPDATE</code></td></tr>
-<tr><td class="rid">RF-E3</td><td>Congelar precio, talla, color y dirección en el pedido</td><td><span class="pill ok">LISTO</span></td><td>Snapshot en <code>order_items</code></td></tr>
-<tr><td class="rid">RF-E4</td><td>Aplicar un cupón y validar sus condiciones</td><td><span class="pill warn">PARCIAL</span></td><td>Sin control de canje por persona <span class="rid">RN-07</span></td></tr>
-<tr><td class="rid">RF-E5</td><td>Generar un número de pedido único</td><td><span class="pill warn">PARCIAL</span></td><td><code>RANDOM()</code>: puede colisionar y tumbar el pago</td></tr>
-<tr><td class="rid">RF-E6</td><td>Permitir cancelar y devolver el stock</td><td><span class="pill warn">PARCIAL</span></td><td>Devuelve stock, no libera el cupón</td></tr>
+<tr><td class="rid">RF-E1</td><td>Take payment without forcing account creation</td><td><span class="pill bad">BROKEN</span></td><td>Backend ready; <code>Checkout.jsx:111</code> relative path</td></tr>
+<tr><td class="rid">RF-E2</td><td>Create the order in a transaction with a stock lock</td><td><span class="pill ok">DONE</span></td><td><code>orders.js</code>, <code>SELECT … FOR UPDATE</code></td></tr>
+<tr><td class="rid">RF-E3</td><td>Freeze price, size, colour and address in the order</td><td><span class="pill ok">DONE</span></td><td>Snapshot in <code>order_items</code></td></tr>
+<tr><td class="rid">RF-E4</td><td>Apply a coupon and validate its conditions</td><td><span class="pill warn">PARTIAL</span></td><td>No per-person redemption control <span class="rid">RN-07</span></td></tr>
+<tr><td class="rid">RF-E5</td><td>Generate a unique order number</td><td><span class="pill warn">PARTIAL</span></td><td><code>RANDOM()</code>: can collide and break the payment</td></tr>
+<tr><td class="rid">RF-E6</td><td>Allow cancellation and return the stock</td><td><span class="pill warn">PARTIAL</span></td><td>Returns stock, does not release the coupon</td></tr>
 </tbody>
 </table>
 </div>
 
-<div class="epic"><span class="letter">F</span><h3>Pagos</h3></div>
+<div class="epic"><span class="letter">F</span><h3>Payments</h3></div>
 <div class="tablewrap">
 <table>
-<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<thead><tr><th>ID</th><th>The system must…</th><th>Status</th><th>Implemented in</th></tr></thead>
 <tbody>
-<tr><td class="rid">RF-F1</td><td>Cobrar con tarjeta a través de Sentoo</td><td><span class="pill bad">ROTO</span></td><td><code>Checkout.jsx:151</code> ruta relativa; faltan credenciales</td></tr>
-<tr><td class="rid">RF-F2</td><td>Aceptar transferencia bancaria</td><td><span class="pill bad">ROTO</span></td><td>El front manda <code>bank</code>, el back espera <code>bank_transfer</code>; y el número de cuenta es <code>XXXX-XXXX</code></td></tr>
-<tr><td class="rid">RF-F3</td><td>Aceptar pago contra entrega</td><td><span class="pill ok">LISTO</span></td><td><code>/api/payments/cod</code></td></tr>
-<tr><td class="rid">RF-F4</td><td>Confirmar el pago re-consultando al proveedor, no fiándose del webhook</td><td><span class="pill ok">LISTO</span></td><td><code>payments.js</code> <span class="rid">RN-11</span></td></tr>
-<tr><td class="rid">RF-F5</td><td>Ignorar un webhook repetido sin duplicar el cobro</td><td><span class="pill warn">PARCIAL</span></td><td>Falta el índice único que lo garantiza</td></tr>
+<tr><td class="rid">RF-F1</td><td>Take card payments through Sentoo</td><td><span class="pill bad">BROKEN</span></td><td><code>Checkout.jsx:151</code> relative path; credentials missing</td></tr>
+<tr><td class="rid">RF-F2</td><td>Accept bank transfer</td><td><span class="pill bad">BROKEN</span></td><td>The front sends <code>bank</code>, the back expects <code>bank_transfer</code>; and the account number is <code>XXXX-XXXX</code></td></tr>
+<tr><td class="rid">RF-F3</td><td>Accept cash on delivery</td><td><span class="pill ok">DONE</span></td><td><code>/api/payments/cod</code></td></tr>
+<tr><td class="rid">RF-F4</td><td>Confirm the payment by re-querying the provider, not trusting the webhook</td><td><span class="pill ok">DONE</span></td><td><code>payments.js</code> <span class="rid">RN-11</span></td></tr>
+<tr><td class="rid">RF-F5</td><td>Ignore a repeated webhook without charging twice</td><td><span class="pill warn">PARTIAL</span></td><td>The unique index that guarantees it is missing</td></tr>
 </tbody>
 </table>
 </div>
 
-<div class="epic"><span class="letter">G</span><h3>Post-venta</h3></div>
+<div class="epic"><span class="letter">G</span><h3>After-sales</h3></div>
 <div class="tablewrap">
 <table>
-<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<thead><tr><th>ID</th><th>The system must…</th><th>Status</th><th>Implemented in</th></tr></thead>
 <tbody>
-<tr><td class="rid">RF-G1</td><td>Consultar un pedido por su número, sin sesión</td><td><span class="pill bad">ROTO</span></td><td><code>TrackOrder.jsx</code> ruta relativa</td></tr>
-<tr><td class="rid">RF-G2</td><td>Mostrar la línea de tiempo del pedido con horas</td><td><span class="pill bad">ROTO</span></td><td>No existe <code>order_status_history</code> <span class="rid">RN-12</span></td></tr>
-<tr><td class="rid">RF-G3</td><td>Dejar una reseña con estrellas</td><td><span class="pill bad">ROTO</span></td><td>Choque de tipos: <code>product_id</code> UUID contra entero</td></tr>
-<tr><td class="rid">RF-G4</td><td>Mostrar solo reseñas aprobadas</td><td><span class="pill ok">LISTO</span></td><td><code>is_approved</code> en la consulta</td></tr>
+<tr><td class="rid">RF-G1</td><td>Look up an order by its number, without logging in</td><td><span class="pill bad">BROKEN</span></td><td><code>TrackOrder.jsx</code> relative path</td></tr>
+<tr><td class="rid">RF-G2</td><td>Show the order timeline with timestamps</td><td><span class="pill bad">BROKEN</span></td><td><code>order_status_history</code> does not exist <span class="rid">RN-12</span></td></tr>
+<tr><td class="rid">RF-G3</td><td>Leave a star review</td><td><span class="pill bad">BROKEN</span></td><td>Type clash: <code>product_id</code> UUID versus integer</td></tr>
+<tr><td class="rid">RF-G4</td><td>Show only approved reviews</td><td><span class="pill ok">DONE</span></td><td><code>is_approved</code> in the query</td></tr>
 </tbody>
 </table>
 </div>
 
-<div class="epic"><span class="letter">H</span><h3>Administración</h3></div>
+<div class="epic"><span class="letter">H</span><h3>Administration</h3></div>
 <div class="tablewrap">
 <table>
-<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<thead><tr><th>ID</th><th>The system must…</th><th>Status</th><th>Implemented in</th></tr></thead>
 <tbody>
-<tr><td class="rid">RF-H1</td><td>Dar acceso al panel solo a la dueña</td><td><span class="pill bad">ROTO</span></td><td>Compara con <code>user.role</code>, columna inexistente <span class="rid">RN-14</span></td></tr>
-<tr><td class="rid">RF-H2</td><td>Listar y cambiar el estado de los pedidos</td><td><span class="pill bad">ROTO</span></td><td>Endpoints listos; <code>Admin.jsx</code> ruta relativa</td></tr>
-<tr><td class="rid">RF-H3</td><td>Ver ventas, pedidos y clientas del periodo</td><td><span class="pill bad">ROTO</span></td><td><code>/api/admin/stats</code></td></tr>
-<tr><td class="rid">RF-H4</td><td>Publicar y retirar productos del catálogo</td><td><span class="pill ok">LISTO</span></td><td>Directus, <code>cms.unistylescuracao.com</code></td></tr>
-<tr><td class="rid">RF-H5</td><td>Gestionar el stock por talla</td><td><span class="pill bad">ROTO</span></td><td><code>/api/variants</code> existe y la base está vacía</td></tr>
+<tr><td class="rid">RF-H1</td><td>Give access to the panel only to the owner</td><td><span class="pill bad">BROKEN</span></td><td>Compares against <code>user.role</code>, a non-existent column <span class="rid">RN-14</span></td></tr>
+<tr><td class="rid">RF-H2</td><td>List orders and change their status</td><td><span class="pill bad">BROKEN</span></td><td>Endpoints ready; <code>Admin.jsx</code> relative path</td></tr>
+<tr><td class="rid">RF-H3</td><td>See sales, orders and customers for the period</td><td><span class="pill bad">BROKEN</span></td><td><code>/api/admin/stats</code></td></tr>
+<tr><td class="rid">RF-H4</td><td>Publish and withdraw catalogue products</td><td><span class="pill ok">DONE</span></td><td>Directus, <code>cms.unistylescuracao.com</code></td></tr>
+<tr><td class="rid">RF-H5</td><td>Manage stock by size</td><td><span class="pill bad">BROKEN</span></td><td><code>/api/variants</code> exists and the table is empty</td></tr>
 </tbody>
 </table>
 </div>
 
-<div class="epic"><span class="letter">I</span><h3>Comunicaciones</h3></div>
+<div class="epic"><span class="letter">I</span><h3>Communications</h3></div>
 <div class="tablewrap">
 <table>
-<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<thead><tr><th>ID</th><th>The system must…</th><th>Status</th><th>Implemented in</th></tr></thead>
 <tbody>
-<tr><td class="rid">RF-I1</td><td>Abrir WhatsApp con el pedido escrito desde el carrito</td><td><span class="pill ok">LISTO</span></td><td><code>utils/whatsapp.js</code>, sin API: enlace directo</td></tr>
-<tr><td class="rid">RF-I2</td><td>Avisar por WhatsApp cuando cambia el estado del pedido</td><td><span class="pill warn">PARCIAL</span></td><td>Webhook listo; faltan credenciales de Meta</td></tr>
-<tr><td class="rid">RF-I3</td><td>Suscribir al boletín desde el pie de página</td><td><span class="pill warn">PARCIAL</span></td><td>Guarda en la base; no hay envío</td></tr>
-<tr><td class="rid">RF-I4</td><td>Enviar el correo de confirmación del pedido</td><td><span class="pill warn">PARCIAL</span></td><td>Depende de SMTP sin configurar</td></tr>
+<tr><td class="rid">RF-I1</td><td>Open WhatsApp with the order pre-written from the cart</td><td><span class="pill ok">DONE</span></td><td><code>utils/whatsapp.js</code>, no API: direct link</td></tr>
+<tr><td class="rid">RF-I2</td><td>Notify via WhatsApp when the order status changes</td><td><span class="pill warn">PARTIAL</span></td><td>Webhook ready; Meta credentials missing</td></tr>
+<tr><td class="rid">RF-I3</td><td>Subscribe to the newsletter from the footer</td><td><span class="pill warn">PARTIAL</span></td><td>Saves to the database; nothing is sent</td></tr>
+<tr><td class="rid">RF-I4</td><td>Send the order confirmation email</td><td><span class="pill warn">PARTIAL</span></td><td>Depends on SMTP, not configured</td></tr>
 </tbody>
 </table>
 </div>
 
-<div class="epic"><span class="letter">J</span><h3>Contenido</h3></div>
+<div class="epic"><span class="letter">J</span><h3>Content</h3></div>
 <div class="tablewrap">
 <table>
-<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<thead><tr><th>ID</th><th>The system must…</th><th>Status</th><th>Implemented in</th></tr></thead>
 <tbody>
-<tr><td class="rid">RF-J1</td><td>Editar portada, páginas legales y datos del negocio sin tocar código</td><td><span class="pill ok">LISTO</span></td><td>Directus: <code>homepage</code>, <code>pages</code>, <code>business_settings</code></td></tr>
-<tr><td class="rid">RF-J2</td><td>Mostrar las páginas legales: términos, privacidad, envíos, FAQ</td><td><span class="pill ok">LISTO</span></td><td>4 páginas del frontend</td></tr>
+<tr><td class="rid">RF-J1</td><td>Edit the home page, legal pages and business details without touching code</td><td><span class="pill ok">DONE</span></td><td>Directus: <code>homepage</code>, <code>pages</code>, <code>business_settings</code></td></tr>
+<tr><td class="rid">RF-J2</td><td>Show the legal pages: terms, privacy, shipping, FAQ</td><td><span class="pill ok">DONE</span></td><td>4 frontend pages</td></tr>
 </tbody>
 </table>
 </div>
 
-<div class="epic"><span class="letter">K</span><h3>Infraestructura</h3></div>
+<div class="epic"><span class="letter">K</span><h3>Infrastructure</h3></div>
 <div class="tablewrap">
 <table>
-<thead><tr><th>ID</th><th>El sistema debe…</th><th>Estado</th><th>Implementado en</th></tr></thead>
+<thead><tr><th>ID</th><th>The system must…</th><th>Status</th><th>Implemented in</th></tr></thead>
 <tbody>
-<tr><td class="rid">RF-K1</td><td>Servir la tienda en <code>unistylescuracao.com</code></td><td><span class="pill ok">LISTO</span></td><td>Coolify, respuesta 200</td></tr>
-<tr><td class="rid">RF-K2</td><td>Servir la API en <code>api.unistylescuracao.com</code></td><td><span class="pill ok">LISTO</span></td><td><code>/health</code> responde <code>healthy</code></td></tr>
-<tr><td class="rid">RF-K3</td><td>Servir el CMS en <code>cms.unistylescuracao.com</code></td><td><span class="pill ok">LISTO</span></td><td>Directus 11, 285 productos</td></tr>
-<tr><td class="rid">RF-K4</td><td>Que el frontend hable con la API publicada</td><td><span class="pill bad">ROTO</span></td><td>El hallazgo de la primera sección</td></tr>
-<tr><td class="rid">RF-K5</td><td>Hacer copia de seguridad diaria de la base</td><td><span class="pill warn">PARCIAL</span></td><td>Coolify lo ofrece; sin verificar restauración</td></tr>
+<tr><td class="rid">RF-K1</td><td>Serve the shop at <code>unistylescuracao.com</code></td><td><span class="pill ok">DONE</span></td><td>Coolify, responds 200</td></tr>
+<tr><td class="rid">RF-K2</td><td>Serve the API at <code>api.unistylescuracao.com</code></td><td><span class="pill ok">DONE</span></td><td><code>/health</code> returns <code>healthy</code></td></tr>
+<tr><td class="rid">RF-K3</td><td>Serve the CMS at <code>cms.unistylescuracao.com</code></td><td><span class="pill ok">DONE</span></td><td>Directus 11, 285 products</td></tr>
+<tr><td class="rid">RF-K4</td><td>Have the frontend talk to the published API</td><td><span class="pill bad">BROKEN</span></td><td>The finding in the first section</td></tr>
+<tr><td class="rid">RF-K5</td><td>Back up the database daily</td><td><span class="pill warn">PARTIAL</span></td><td>Coolify provides it; restore not verified</td></tr>
 </tbody>
 </table>
 </div>
 </section>
 
 <section id="p5">
-<span class="pnum">PARTE 5</span>
-<h2>Requisitos no funcionales</h2>
-<p class="col">Los que nadie pide y todos notan cuando faltan. Cada uno con un número que se pueda comprobar: un requisito no funcional sin cifra no es un requisito, es un deseo.</p>
+<span class="pnum">PART 5</span>
+<h2>Non-functional requirements</h2>
+<p class="col">The ones nobody asks for and everybody notices when they are missing. Each with a number that can be checked: a non-functional requirement without a figure is not a requirement, it is a wish.</p>
 
 <div class="tablewrap">
 <table>
-<thead><tr><th>ID</th><th>Requisito</th><th>Meta medible</th><th>Hoy</th></tr></thead>
+<thead><tr><th>ID</th><th>Requirement</th><th>Measurable target</th><th>Today</th></tr></thead>
 <tbody>
-<tr><td class="rid">RNF-01</td><td>La ficha de producto carga rápido en móvil con datos de Curaçao</td><td>LCP &lt; 2,5 s en 4G</td><td><span class="pill warn">Sin medir</span></td></tr>
-<tr><td class="rid">RNF-02</td><td>La tienda funciona en móvil</td><td>Todo el flujo de compra a 360 px</td><td><span class="pill ok">Diseñado así</span></td></tr>
-<tr><td class="rid">RNF-03</td><td>Las contraseñas se guardan cifradas</td><td>bcrypt, coste 12</td><td><span class="pill ok">LISTO</span></td></tr>
-<tr><td class="rid">RNF-04</td><td>Nunca se almacenan datos de tarjeta</td><td>Cero campos de tarjeta; los cobra Sentoo</td><td><span class="pill ok">LISTO</span></td></tr>
-<tr><td class="rid">RNF-05</td><td>La API resiste intentos de fuerza bruta</td><td>Límite por IP en login y pago</td><td><span class="pill ok">LISTO</span> <code>express-rate-limit</code></td></tr>
-<tr><td class="rid">RNF-06</td><td>Un fallo del CMS no tumba la tienda</td><td>El catálogo cae al respaldo local</td><td><span class="pill warn">PARCIAL</span> respaldo viejo</td></tr>
-<tr><td class="rid">RNF-07</td><td>Ningún secreto vive en el repositorio</td><td>Cero credenciales en git</td><td><span class="pill ok">LISTO</span> tras añadir al <code>.gitignore</code></td></tr>
-<tr><td class="rid">RNF-08</td><td>Los servicios se reinician por separado</td><td>Caer uno no arrastra a los demás</td><td><span class="pill ok">LISTO</span> 5 recursos en Coolify</td></tr>
-<tr><td class="rid">RNF-09</td><td>La base se puede restaurar</td><td>Ensayo de restauración superado</td><td><span class="pill bad">Nunca probado</span></td></tr>
-<tr><td class="rid">RNF-10</td><td>La tienda habla el idioma de la clienta</td><td>Español, con papiamento pendiente de decidir</td><td><span class="pill warn">Mezclado</span> hay textos en inglés</td></tr>
-<tr><td class="rid">RNF-11</td><td>El sitio es accesible</td><td>Contraste AA, navegable con teclado</td><td><span class="pill warn">Sin auditar</span></td></tr>
-<tr><td class="rid">RNF-12</td><td>Hay pruebas automáticas del flujo de compra</td><td>Al menos el camino crítico cubierto</td><td><span class="pill bad">Cero pruebas</span></td></tr>
+<tr><td class="rid">RNF-01</td><td>The product page loads fast on mobile with Curaçao data connections</td><td>LCP &lt; 2.5 s on 4G</td><td><span class="pill warn">Not measured</span></td></tr>
+<tr><td class="rid">RNF-02</td><td>The shop works on mobile</td><td>The entire purchase flow at 360 px</td><td><span class="pill ok">Designed that way</span></td></tr>
+<tr><td class="rid">RNF-03</td><td>Passwords are stored hashed</td><td>bcrypt, cost 12</td><td><span class="pill ok">DONE</span></td></tr>
+<tr><td class="rid">RNF-04</td><td>Card data is never stored</td><td>Zero card fields; Sentoo takes the payment</td><td><span class="pill ok">DONE</span></td></tr>
+<tr><td class="rid">RNF-05</td><td>The API withstands brute-force attempts</td><td>Per-IP limit on login and payment</td><td><span class="pill ok">DONE</span> <code>express-rate-limit</code></td></tr>
+<tr><td class="rid">RNF-06</td><td>A CMS failure does not bring the shop down</td><td>The catalogue falls back to the local copy</td><td><span class="pill warn">PARTIAL</span> stale fallback</td></tr>
+<tr><td class="rid">RNF-07</td><td>No secret lives in the repository</td><td>Zero credentials in git</td><td><span class="pill ok">DONE</span> after adding to <code>.gitignore</code></td></tr>
+<tr><td class="rid">RNF-08</td><td>Services restart independently</td><td>One going down does not take the others with it</td><td><span class="pill ok">DONE</span> 5 resources in Coolify</td></tr>
+<tr><td class="rid">RNF-09</td><td>The database can be restored</td><td>Restore drill passed</td><td><span class="pill bad">Never tested</span></td></tr>
+<tr><td class="rid">RNF-10</td><td>The shop speaks the customer's language</td><td>Spanish, with Papiamentu still to be decided</td><td><span class="pill warn">Mixed</span> some text is in English</td></tr>
+<tr><td class="rid">RNF-11</td><td>The site is accessible</td><td>AA contrast, keyboard navigable</td><td><span class="pill warn">Not audited</span></td></tr>
+<tr><td class="rid">RNF-12</td><td>There are automated tests for the purchase flow</td><td>At least the critical path covered</td><td><span class="pill bad">Zero tests</span></td></tr>
 </tbody>
 </table>
 </div>
 </section>
 
 <section id="p6">
-<span class="pnum">PARTE 6</span>
-<h2>User stories con criterios de aceptación</h2>
-<p class="col">Las de las épicas críticas, en el formato que se puede convertir en prueba automática sin reescribirlo. Cada criterio está redactado para responder sí o no, nunca «más o menos».</p>
+<span class="pnum">PART 6</span>
+<h2>User stories with acceptance criteria</h2>
+<p class="col">Those for the critical epics, in a format that can be turned into an automated test without rewriting it. Each criterion is worded to be answered yes or no, never “more or less”.</p>
 
 <div class="us">
-<div class="hd"><span class="id">US-01</span><span class="txt">Como visitante quiero comprar sin crear cuenta, para no perder tiempo en un formulario.</span><span class="pill bad">ROTO</span></div>
+<div class="hd"><span class="id">US-01</span><span class="txt">As a visitor I want to buy without creating an account, so I don't waste time on a form.</span><span class="pill bad">BROKEN</span></div>
 <div class="bd">
-<div class="gherkin"><b>Dado</b> que tengo artículos en el carrito y no he iniciado sesión<br><b>Cuando</b> completo el checkout con mi nombre, teléfono y dirección<br><b>Entonces</b> el pedido se crea con <code>user_id</code> nulo<br><b>Y</b> el pedido guarda mi teléfono y mi correo<br><b>Y</b> recibo un número de pedido con el que consultarlo después</div>
-<p><strong>Cubre</strong> <span class="rid">RF-E1</span> <span class="rid">RN-01</span> · <strong>Bloqueado por</strong> las rutas relativas y por la falta del <code>CHECK</code> de contacto.</p>
-</div>
-</div>
-
-<div class="us">
-<div class="hd"><span class="id">US-02</span><span class="txt">Como clienta quiero elegir mi talla y ver si hay existencias, para no comprar algo que no me van a poder enviar.</span><span class="pill bad">ROTO</span></div>
-<div class="bd">
-<div class="gherkin"><b>Dado</b> un brasier con variantes de talla y color<br><b>Cuando</b> abro su ficha<br><b>Entonces</b> veo solo las combinaciones que existen<br><b>Y</b> las agotadas aparecen deshabilitadas, no ocultas<br><b>Y</b> al añadirlo al carrito se guarda la variante, no el texto de la talla</div>
-<p><strong>Cubre</strong> <span class="rid">RF-A5</span> <span class="rid">RF-C4</span> <span class="rid">RN-04</span> · <strong>Bloqueado por</strong> las 77 variantes sin cargar y el vocabulario de tallas sin normalizar.</p>
+<div class="gherkin"><b>Given</b> I have items in the cart and I am not logged in<br><b>When</b> I complete checkout with my name, phone and address<br><b>Then</b> the order is created with a null <code>user_id</code><br><b>And</b> the order stores my phone and my email<br><b>And</b> I receive an order number I can use to look it up later</div>
+<p><strong>Covers</strong> <span class="rid">RF-E1</span> <span class="rid">RN-01</span> · <strong>Blocked by</strong> the relative paths and the missing contact <code>CHECK</code>.</p>
 </div>
 </div>
 
 <div class="us">
-<div class="hd"><span class="id">US-03</span><span class="txt">Como clienta quiero saber cuánto cuesta el envío a mi barrio antes de pagar, para no llevarme sorpresas.</span><span class="pill bad">ROTO</span></div>
+<div class="hd"><span class="id">US-02</span><span class="txt">As a customer I want to choose my size and see whether it is in stock, so I don't buy something that can't be shipped to me.</span><span class="pill bad">BROKEN</span></div>
 <div class="bd">
-<div class="gherkin"><b>Dado</b> que estoy en el checkout<br><b>Cuando</b> escribo mi barrio<br><b>Entonces</b> el sistema deduce mi zona y muestra la tarifa<br><b>Y</b> si mi subtotal supera el umbral de esa zona, el envío pasa a cero<br><b>Y</b> el total mostrado coincide con el que se cobra</div>
-<p><strong>Cubre</strong> <span class="rid">RF-D1</span> <span class="rid">RF-D2</span> <span class="rid">RF-D3</span> <span class="rid">RN-06</span> · <strong>Bloqueado por</strong> ruta relativa, barrios sin sembrar y tres fuentes del umbral.</p>
+<div class="gherkin"><b>Given</b> a bra with size and colour variants<br><b>When</b> I open its product page<br><b>Then</b> I see only the combinations that exist<br><b>And</b> the sold-out ones appear disabled, not hidden<br><b>And</b> when I add it to the cart the variant is saved, not the size text</div>
+<p><strong>Covers</strong> <span class="rid">RF-A5</span> <span class="rid">RF-C4</span> <span class="rid">RN-04</span> · <strong>Blocked by</strong> the 77 unloaded variants and the unnormalised size vocabulary.</p>
 </div>
 </div>
 
 <div class="us">
-<div class="hd"><span class="id">US-04</span><span class="txt">Como clienta quiero pagar con tarjeta y que el pedido solo se confirme si el pago se aprobó de verdad.</span><span class="pill bad">ROTO</span></div>
+<div class="hd"><span class="id">US-03</span><span class="txt">As a customer I want to know how much delivery to my neighbourhood costs before paying, so there are no surprises.</span><span class="pill bad">BROKEN</span></div>
 <div class="bd">
-<div class="gherkin"><b>Dado</b> un pedido pendiente de pago<br><b>Cuando</b> pago en la pasarela de Sentoo<br><b>Entonces</b> el backend vuelve a preguntar el estado a Sentoo antes de confirmar<br><b>Y</b> si llega dos veces el mismo aviso, el pedido no se duplica<br><b>Y</b> si el pago falla, el stock vuelve a estar disponible</div>
-<p><strong>Cubre</strong> <span class="rid">RF-F1</span> <span class="rid">RF-F4</span> <span class="rid">RF-F5</span> <span class="rid">RN-11</span> · La lógica del servidor está bien; falla la llamada del navegador y faltan credenciales.</p>
+<div class="gherkin"><b>Given</b> I am at checkout<br><b>When</b> I type my neighbourhood<br><b>Then</b> the system infers my zone and shows the fee<br><b>And</b> if my subtotal exceeds that zone's threshold, delivery drops to zero<br><b>And</b> the total shown matches the amount charged</div>
+<p><strong>Covers</strong> <span class="rid">RF-D1</span> <span class="rid">RF-D2</span> <span class="rid">RF-D3</span> <span class="rid">RN-06</span> · <strong>Blocked by</strong> the relative path, unseeded neighbourhoods and three sources for the threshold.</p>
 </div>
 </div>
 
 <div class="us">
-<div class="hd"><span class="id">US-05</span><span class="txt">Como clienta quiero seguir mi pedido con su número, para saber cuándo llega sin escribir por WhatsApp.</span><span class="pill bad">ROTO</span></div>
+<div class="hd"><span class="id">US-04</span><span class="txt">As a customer I want to pay by card and have the order confirmed only if the payment was really approved.</span><span class="pill bad">BROKEN</span></div>
 <div class="bd">
-<div class="gherkin"><b>Dado</b> que tengo un número de pedido<br><b>Cuando</b> lo introduzco en la página de seguimiento<br><b>Entonces</b> veo el estado actual<br><b>Y</b> veo cuándo pasó por cada estado anterior, con fecha y hora<br><b>Y</b> no necesito haber iniciado sesión</div>
-<p><strong>Cubre</strong> <span class="rid">RF-G1</span> <span class="rid">RF-G2</span> <span class="rid">RN-12</span> · La página existe desde hace meses y no tiene datos que mostrar: falta la tabla de historial.</p>
+<div class="gherkin"><b>Given</b> an order awaiting payment<br><b>When</b> I pay on the Sentoo gateway<br><b>Then</b> the backend asks Sentoo for the status again before confirming<br><b>And</b> if the same notification arrives twice, the order is not duplicated<br><b>And</b> if the payment fails, the stock becomes available again</div>
+<p><strong>Covers</strong> <span class="rid">RF-F1</span> <span class="rid">RF-F4</span> <span class="rid">RF-F5</span> <span class="rid">RN-11</span> · The server logic is fine; the browser call fails and credentials are missing.</p>
 </div>
 </div>
 
 <div class="us">
-<div class="hd"><span class="id">US-06</span><span class="txt">Como dueña quiero ver mis pedidos y cambiarles el estado, para trabajar sin abrir la base de datos.</span><span class="pill bad">ROTO</span></div>
+<div class="hd"><span class="id">US-05</span><span class="txt">As a customer I want to track my order by its number, so I know when it arrives without messaging on WhatsApp.</span><span class="pill bad">BROKEN</span></div>
 <div class="bd">
-<div class="gherkin"><b>Dado</b> que inicio sesión con mi cuenta de administradora<br><b>Cuando</b> entro en <code>/admin</code><br><b>Entonces</b> veo ventas, pedidos y clientas<br><b>Y</b> puedo pasar un pedido a «enviado»<br><b>Y</b> ese cambio queda registrado con la hora<br><b>Y</b> una clienta normal que escriba <code>/admin</code> es devuelta al inicio</div>
-<p><strong>Cubre</strong> <span class="rid">RF-H1</span> <span class="rid">RF-H2</span> <span class="rid">RF-H3</span> <span class="rid">RN-14</span> · <strong>Bloqueado por</strong> dos modelos de autorización incompatibles: <code>role</code> contra <code>is_admin</code>.</p>
+<div class="gherkin"><b>Given</b> I have an order number<br><b>When</b> I enter it on the tracking page<br><b>Then</b> I see the current status<br><b>And</b> I see when it went through each previous status, with date and time<br><b>And</b> I don't need to be logged in</div>
+<p><strong>Covers</strong> <span class="rid">RF-G1</span> <span class="rid">RF-G2</span> <span class="rid">RN-12</span> · The page has existed for months and has no data to show: the history table is missing.</p>
 </div>
 </div>
 
 <div class="us">
-<div class="hd"><span class="id">US-07</span><span class="txt">Como dueña quiero que el cupón de bienvenida se use una sola vez por clienta, para no regalar margen.</span><span class="pill bad">ROTO</span></div>
+<div class="hd"><span class="id">US-06</span><span class="txt">As the owner I want to see my orders and change their status, so I can work without opening the database.</span><span class="pill bad">BROKEN</span></div>
 <div class="bd">
-<div class="gherkin"><b>Dado</b> un cupón marcado como «solo primer pedido»<br><b>Cuando</b> una clienta que ya lo usó intenta aplicarlo otra vez<br><b>Entonces</b> el sistema lo rechaza<br><b>Y</b> si su pedido se cancela, el uso se libera y puede volver a aplicarlo<br><b>Y</b> puedo ver cuánto descuento repartió cada código</div>
-<p><strong>Cubre</strong> <span class="rid">RF-E4</span> <span class="rid">RN-07</span> <span class="rid">RN-08</span> · <strong>Bloqueado por</strong> la ausencia de <code>coupon_redemptions</code>.</p>
+<div class="gherkin"><b>Given</b> I log in with my administrator account<br><b>When</b> I go to <code>/admin</code><br><b>Then</b> I see sales, orders and customers<br><b>And</b> I can move an order to “shipped”<br><b>And</b> that change is recorded with its timestamp<br><b>And</b> a regular customer who types <code>/admin</code> is sent back to the home page</div>
+<p><strong>Covers</strong> <span class="rid">RF-H1</span> <span class="rid">RF-H2</span> <span class="rid">RF-H3</span> <span class="rid">RN-14</span> · <strong>Blocked by</strong> two incompatible authorisation models: <code>role</code> versus <code>is_admin</code>.</p>
 </div>
 </div>
 
 <div class="us">
-<div class="hd"><span class="id">US-08</span><span class="txt">Como dueña quiero publicar y retirar productos yo misma, sin pedirle nada a nadie.</span><span class="pill ok">LISTO</span></div>
+<div class="hd"><span class="id">US-07</span><span class="txt">As the owner I want the welcome coupon to be used only once per customer, so I don't give away margin.</span><span class="pill bad">BROKEN</span></div>
 <div class="bd">
-<div class="gherkin"><b>Dado</b> que entro en el CMS<br><b>Cuando</b> creo, edito o retiro un producto<br><b>Entonces</b> el cambio se ve en la tienda sin recompilar nada<br><b>Y</b> no hace falta tocar SQL ni ningún archivo del repositorio</div>
-<p><strong>Cubre</strong> <span class="rid">RF-H4</span> <span class="rid">RF-J1</span> <span class="rid">RN-15</span> · Funciona. La única condición es no volver a editar <code>productData.js</code> a mano.</p>
+<div class="gherkin"><b>Given</b> a coupon flagged as “first order only”<br><b>When</b> a customer who has already used it tries to apply it again<br><b>Then</b> the system rejects it<br><b>And</b> if her order is cancelled, the use is released and she can apply it again<br><b>And</b> I can see how much discount each code gave away</div>
+<p><strong>Covers</strong> <span class="rid">RF-E4</span> <span class="rid">RN-07</span> <span class="rid">RN-08</span> · <strong>Blocked by</strong> the absence of <code>coupon_redemptions</code>.</p>
+</div>
+</div>
+
+<div class="us">
+<div class="hd"><span class="id">US-08</span><span class="txt">As the owner I want to publish and withdraw products myself, without asking anyone for anything.</span><span class="pill ok">DONE</span></div>
+<div class="bd">
+<div class="gherkin"><b>Given</b> I log in to the CMS<br><b>When</b> I create, edit or withdraw a product<br><b>Then</b> the change shows in the shop without rebuilding anything<br><b>And</b> there is no need to touch SQL or any file in the repository</div>
+<p><strong>Covers</strong> <span class="rid">RF-H4</span> <span class="rid">RF-J1</span> <span class="rid">RN-15</span> · It works. The only condition is never editing <code>productData.js</code> by hand again.</p>
 </div>
 </div>
 </section>
 
 <section id="p7">
-<span class="pnum">PARTE 7</span>
-<h2>Matriz de trazabilidad</h2>
-<p class="col">La herramienta que convierte todo lo anterior en algo navegable: de un requisito llegas a la página, al endpoint, a la tabla y a la prueba que lo cubre. Es también la forma de detectar código que no sirve a ningún requisito — y requisitos que no tienen código.</p>
+<span class="pnum">PART 7</span>
+<h2>Traceability matrix</h2>
+<p class="col">The tool that turns everything above into something navigable: from a requirement you get to the page, the endpoint, the table and the test that covers it. It is also the way to spot code that serves no requirement — and requirements that have no code.</p>
 
 <div class="tablewrap">
 <table>
-<thead><tr><th>Requisito</th><th>Página</th><th>Endpoint</th><th>Tabla</th><th>Regla</th><th>Prueba</th></tr></thead>
+<thead><tr><th>Requirement</th><th>Page</th><th>Endpoint</th><th>Table</th><th>Rule</th><th>Test</th></tr></thead>
 <tbody>
-<tr><td class="rid">RF-A1</td><td><code>Category.jsx</code></td><td>Directus <code>/items/products</code></td><td><code>products</code></td><td>RN-15</td><td><span class="pill bad">falta</span></td></tr>
-<tr><td class="rid">RF-A5</td><td><code>Product.jsx</code></td><td><code>GET /api/variants/product/:id</code></td><td><code>product_variants</code></td><td>RN-04</td><td><span class="pill bad">falta</span></td></tr>
-<tr><td class="rid">RF-B2</td><td><code>AuthContext.jsx</code></td><td><code>GET /api/auth/me</code></td><td><code>users</code></td><td>RN-02</td><td><span class="pill bad">falta</span></td></tr>
-<tr><td class="rid">RF-C2</td><td><code>cartStore.js</code></td><td><code>GET /api/cart</code></td><td>Redis</td><td>—</td><td><span class="pill bad">falta</span></td></tr>
-<tr><td class="rid">RF-D1</td><td><code>Checkout.jsx</code></td><td><code>GET /api/delivery/zones</code></td><td><code>delivery_zones</code></td><td>RN-06</td><td><span class="pill bad">falta</span></td></tr>
-<tr><td class="rid">RF-E1</td><td><code>Checkout.jsx</code></td><td><code>POST /api/orders</code></td><td><code>orders</code>, <code>order_items</code></td><td>RN-01, RN-03, RN-05</td><td><span class="pill bad">falta</span></td></tr>
-<tr><td class="rid">RF-E4</td><td><code>Checkout.jsx</code></td><td><code>POST /api/coupons/apply</code></td><td><code>coupons</code></td><td>RN-07</td><td><span class="pill bad">falta</span></td></tr>
-<tr><td class="rid">RF-F1</td><td><code>PaymentCallback.jsx</code></td><td><code>POST /api/payments/sentoo</code></td><td><code>payments</code></td><td>RN-11</td><td><span class="pill bad">falta</span></td></tr>
-<tr><td class="rid">RF-G1</td><td><code>TrackOrder.jsx</code></td><td><code>GET /api/orders/track/:n</code></td><td><code>orders</code></td><td>RN-12</td><td><span class="pill bad">falta</span></td></tr>
-<tr><td class="rid">RF-G3</td><td><code>Product.jsx</code></td><td><code>POST /api/reviews</code></td><td><code>reviews</code></td><td>RN-09, RN-10</td><td><span class="pill bad">falta</span></td></tr>
-<tr><td class="rid">RF-H2</td><td><code>Admin.jsx</code></td><td><code>PUT /api/admin/orders/:id</code></td><td><code>orders</code></td><td>RN-12, RN-14</td><td><span class="pill bad">falta</span></td></tr>
+<tr><td class="rid">RF-A1</td><td><code>Category.jsx</code></td><td>Directus <code>/items/products</code></td><td><code>products</code></td><td>RN-15</td><td><span class="pill bad">missing</span></td></tr>
+<tr><td class="rid">RF-A5</td><td><code>Product.jsx</code></td><td><code>GET /api/variants/product/:id</code></td><td><code>product_variants</code></td><td>RN-04</td><td><span class="pill bad">missing</span></td></tr>
+<tr><td class="rid">RF-B2</td><td><code>AuthContext.jsx</code></td><td><code>GET /api/auth/me</code></td><td><code>users</code></td><td>RN-02</td><td><span class="pill bad">missing</span></td></tr>
+<tr><td class="rid">RF-C2</td><td><code>cartStore.js</code></td><td><code>GET /api/cart</code></td><td>Redis</td><td>—</td><td><span class="pill bad">missing</span></td></tr>
+<tr><td class="rid">RF-D1</td><td><code>Checkout.jsx</code></td><td><code>GET /api/delivery/zones</code></td><td><code>delivery_zones</code></td><td>RN-06</td><td><span class="pill bad">missing</span></td></tr>
+<tr><td class="rid">RF-E1</td><td><code>Checkout.jsx</code></td><td><code>POST /api/orders</code></td><td><code>orders</code>, <code>order_items</code></td><td>RN-01, RN-03, RN-05</td><td><span class="pill bad">missing</span></td></tr>
+<tr><td class="rid">RF-E4</td><td><code>Checkout.jsx</code></td><td><code>POST /api/coupons/apply</code></td><td><code>coupons</code></td><td>RN-07</td><td><span class="pill bad">missing</span></td></tr>
+<tr><td class="rid">RF-F1</td><td><code>PaymentCallback.jsx</code></td><td><code>POST /api/payments/sentoo</code></td><td><code>payments</code></td><td>RN-11</td><td><span class="pill bad">missing</span></td></tr>
+<tr><td class="rid">RF-G1</td><td><code>TrackOrder.jsx</code></td><td><code>GET /api/orders/track/:n</code></td><td><code>orders</code></td><td>RN-12</td><td><span class="pill bad">missing</span></td></tr>
+<tr><td class="rid">RF-G3</td><td><code>Product.jsx</code></td><td><code>POST /api/reviews</code></td><td><code>reviews</code></td><td>RN-09, RN-10</td><td><span class="pill bad">missing</span></td></tr>
+<tr><td class="rid">RF-H2</td><td><code>Admin.jsx</code></td><td><code>PUT /api/admin/orders/:id</code></td><td><code>orders</code></td><td>RN-12, RN-14</td><td><span class="pill bad">missing</span></td></tr>
 </tbody>
 </table>
 </div>
 
 <div class="note bad">
-<p><b>La columna que habla sola.</b> Cero pruebas automáticas en todo el proyecto, incluido el camino que mueve dinero. No es un reproche: es la consecuencia de no haber tenido nunca una lista de requisitos contra la que escribirlas. Ahora la hay, y cada fila de esta tabla es una prueba que se puede escribir hoy.</p>
+<p><b>The column that speaks for itself.</b> Zero automated tests in the entire project, including the path that moves money. This is not a reproach: it is the consequence of never having had a list of requirements to write them against. Now there is one, and every row in this table is a test that can be written today.</p>
 </div>
 
-<h3>Código sin requisito</h3>
-<p class="col">El otro uso de la matriz: lo que sobra. Detectado en esta pasada — <code>utils/api.js</code>, cliente completo sin un solo importador; <code>data/productData.js.backup-1777484894</code>, copia de copia; y dos implementaciones paralelas del carrito, <code>services/cartService.js</code> y <code>stores/cartStore.js</code>. Cada una es deuda que alguien leerá algún día creyendo que está viva.</p>
+<h3>Code without a requirement</h3>
+<p class="col">The other use of the matrix: what is surplus. Detected in this pass — <code>utils/api.js</code>, a complete client without a single importer; <code>data/productData.js.backup-1777484894</code>, a copy of a copy; and two parallel cart implementations, <code>services/cartService.js</code> and <code>stores/cartStore.js</code>. Each one is debt that someone will read one day believing it is alive.</p>
 </section>
 
 <section id="p8">
-<span class="pnum">PARTE 8</span>
-<h2>La serie: seis documentos</h2>
-<p class="col">Así queda repartida la investigación. Este es el primero; el quinto ya existe. Cada uno responde una pregunta distinta y ninguno repite al otro.</p>
+<span class="pnum">PART 8</span>
+<h2>The series: six documents</h2>
+<p class="col">This is how the research is split. This is the first; the fifth already exists. Each answers a different question and none repeats another.</p>
 
 <div class="tablewrap">
 <table>
-<thead><tr><th>#</th><th>Documento</th><th>Responde</th><th>Estado</th></tr></thead>
+<thead><tr><th>#</th><th>Document</th><th>Answers</th><th>Status</th></tr></thead>
 <tbody>
-<tr><td class="num">1</td><td><strong>Requisitos, reglas y user stories</strong></td><td>Qué debe hacer el sistema y quién lo necesita</td><td><span class="pill ok">Este documento</span></td></tr>
-<tr><td class="num">2</td><td><strong>Mapa del código</strong></td><td>Cada carpeta y archivo: qué hace, quién lo llama, qué pasa si se borra</td><td>Siguiente</td></tr>
-<tr><td class="num">3</td><td><strong>Arquitectura del sistema</strong></td><td>Los cinco servicios, el despliegue en Coolify, las integraciones y los diagramas de secuencia</td><td>Pendiente</td></tr>
-<tr><td class="num">4</td><td><strong>Pruebas y calidad</strong></td><td>Qué probar, en qué orden, con qué herramienta; la matriz de trazabilidad convertida en suite</td><td>Pendiente</td></tr>
-<tr><td class="num">5</td><td><strong>Base de datos</strong></td><td>El método de diseño, el diagnóstico y el runbook del paso 0 al final</td><td><span class="pill ok">Publicado</span></td></tr>
-<tr><td class="num">6</td><td><strong>Plan de lanzamiento</strong></td><td>El orden real de ejecución, con dependencias y criterio de «terminado»</td><td>Pendiente</td></tr>
+<tr><td class="num">1</td><td><strong>Requirements, rules and user stories</strong></td><td>What the system must do and who needs it</td><td><span class="pill ok">This document</span></td></tr>
+<tr><td class="num">2</td><td><strong>Code map</strong></td><td>Every folder and file: what it does, who calls it, what happens if it is deleted</td><td>Next</td></tr>
+<tr><td class="num">3</td><td><strong>System architecture</strong></td><td>The five services, the Coolify deployment, the integrations and the sequence diagrams</td><td>Pending</td></tr>
+<tr><td class="num">4</td><td><strong>Testing and quality</strong></td><td>What to test, in what order, with which tool; the traceability matrix turned into a suite</td><td>Pending</td></tr>
+<tr><td class="num">5</td><td><strong>Database</strong></td><td>The design method, the diagnosis and the runbook from step 0 to the end</td><td><span class="pill ok">Published</span></td></tr>
+<tr><td class="num">6</td><td><strong>Launch plan</strong></td><td>The real execution order, with dependencies and a definition of “done”</td><td>Pending</td></tr>
 </tbody>
 </table>
 </div>
 
-<h3>Si solo se pudiera arreglar una cosa</h3>
-<p class="col">Las rutas relativas <span class="rid">RF-K4</span>. No porque sea el defecto más grave de diseño, sino porque desbloquea de golpe veinte requisitos que ya están programados y hoy no llegan a ejecutarse: registro, sesión, carrito con cuenta, cupones, pedido, pago, seguimiento, perfil, panel y zonas de envío. Es el cambio con mayor distancia entre esfuerzo y efecto de todo el proyecto.</p>
+<h3>If only one thing could be fixed</h3>
+<p class="col">The relative paths <span class="rid">RF-K4</span>. Not because it is the most serious design defect, but because it unblocks in one go twenty requirements that are already coded and today never get to run: sign-up, session, logged-in cart, coupons, order, payment, tracking, profile, admin panel and delivery zones. It is the change with the biggest gap between effort and effect in the whole project.</p>
 
-<p class="col">Después, por este orden: el modelo de autorización <span class="rid">RN-14</span>, porque sin panel no se opera la tienda; el esquema v2 con las variantes cargadas <span class="rid">RN-04</span>, porque sin él no se puede vender una talla; y las credenciales que faltan, que no son programación sino trámite — Sentoo, SMTP, WhatsApp y el número de cuenta bancaria real.</p>
+<p class="col">After that, in this order: the authorisation model <span class="rid">RN-14</span>, because without the panel the shop cannot be operated; the v2 schema with the variants loaded <span class="rid">RN-04</span>, because without it a size cannot be sold; and the missing credentials, which are not programming but paperwork — Sentoo, SMTP, WhatsApp and the real bank account number.</p>
 </section>
 
 <footer class="end">
-<p>Unistyles Curaçao · Research 1 de 6 · 19 de septiembre de 2026. Estados verificados leyendo el repositorio y probando <code>unistylescuracao.com</code>, <code>api.unistylescuracao.com</code> y <code>cms.unistylescuracao.com</code> el mismo día. Documento hermano: el de base de datos, research 5 de 6.</p>
+<p>Unistyles Curaçao · Research 1 of 6 · 19 September 2026. Statuses verified by reading the repository and testing <code>unistylescuracao.com</code>, <code>api.unistylescuracao.com</code> and <code>cms.unistylescuracao.com</code> on the same day. Companion document: the database one, research 5 of 6.</p>
 </footer>
 </main>
 </div>
+</html>
