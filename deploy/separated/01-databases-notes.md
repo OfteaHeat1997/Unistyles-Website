@@ -1,67 +1,67 @@
-# Bases de datos separadas (PostgreSQL + Redis) en Coolify
+# Separate databases (PostgreSQL + Redis) in Coolify
 
-> Estas dos son **recursos gestionados** de Coolify (sección *Databases*).
-> Son las piezas que **nunca** deben volver a borrarse. Por eso van primero.
+> These two are Coolify **managed resources** (*Databases* section).
+> They are the pieces that must **never** be deleted again. That is why they come first.
 
-## 1) PostgreSQL (recurso "unistyles-postgres")
+## 1) PostgreSQL (resource "unistyles-postgres")
 
-Al crearlo en Coolify (**+ New Resource → Databases → PostgreSQL**), configura:
+When creating it in Coolify (**+ New Resource → Databases → PostgreSQL**), configure:
 
-| Campo en Coolify | Valor |
+| Field in Coolify | Value |
 |---|---|
 | Name | `unistyles-postgres` |
 | Username (Postgres User) | `unistyles` |
-| Password | *(tu `DB_PASSWORD` del gestor de contraseñas)* |
+| Password | *(your `DB_PASSWORD` from the password manager)* |
 | Database (Initial DB) | `unistyles_db` |
 | Image / Version | `postgres:16-alpine` |
 
-Después de crearlo:
-- **Activa los backups automáticos** (pestaña *Backups* → programa uno diario).
-  Esto es lo que faltaba antes y lo que evita perder los productos otra vez.
-- Copia la **"Postgres URL (Internal)"** que Coolify muestra — la necesitas
-  para el backend y para Directus. El host interno NO es `postgres` ni
-  `localhost`; es un nombre tipo `xxxxxxxx` que Coolify asigna.
+After creating it:
+- **Enable automatic backups** (*Backups* tab → schedule a daily one).
+  This is what was missing before and what prevents losing the products again.
+- Copy the **"Postgres URL (Internal)"** that Coolify shows — you need it
+  for the backend and for Directus. The internal host is NOT `postgres` or
+  `localhost`; it is a name like `xxxxxxxx` that Coolify assigns.
 
-### ⚠️ Paso obligatorio: cargar el esquema del backend una vez
+### ⚠️ Mandatory step: load the backend schema once
 
-El archivo `database/init.sql` crea las tablas del backend (usuarios, pedidos,
-pagos, cupones…). Antes corría solo; ahora hay que ejecutarlo una vez contra la
-base de datos nueva. Desde tu laptop (o por SSH al servidor):
+The `database/init.sql` file creates the backend tables (users, orders,
+payments, coupons…). It used to run automatically; now it has to be run once
+against the new database. From your laptop (or over SSH on the server):
 
 ```bash
-# Opción A — desde tu laptop, usando la URL PÚBLICA temporal de Coolify
-#   (activa "Make it publicly available" en el recurso Postgres, copia el host y puerto)
-psql "postgresql://unistyles:<DB_PASSWORD>@<HOST_PUBLICO>:<PUERTO>/unistyles_db" \
+# Option A — from your laptop, using Coolify's temporary PUBLIC URL
+#   (enable "Make it publicly available" on the Postgres resource, copy the host and port)
+psql "postgresql://unistyles:<DB_PASSWORD>@<PUBLIC_HOST>:<PORT>/unistyles_db" \
   -f database/init.sql
 
-# Opción B — por SSH dentro del servidor (más seguro, sin abrir puerto público)
+# Option B — over SSH inside the server (safer, no public port opened)
 ssh root@157.173.193.90
 docker exec -i $(docker ps --format '{{.Names}}' | grep unistyles-postgres) \
   psql -U unistyles -d unistyles_db < database/init.sql
 ```
 
-Si vuelves a verlo decir `already exists`, no pasa nada: significa que ya estaba.
+If you see it say `already exists` when running it again, that is fine: it means it was already there.
 
-## 2) Redis (recurso "unistyles-redis")
+## 2) Redis (resource "unistyles-redis")
 
 **+ New Resource → Databases → Redis**:
 
-| Campo en Coolify | Valor |
+| Field in Coolify | Value |
 |---|---|
 | Name | `unistyles-redis` |
-| Password | *(tu `REDIS_PASSWORD` del gestor de contraseñas)* |
+| Password | *(your `REDIS_PASSWORD` from the password manager)* |
 | Image / Version | `redis:7-alpine` |
 
-Después: copia la **"Redis URL (Internal)"**. La usan el backend (`REDIS_URL`)
-y Directus (`REDIS`).
+Afterwards: copy the **"Redis URL (Internal)"**. It is used by the backend (`REDIS_URL`)
+and Directus (`REDIS`).
 
 ---
 
-## Recordatorio: todo en UN servidor está bien
+## Reminder: everything on ONE server is fine
 
-Tus 5 recursos separados corren en el **mismo** servidor ("Unistyles Server",
-157.173.193.90 — 6 núcleos, 11.7 GB RAM). Eso es correcto y suficiente.
+Your 5 separate resources run on the **same** server ("Unistyles Server",
+157.173.193.90 — 6 cores, 11.7 GB RAM). That is correct and sufficient.
 
-- "Separado" = **recursos/contenedores independientes**, no servidores distintos.
-- Si un recurso se cae, los demás siguen porque cada uno es su propio contenedor.
-- No necesitas pagar varios servidores. Uno solo, bien organizado, basta.
+- "Separate" = **independent resources/containers**, not different servers.
+- If one resource goes down, the others keep running because each one is its own container.
+- You do not need to pay for several servers. A single one, well organised, is enough.

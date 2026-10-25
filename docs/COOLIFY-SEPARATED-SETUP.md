@@ -1,16 +1,16 @@
-# Unistyles en Coolify — Montaje SEPARADO (cada servicio aparte)
+# Unistyles on Coolify — SEPARATED Setup (each service on its own)
 
-> **Objetivo:** dejar de tener los 5 servicios apretados en un solo bloque
-> (`docker-compose.yml`) y pasar a **5 recursos independientes** en Coolify,
-> agrupados por tipo — igual que el panel ordenado que te gustó (Applications /
-> Databases). Si uno se cae, los demás siguen funcionando. La base de datos vive
-> aparte, con backups automáticos, y **nunca se vuelve a borrar sola.**
+> **Goal:** stop having the 5 services squeezed into a single block
+> (`docker-compose.yml`) and move to **5 independent resources** in Coolify,
+> grouped by type — just like the tidy panel you liked (Applications /
+> Databases). If one goes down, the others keep running. The database lives
+> separately, with automatic backups, and **never gets deleted on its own again.**
 
-> **22-ago-2026 — Fases 1, 2 y 3 hechas.** Los clics exactos que faltan
-> (Fase 4 backend, Fase 4-bis tablas, Fase 5 frontend) están en
-> [COOLIFY-FASE4-5-PASO-A-PASO.md](COOLIFY-FASE4-5-PASO-A-PASO.md).
+> **22 Aug 2026 — Phases 1, 2 and 3 done.** The exact remaining clicks
+> (Phase 4 backend, Phase 4-bis tables, Phase 5 frontend) are in
+> [COOLIFY-PHASE4-5-STEP-BY-STEP.md](COOLIFY-PHASE4-5-STEP-BY-STEP.md).
 
-## Cómo queda tu tienda (calcado al panel que te gustó)
+## What your store looks like (modelled on the panel you liked)
 
 ```
 DATABASES                         (se crean PRIMERO — son las que protegemos)
@@ -23,76 +23,76 @@ APPLICATIONS
   ● unistyles-frontend  (Tienda)  https://unistylescuracao.com
 ```
 
-> El panel de ejemplo (AetherCorp) tenía además una sección *Services*
-> (Auth, Email, Image-Resizer, Analytics…). **Tú NO necesitas esas todavía** —
-> en tu caso el login va dentro del backend, el correo es SMTP del backend, y el
-> redimensionado de imágenes lo hace Directus. Son extras para el futuro, no ahora.
+> The example panel (AetherCorp) also had a *Services* section
+> (Auth, Email, Image-Resizer, Analytics…). **You do NOT need those yet** —
+> in your case login lives inside the backend, email is the backend's SMTP, and
+> image resizing is done by Directus. They are extras for the future, not for now.
 
-## Aclaración importante: "localhost" NO es un problema
+## Important clarification: "localhost" is NOT a problem
 
-En Coolify, tu servidor se llama **"localhost"** simplemente porque Coolify está
-instalado en ese mismo servidor. **No significa que tu web sea solo local** — tu
-sitio está de verdad en internet, en el servidor "Unistyles Server"
-(157.173.193.90, Ubuntu 24.04, 6 núcleos, 11.7 GB RAM). Los 5 recursos separados
-corren en ese mismo servidor. "Separado" = contenedores independientes, **no**
-servidores distintos. Un solo servidor bien organizado es lo correcto y más barato.
+In Coolify, your server is called **"localhost"** simply because Coolify is
+installed on that same server. **It does not mean your website is only local** — your
+site really is on the internet, on the "Unistyles Server"
+(157.173.193.90, Ubuntu 24.04, 6 cores, 11.7 GB RAM). The 5 separate resources
+run on that same server. "Separated" = independent containers, **not**
+different servers. A single, well-organised server is the right and cheaper choice.
 
 ---
 
-## Orden de trabajo (fases)
+## Work order (phases)
 
-Hazlo en este orden exacto. No pases a la siguiente fase hasta que la anterior
-esté en verde.
+Do it in this exact order. Do not move on to the next phase until the previous one
+is green.
 
-### Fase 0 — Antes de tocar nada
-- [ ] Ten a mano tu gestor de contraseñas con los 7 secretos generados
+### Phase 0 — Before touching anything
+- [ ] Have your password manager at hand with the 7 generated secrets
       (`DB_PASSWORD`, `REDIS_PASSWORD`, `JWT_SECRET`, `DIRECTUS_KEY`,
       `DIRECTUS_SECRET`, `DIRECTUS_ADMIN_PASSWORD`, `WHATSAPP_VERIFY_TOKEN`).
-- [ ] **NO borres todavía** el bloque viejo de 5-en-1. Lo apagamos al final,
-      cuando lo nuevo ya funcione. Así no te quedas sin nada en el camino.
+- [ ] **Do NOT delete** the old 5-in-1 block yet. We shut it down at the end,
+      once the new setup works. That way you are never left with nothing along the way.
 
-### Fase 1 — Base de datos PostgreSQL (aparte)
-Sigue `deploy/separated/01-databases-notes.md` (sección PostgreSQL).
-- [ ] Crear recurso `unistyles-postgres` (user `unistyles`, db `unistyles_db`).
-- [ ] Activar **backups automáticos** (diario).
-- [ ] Ejecutar `database/init.sql` una vez (tablas del backend).
-- [ ] Copiar la **Postgres URL (Internal)**.
+### Phase 1 — PostgreSQL database (separate)
+Follow `deploy/separated/01-databases-notes.md` (PostgreSQL section).
+- [ ] Create resource `unistyles-postgres` (user `unistyles`, db `unistyles_db`).
+- [ ] Enable **automatic backups** (daily).
+- [ ] Run `database/init.sql` once (backend tables).
+- [ ] Copy the **Postgres URL (Internal)**.
 
-### Fase 2 — Redis (aparte)
-Sigue `deploy/separated/01-databases-notes.md` (sección Redis).
-- [ ] Crear recurso `unistyles-redis` (con `REDIS_PASSWORD`).
-- [ ] Copiar la **Redis URL (Internal)**.
+### Phase 2 — Redis (separate)
+Follow `deploy/separated/01-databases-notes.md` (Redis section).
+- [ ] Create resource `unistyles-redis` (with `REDIS_PASSWORD`).
+- [ ] Copy the **Redis URL (Internal)**.
 
-### Fase 3 — Directus / CMS (aparte)
+### Phase 3 — Directus / CMS (separate)
 - [ ] **+ New Resource → Docker Image** → `directus/directus:11`.
-- [ ] Nombre: `unistyles-directus`.
-- [ ] Pegar variables de `deploy/separated/directus.env.example`
-      (rellenando los `REEMPLAZAR_…` con tus secretos y los hosts internos de
-      Postgres/Redis).
-- [ ] Dominio: `cms.unistylescuracao.com` · Puerto del contenedor: `8055`.
-- [ ] Volumen persistente: `/directus/uploads` (para que las fotos no se pierdan).
-- [ ] Deploy. Esperar a ver `Server started at http://0.0.0.0:8055`.
+- [ ] Name: `unistyles-directus`.
+- [ ] Paste the variables from `deploy/separated/directus.env.example`
+      (filling in the `REEMPLAZAR_…` placeholders with your secrets and the internal
+      Postgres/Redis hosts).
+- [ ] Domain: `cms.unistylescuracao.com` · Container port: `8055`.
+- [ ] Persistent volume: `/directus/uploads` (so photos are not lost).
+- [ ] Deploy. Wait until you see `Server started at http://0.0.0.0:8055`.
 
-### Fase 4 — Backend / API (aparte)
-- [ ] **+ New Resource → Application → Public/Private Repository** (tu repo Git).
+### Phase 4 — Backend / API (separate)
+- [ ] **+ New Resource → Application → Public/Private Repository** (your Git repo).
 - [ ] Base Directory: `/services/backend` · Dockerfile: `Dockerfile`.
-- [ ] Nombre: `unistyles-backend`.
-- [ ] Pegar variables de `deploy/separated/backend.env.example` (con la
-      `DATABASE_URL` y `REDIS_URL` internas que copiaste).
-- [ ] Dominio: `api.unistylescuracao.com` · Puerto del contenedor: `3000`.
-- [ ] Deploy. Verificar `https://api.unistylescuracao.com/health` → JSON `healthy`.
+- [ ] Name: `unistyles-backend`.
+- [ ] Paste the variables from `deploy/separated/backend.env.example` (with the
+      internal `DATABASE_URL` and `REDIS_URL` you copied).
+- [ ] Domain: `api.unistylescuracao.com` · Container port: `3000`.
+- [ ] Deploy. Check `https://api.unistylescuracao.com/health` → JSON `healthy`.
 
-### Fase 5 — Frontend / Tienda (aparte)
-- [ ] **+ New Resource → Application → tu repo Git**.
+### Phase 5 — Frontend / Store (separate)
+- [ ] **+ New Resource → Application → your Git repo**.
 - [ ] Base Directory: `/services/frontend` · Dockerfile: `Dockerfile`.
-- [ ] Nombre: `unistyles-frontend`.
-- [ ] Pegar las 3 variables de `deploy/separated/frontend.build-args.example`
-      en **Build-time Environment Variables** (¡no en las normales!).
-- [ ] Dominio: `unistylescuracao.com` · Puerto del contenedor: `80`.
+- [ ] Name: `unistyles-frontend`.
+- [ ] Paste the 3 variables from `deploy/separated/frontend.build-args.example`
+      into **Build-time Environment Variables** (not the regular ones!).
+- [ ] Domain: `unistylescuracao.com` · Container port: `80`.
 - [ ] Deploy.
 
-### Fase 6 — Recuperar los 285 productos
-Con Directus ya arriba, desde tu laptop:
+### Phase 6 — Restore the 285 products
+With Directus up, from your laptop:
 ```bash
 DIRECTUS_URL=https://cms.unistylescuracao.com \
 DIRECTUS_ADMIN_EMAIL=admin@unistylescuracao.com \
@@ -105,21 +105,21 @@ DIRECTUS_ADMIN_PASSWORD=<tu DIRECTUS_ADMIN_PASSWORD> \
 node deploy/scripts/migrate-strapi-to-directus.js   # carga los 285 productos
 ```
 
-### Fase 7 — Probar todo
-- [ ] `https://unistylescuracao.com` → tienda carga con productos.
+### Phase 7 — Test everything
+- [ ] `https://unistylescuracao.com` → store loads with products.
 - [ ] `https://api.unistylescuracao.com/health` → `healthy`.
-- [ ] `https://cms.unistylescuracao.com/admin` → entras a Directus.
+- [ ] `https://cms.unistylescuracao.com/admin` → you can log in to Directus.
 
-### Fase 8 — Apagar el bloque viejo
-Solo cuando TODO lo de arriba esté en verde:
-- [ ] En Coolify, parar y borrar el recurso "Docker Compose" viejo (el de 5-en-1).
-- [ ] Borrar también el recurso `postgresql-database` huérfano del falso comienzo.
+### Phase 8 — Shut down the old block
+Only when EVERYTHING above is green:
+- [ ] In Coolify, stop and delete the old "Docker Compose" resource (the 5-in-1 one).
+- [ ] Also delete the orphaned `postgresql-database` resource from the false start.
 
 ---
 
-## ¿Qué falta para darte los clics exactos?
+## What is still needed to give you the exact clicks?
 
-Para rellenar los hosts internos reales (`REEMPLAZAR_HOST_POSTGRES`,
-`REEMPLAZAR_HOST_REDIS`) necesito una captura de tu panel real en
-`cloud.unistylescuracao.com` mostrando los recursos ya creados. Con eso te paso
-las URLs internas exactas listas para copiar y pegar.
+To fill in the real internal hosts (`REEMPLAZAR_HOST_POSTGRES`,
+`REEMPLAZAR_HOST_REDIS`) I need a screenshot of your actual panel at
+`cloud.unistylescuracao.com` showing the resources already created. With that I can give you
+the exact internal URLs, ready to copy and paste.
