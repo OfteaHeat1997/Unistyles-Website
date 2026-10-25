@@ -379,7 +379,7 @@ Asignación de repartidor y pantalla de despacho · seguimiento en vivo · franj
 
 Sin analítica ninguna de estas se puede medir hoy; por eso instalarla es P1 y no P2.
 
-**Negocio.** Tasa de conversión de visita a pedido · valor medio del pedido contra los umbrales de envío gratis de 75/100/150 XCG · tasa de abandono de carrito, con la referencia del sector en 70,2 % general y 80,0 % en móvil · reparto entre pedido por web y pedido por WhatsApp · compra repetida a 90 días, que en un mercado de ~185.000 personas con crecimiento cercano a cero pesa más que captar tráfico nuevo.
+**Negocio.** Tasa de conversión de visita a pedido · valor medio del pedido contra los umbrales de envío gratis de 75/100/150 XCG · tasa de abandono de carrito, con la referencia del sector en 70,2 % general y 80,0 % en móvil · reparto entre pedido por web y pedido por WhatsApp · compra repetida a 90 días, que en un mercado de 158.006 personas (CBS, 1-ene-2026) con crecimiento cercano a cero pesa más que captar tráfico nuevo.
 
 **Producto.** Caída paso a paso del checkout · búsquedas sin resultados · productos vistos sin añadir al carrito · número de campos del formulario, con objetivo de 12–14.
 
@@ -417,4 +417,4 @@ Las que hay que responder con clientas reales, no en el código.
 - Testing Trophy frente a pirámide de pruebas — https://www.baytechconsulting.com/blog/test-pyramid-vs-testing-trophy-whats-the-difference
 - Vitest y Playwright, adopción y reparto de capas — https://testdino.com/blog/javascript-testing-frameworks · https://www.browserstack.com/guide/vitest-vs-playwright
 
-Datos de mercado de Curaçao 2025 (población ~185.000, 126.000 usuarios de internet, 192.000 conexiones móviles, papiamentu ~81 %): tomados del documento 4 de `docs/planning/`, julio 2026.
+Datos de mercado de Curaçao 2025 (población: el documento 4 decía ~185.000, pero CBS da **158.006** a 1-ene-2026 — https://www.cbs.cw/population; 126.000 usuarios de internet, 192.000 conexiones móviles, papiamentu ~81 %): tomados del documento 4 de `docs/planning/`, julio 2026.
