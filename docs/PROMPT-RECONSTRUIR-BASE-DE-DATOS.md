@@ -102,7 +102,8 @@ se modelaron y cómo se consultan:
 - **Stock incoherente**: 49 productos tienen `stock_quantity = 0` pero `in_stock = true`.
 - **Filtros por género vacíos**: las 133 colonias tienen `gender = 'unisex'`, así que los filtros mujer/hombre no devuelven nada.
 - **Imágenes**: los 285 productos tienen `image = null` (no hay ninguna imagen subida a Directus). Todo depende de
-  `legacy_image`, una ruta estática servida por el frontend (`/images/...`).
+  `legacy_image`, una ruta estática servida por el frontend (`/images/...`). De las 270 rutas distintas,
+  **77 no cargan en producción** (no devuelven imagen), y un producto no tiene ninguna.
 - **Nombres generados mal**: p. ej. `Leonisa BraESTAMPADOC` o `Leonisa BraSTAMPADO` (concatenación sin espacio en el script de importación).
   Hay 16 nombres duplicados.
 
