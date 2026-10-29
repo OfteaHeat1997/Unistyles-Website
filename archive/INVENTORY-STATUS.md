@@ -103,8 +103,8 @@
 ## 3. LO QUE FALTA HACER
 
 ### Crítico para el launch (te toca a ti)
-1. **Deploy con `FORCE_RESEED=1`** en Vercel (o donde corra Strapi en producción).
-   En Vercel: Settings → Environment Variables → agregar `FORCE_RESEED` = `1` → Redeploy.
+1. **Deploy con `FORCE_RESEED=1`** en Coolify (o donde corra Strapi en producción).
+   En Coolify: Environment Variables → agregar `FORCE_RESEED` = `1` → Redeploy.
    Después del primer deploy exitoso, **quita la variable** o ponla en `0` para que los próximos restarts no borren todo.
 2. **Smoke test** el sitio en vivo:
    - Home carga

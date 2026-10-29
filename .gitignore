@@ -47,7 +47,6 @@ backups/
 # Large image originals at repo root (too big for GitHub)
 # Anchored with leading slash so it does NOT match frontend/public/images/
 /images/
-.vercel
 
 # Secretos locales de Coolify (NUNCA subir al repo)
 env for coolify

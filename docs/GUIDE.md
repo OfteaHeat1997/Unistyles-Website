@@ -50,7 +50,7 @@ That's deployment. The rest of this guide walks you through it.
 
 There are two ways to put a website online:
 
-**Managed hosting** — You upload your code to a company like Vercel or Netlify. They run it for you. Easy, but you pay per usage and you don't control the server.
+**Managed hosting** — You upload your code to a managed hosting company. They run it for you. Easy, but you pay per usage and you don't control the server.
 
 **Self-hosting** — You run the website on your own server (often rented from DigitalOcean, Hetzner, or similar — they sell you a Linux machine for $5-20/month). You control everything: where files are saved, when updates happen, what software is installed.
 

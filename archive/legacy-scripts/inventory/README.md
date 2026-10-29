@@ -59,7 +59,7 @@ For a clean wipe (e.g. major schema/structure change):
 
 ```bash
 FORCE_RESEED=1 npm run develop      # local
-# or set FORCE_RESEED=1 in Vercel/host env vars and redeploy
+# or set FORCE_RESEED=1 in the host env vars and redeploy
 ```
 
 This deletes ALL products first, then seeds from scratch. **Use sparingly** — admin edits made in the Strapi UI will be lost.

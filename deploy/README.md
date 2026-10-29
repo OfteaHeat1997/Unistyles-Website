@@ -159,14 +159,6 @@ POSTGRES_CONTAINER=$(docker ps --format '{{.Names}}' | grep postgres)
 
 Schedule it via Coolify's built-in **Scheduled Tasks** (cron) feature pointing at the resource, or run it from the host shell.
 
-## 12. Retire Vercel
-
-After the smoke tests pass and you're confident in the new setup:
-
-1. In Vercel: pause production deployments on the unistyles project.
-2. In your DNS: point `unistylescuracao.com` away from Vercel (the records from step 2 supersede it).
-3. Keep the Vercel project for ~1 week as a rollback path. Delete after.
-
 ## Troubleshooting
 
 | Symptom | Fix |

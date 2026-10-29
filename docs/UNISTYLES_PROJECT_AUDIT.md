@@ -247,7 +247,7 @@
 6. **Complete Backend API** - Product listing, cart, checkout endpoints
 7. **Connect Frontend to API** - Replace sample data with real API calls
 8. **Complete Cart/Checkout** - Shopping functionality
-9. **Deploy** - Set up hosting (Vercel/Netlify for frontend, Railway/Render for backend)
+9. **Deploy** - Set up hosting (Coolify: frontend, backend, Directus, Postgres, Redis)
 
 ---
 
