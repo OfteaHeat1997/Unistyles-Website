@@ -1,0 +1,56 @@
+# ===========================================
+# UNISTYLES — LOCAL DEMO STACK (not used by Coolify)
+# Postgres + Redis + Directus on localhost. Backend and frontend run with
+# `npm run dev` on the host. Full steps: deploy/LOCAL-DEMO.md
+#
+#   docker compose -f docker-compose.local.yml up -d
+# ===========================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=unistyles
+      - POSTGRES_PASSWORD=localdev
+      - POSTGRES_DB=unistyles_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - local-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U unistyles -d unistyles_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass localdev
+    ports:
+      - "6380:6379"
+
+  directus:
+    image: directus/directus:11
+    environment:
+      - KEY=local-demo-key-0000000000000000
+      - SECRET=local-demo-secret-000000000000000
+      - ADMIN_EMAIL=admin@example.com
+      - ADMIN_PASSWORD=Demo1234!
+      - PUBLIC_URL=http://localhost:8055
+      - DB_CLIENT=pg
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=unistyles_db
+      - DB_USER=unistyles
+      - DB_PASSWORD=localdev
+      - CACHE_ENABLED=false
+      - CORS_ENABLED=true
+      - CORS_ORIGIN=http://localhost:5173
+    ports:
+      - "8055:8055"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  local-postgres:

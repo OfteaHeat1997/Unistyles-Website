@@ -4,6 +4,7 @@ import { useHomepage, useCategories, useBrands } from '../hooks/useProducts'
 import { getGeneralInquiryUrl } from '../utils/whatsapp'
 import HeroSlider from '../components/HeroSlider'
 import NewReleasesCarousel from '../components/NewReleasesCarousel'
+import FreeDeliveryAmount from '../components/FreeDeliveryAmount'
 
 // Category tile configuration - CORRECT product images for each category
 const categoryConfig = {
@@ -222,7 +223,7 @@ function Home() {
               </div>
               <div className="trust-text">
                 <h4>Free Delivery</h4>
-                <p>On orders over XCG 80</p>
+                <p>On orders from <FreeDeliveryAmount /></p>
               </div>
             </div>
             <div className="trust-item">

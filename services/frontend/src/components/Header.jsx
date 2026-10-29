@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext'
 import CartSidebar from './CartSidebar'
 import AnimatedLogo from './AnimatedLogo'
 import { getGeneralInquiryUrl } from '../utils/whatsapp'
+import FreeDeliveryAmount from './FreeDeliveryAmount'
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -73,7 +74,7 @@ function Header() {
     <>
       {/* Announcement Bar */}
       <div className="announcement-bar">
-        <p>Free delivery in Curacao on orders over XCG 80</p>
+        <p>Free delivery in Curaçao on orders from <FreeDeliveryAmount /></p>
       </div>
 
       {/* Main Header - Sticky */}
@@ -261,6 +262,16 @@ function Header() {
                     </span>
                   </Link>
                 </div>
+                {user?.role === 'admin' && (
+                  <Link to="/admin" className="action-icon" aria-label="Back office" title="Back office" style={{ fontSize: '13px', fontWeight: 600 }}>
+                    <i className="fas fa-store-alt"></i>
+                  </Link>
+                )}
+                {(user?.role === 'driver' || user?.role === 'admin') && (
+                  <Link to="/driver" className="action-icon" aria-label="Deliveries" title="Deliveries" style={{ fontSize: '13px', fontWeight: 600 }}>
+                    <i className="fas fa-shipping-fast"></i>
+                  </Link>
+                )}
               </>
             ) : (
               <Link to="/login" className="action-icon" aria-label="Account">

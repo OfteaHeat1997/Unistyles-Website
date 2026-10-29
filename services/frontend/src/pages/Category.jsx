@@ -3,6 +3,7 @@ import { useState, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useProductsByCategory, useCategory } from '../hooks/useProducts'
 import QuickViewModal from '../components/QuickViewModal'
+import FreeDeliveryAmount from '../components/FreeDeliveryAmount'
 
 // Map breadcrumb names to their first category link
 const breadcrumbLinks = {
@@ -660,7 +661,7 @@ function Category({ category }) {
             </div>
             <div className="bottom-feature-text">
               <h4>Free Home Delivery</h4>
-              <p>Orders over XCG 80</p>
+              <p>Orders from <FreeDeliveryAmount /></p>
             </div>
           </div>
           <div className="bottom-feature">

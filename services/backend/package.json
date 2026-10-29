@@ -7,7 +7,9 @@
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "db:init": "node -e \"require('./src/utils/db').query('SELECT 1').then(() => console.log('DB connected')).catch(console.error)\"",
-    "db:migrate": "node ../database/migrate.js"
+    "db:migrate": "node ../database/migrate.js",
+    "test": "node --test \"test/*.test.js\"",
+    "test:integration": "node --test --test-concurrency=1 \"test/integration/*.test.js\""
   },
   "dependencies": {
     "pg": "^8.11.3",

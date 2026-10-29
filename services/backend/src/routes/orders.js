@@ -1,5 +1,8 @@
 // ===========================================
 // ORDERS ROUTES
+// Order creation reuses the checkout quote (services/pricing.js) inside a
+// transaction with the product/variant/slot rows locked, so the total the
+// customer saw is the total charged and the last unit cannot be sold twice.
 // ===========================================
 
 const express = require('express');
@@ -8,290 +11,348 @@ const { body, param, query, validationResult } = require('express-validator');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { optionalAuth, authenticate } = require('../middleware/auth');
 const db = require('../utils/db');
+const { getSettings } = require('../services/settings');
+const { buildQuote, fromCents } = require('../services/pricing');
+const { newTrackingToken, setAuditContext, cancelOrder } = require('../services/orderOps');
+const { LABELS, CUSTOMER_CANCELLABLE } = require('../services/orderState');
+const sentoo = require('../services/sentoo');
 const { sendOrderConfirmation, sendWhatsAppNotification, sendOrderStatusUpdate } = require('../utils/notifications');
+
+const ORDER_NUMBER_RE = /^UNI-\d{6}-\d{4}$/;
+
+// -------------------------------------------
+// Serialization
+// -------------------------------------------
+function parseJson(v) {
+    if (v === null || v === undefined) return null;
+    return typeof v === 'string' ? JSON.parse(v) : v;
+}
+
+function serializeOrder(order, { items = [], payment = null, history = [], pickupLocation = null, includeContact = true } = {}) {
+    return {
+        id: order.id,
+        orderNumber: order.order_number,
+        trackingToken: includeContact ? order.tracking_token : undefined,
+        status: order.status,
+        statusLabel: LABELS[order.status] || order.status,
+        paymentMethod: order.payment_method,
+        paymentStatus: order.payment_status,
+        paymentExpiresAt: order.payment_expires_at,
+        fulfillmentMethod: order.fulfillment_method || 'delivery',
+        currency: order.currency || 'XCG',
+        subtotal: parseFloat(order.subtotal),
+        discount: parseFloat(order.discount || 0),
+        deliveryFee: parseFloat(order.delivery_fee || 0),
+        total: parseFloat(order.total),
+        couponCode: order.coupon_code || null,
+        deliveryZoneName: order.delivery_zone_name || null,
+        fulfillmentDate: order.delivery_date,
+        fulfillmentSlot: order.delivery_time_slot,
+        pickupLocation,
+        shippingAddress: includeContact ? parseJson(order.shipping_address) : undefined,
+        customer: includeContact ? {
+            name: order.guest_name,
+            email: order.guest_email,
+            phone: order.guest_phone
+        } : undefined,
+        notes: includeContact ? order.notes : undefined,
+        items: items.map(i => ({
+            productId: i.product_id,
+            variantId: i.variant_id,
+            name: i.product_name,
+            sku: i.product_sku,
+            quantity: i.quantity,
+            price: parseFloat(i.price),
+            lineTotal: parseFloat(i.price) * i.quantity,
+            size: i.size,
+            color: i.color,
+            imageUrl: i.image_url
+        })),
+        payment: payment ? {
+            method: payment.method,
+            status: payment.status,
+            amount: parseFloat(payment.amount),
+            paidAt: payment.paid_at,
+            hasOnlineSession: !!payment.transaction_id && payment.method === 'sentoo'
+        } : null,
+        timeline: history.map(h => ({
+            status: h.to_status,
+            label: LABELS[h.to_status] || h.to_status,
+            note: h.note,
+            at: h.created_at
+        })),
+        createdAt: order.created_at,
+        updatedAt: order.updated_at
+    };
+}
+
+async function loadOrderBundle(order, { includeContact = true } = {}) {
+    const [items, payment, history, pickup] = await Promise.all([
+        db.query('SELECT * FROM order_items WHERE order_id = $1 ORDER BY created_at', [order.id]),
+        db.query('SELECT * FROM payments WHERE order_id = $1 ORDER BY created_at DESC LIMIT 1', [order.id]),
+        db.query('SELECT to_status, note, created_at FROM order_status_history WHERE order_id = $1 ORDER BY created_at, id', [order.id]),
+        order.pickup_location_id
+            ? db.query('SELECT id, name, address, latitude, longitude, hours, instructions FROM pickup_locations WHERE id = $1', [order.pickup_location_id])
+            : Promise.resolve({ rows: [] })
+    ]);
+    const loc = pickup.rows[0];
+    return serializeOrder(order, {
+        items: items.rows,
+        payment: payment.rows[0] || null,
+        history: history.rows,
+        includeContact,
+        pickupLocation: loc ? {
+            id: loc.id, name: loc.name, address: loc.address, hours: loc.hours, instructions: loc.instructions,
+            lat: loc.latitude !== null ? parseFloat(loc.latitude) : null,
+            lng: loc.longitude !== null ? parseFloat(loc.longitude) : null
+        } : null
+    });
+}
+
+async function isAdminUser(userId) {
+    if (!userId) return false;
+    const r = await db.query("SELECT role FROM users WHERE id = $1", [userId]);
+    return r.rows[0]?.role === 'admin';
+}
+
+/** Owner, admin, or the holder of the tracking token may see/act on an order. */
+async function canAccess(req, order) {
+    const token = req.query.t || req.body?.trackingToken;
+    if (token && order.tracking_token && token === order.tracking_token) return true;
+    if (req.user && order.user_id && req.user.id === order.user_id) return true;
+    return isAdminUser(req.user?.id);
+}
 
 // ===========================================
 // POST /api/orders
-// Create new order
 // ===========================================
 router.post('/',
     optionalAuth,
     [
-        body('items').isArray({ min: 1 }).withMessage('At least one item required'),
-        body('paymentMethod').isIn(['cod', 'sentoo', 'bank_transfer', 'card', 'whatsapp']),
-        body('shippingAddress.name').notEmpty(),
-        body('shippingAddress.phone').notEmpty(),
-        body('shippingAddress.street').notEmpty(),
-        body('shippingAddress.city').notEmpty(),
-        body('deliveryTimeSlot').optional()
+        body('items').isArray({ min: 1, max: 50 }).withMessage('At least one item required'),
+        body('items.*.productId').isInt({ min: 1 }).toInt(),
+        body('items.*.variantId').optional({ nullable: true }).isUUID(),
+        body('items.*.quantity').isInt({ min: 1, max: 99 }).toInt(),
+        body('paymentMethod').isIn(['cod', 'sentoo', 'bank_transfer', 'whatsapp']).withMessage('Choose a payment method'),
+        body('customer.firstName').trim().notEmpty().isLength({ max: 100 }).withMessage('First name is required'),
+        body('customer.lastName').trim().notEmpty().isLength({ max: 100 }).withMessage('Last name is required'),
+        body('customer.phone').trim().matches(/^\+?[0-9 ()-]{7,20}$/).withMessage('A valid phone number is required'),
+        body('customer.email').optional({ checkFalsy: true }).isEmail().normalizeEmail().withMessage('Invalid email'),
+        body('fulfillment.method').isIn(['pickup', 'delivery']).withMessage('Choose pickup or delivery'),
+        body('fulfillment.street').if(body('fulfillment.method').equals('delivery')).trim().notEmpty().isLength({ max: 255 }).withMessage('Street address is required'),
+        body('fulfillment.landmark').optional({ nullable: true }).isString().isLength({ max: 255 }),
+        body('fulfillment.lat').optional({ nullable: true }).isFloat({ min: -90, max: 90 }),
+        body('fulfillment.lng').optional({ nullable: true }).isFloat({ min: -180, max: 180 }),
+        body('fulfillment.date').isISO8601().withMessage('Choose a date'),
+        body('fulfillment.slotId').isInt().withMessage('Choose a time window'),
+        body('notes').optional({ nullable: true }).isString().isLength({ max: 1000 }),
+        body('couponCode').optional({ nullable: true }).isString().isLength({ max: 50 })
     ],
     asyncHandler(async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
+            return res.status(400).json({ error: errors.array()[0].msg, errors: errors.array() });
         }
 
-        const {
-            items,
-            paymentMethod,
-            shippingAddress,
-            deliveryDate,
-            deliveryTimeSlot,
-            notes,
-            guestEmail,
-            guestPhone,
-            guestName,
-            couponCode
-        } = req.body;
+        const { items, paymentMethod, customer, fulfillment, notes, couponCode } = req.body;
+        const idempotencyKey = (req.get('Idempotency-Key') || '').slice(0, 64) || null;
+        const userId = req.user?.id || null;
 
-        // ===========================================
-        // Use a DB transaction with row-level locking
-        // to prevent two customers from buying the last item
-        // ===========================================
+        if (!userId && !customer.email) {
+            return res.status(400).json({ error: 'Email is required for guest checkout' });
+        }
+
+        const settings = await getSettings();
+        if (!(settings.payment_methods || []).includes(paymentMethod)) {
+            return res.status(422).json({ error: 'This payment method is not available' });
+        }
+        if (paymentMethod === 'sentoo' && process.env.PAYMENTS_MODE !== 'mock' && !sentoo.isConfigured()) {
+            return res.status(503).json({ error: 'Online payment is temporarily unavailable. Choose another method.' });
+        }
+
         const client = await db.getClient();
-
         let order;
-        const orderItems = [];
+        let quote;
+        let replayed = false;
 
         try {
             await client.query('BEGIN');
 
-            // Lock the product rows we need (SELECT FOR UPDATE)
-            // This makes other checkout requests wait until we're done
-            const productIds = items.map(item => item.productId);
-            const products = await client.query(
-                'SELECT id, ref, name, price, in_stock, stock_quantity, image, legacy_image FROM products WHERE id = ANY($1) FOR UPDATE',
-                [productIds]
-            );
-
-            const productMap = {};
-            products.rows.forEach(p => {
-                productMap[p.id] = p;
-            });
-
-            let subtotal = 0;
-
-            for (const item of items) {
-                const product = productMap[item.productId];
-                if (!product) {
-                    throw { statusCode: 400, message: `Product not found: ${item.productId}` };
+            // Idempotency: the same checkout submitted twice returns the first order.
+            if (idempotencyKey) {
+                const existing = await client.query('SELECT * FROM orders WHERE idempotency_key = $1', [idempotencyKey]);
+                if (existing.rowCount > 0) {
+                    order = existing.rows[0];
+                    replayed = true;
                 }
-                if (!product.in_stock) {
-                    throw { statusCode: 400, message: `Out of stock: ${product.name}` };
-                }
-                if (product.stock_quantity !== null && product.stock_quantity < item.quantity) {
-                    throw { statusCode: 400, message: `Not enough stock for ${product.name}. Available: ${product.stock_quantity}` };
-                }
-
-                const itemPrice = parseFloat(product.price);
-                subtotal += itemPrice * item.quantity;
-
-                orderItems.push({
-                    productId: product.id,
-                    variantId: item.variantId || null,
-                    productName: product.name,
-                    productSku: product.ref || '',
-                    quantity: item.quantity,
-                    price: itemPrice,
-                    size: item.size || null,
-                    color: item.color || null,
-                    imageUrl: product.legacy_image || null
-                });
             }
 
-            // Resolve delivery fee from the zone matching shippingAddress.area.
-            // Each zone may override the global free-shipping threshold.
-            const thresholdResult = await client.query(
-                "SELECT value FROM settings WHERE key = 'free_delivery_threshold'"
-            );
-            const globalThreshold = parseFloat(thresholdResult.rows[0]?.value || 0);
+            if (!replayed) {
+                // Serialize bookings of the same slot so capacity cannot be exceeded.
+                await client.query('SELECT id FROM fulfillment_slots WHERE id = $1 FOR UPDATE', [fulfillment.slotId]);
 
-            const areaName = shippingAddress.area || shippingAddress.city || null;
-            let zoneId = null;
-            let zoneFee = 0;
-            let zoneThreshold = globalThreshold;
+                quote = await buildQuote(client, {
+                    items,
+                    fulfillment,
+                    couponCode,
+                    email: customer.email
+                }, { settings, userId, lock: true, requireComplete: true });
 
-            if (areaName) {
-                const zoneResult = await client.query(
-                    `SELECT id, fee, free_threshold FROM delivery_zones
-                     WHERE is_active = true
-                       AND EXISTS (
-                         SELECT 1 FROM jsonb_array_elements(neighborhoods) n
-                         WHERE LOWER(n->>'name') = LOWER($1)
-                       )
-                     LIMIT 1`,
-                    [areaName]
+                const blocking = quote.issues.filter(i => i.blocking !== false);
+                if (blocking.length > 0 || !quote.canPlaceOrder) {
+                    await client.query('ROLLBACK');
+                    return res.status(409).json({
+                        error: blocking[0]?.message || 'Your order could not be placed',
+                        issues: quote.issues,
+                        quote: { subtotal: quote.subtotal, deliveryFee: quote.deliveryFee, discount: quote.discount, total: quote.total }
+                    });
+                }
+                if (couponCode && !quote.coupon?.valid) {
+                    await client.query('ROLLBACK');
+                    return res.status(409).json({ error: quote.coupon?.error || 'Invalid coupon', issues: quote.issues });
+                }
+
+                const { totals, zone, coupon, couponResult, lines } = quote._internal;
+                if (paymentMethod === 'sentoo' && totals.totalCents < 100) {
+                    await client.query('ROLLBACK');
+                    return res.status(422).json({ error: 'Online payment requires a total of at least XCG 1.00' });
+                }
+
+                // DEC-017: every order starts unconfirmed; stock is deducted when staff
+                // confirms it (cash) or the payment arrives (transfer, Sentoo).
+                let status = 'pending';
+                let paymentStatus = 'pending';
+                let expiresSql = null;
+                if (paymentMethod === 'cod') {
+                    paymentStatus = 'pending_delivery';
+                } else if (paymentMethod === 'sentoo') {
+                    status = 'awaiting_payment';
+                    expiresSql = `${settings.payment_expiry_minutes} minutes`;
+                } else if (paymentMethod === 'bank_transfer') {
+                    status = 'awaiting_payment';
+                    expiresSql = `${settings.bank_transfer_expiry_hours} hours`;
+                }
+
+                const name = `${customer.firstName} ${customer.lastName}`.trim();
+                const shippingAddress = fulfillment.method === 'delivery' ? {
+                    name,
+                    phone: customer.phone,
+                    street: fulfillment.street,
+                    area: fulfillment.area || zone?.name || null,
+                    city: fulfillment.area || 'Curaçao',
+                    landmark: fulfillment.landmark || null,
+                    lat: fulfillment.lat ?? null,
+                    lng: fulfillment.lng ?? null
+                } : null;
+
+                await setAuditContext(client, { userId, note: 'Order placed online' });
+                const inserted = await client.query(`
+                    INSERT INTO orders (
+                        user_id, guest_email, guest_phone, guest_name,
+                        status, payment_method, payment_status,
+                        subtotal, delivery_fee, discount, total, currency,
+                        coupon_id, coupon_code,
+                        fulfillment_method, pickup_location_id, fulfillment_slot_id,
+                        shipping_address, delivery_zone_id, delivery_zone_name, delivery_lat, delivery_lng,
+                        delivery_date, delivery_time_slot, notes,
+                        tracking_token, idempotency_key, payment_expires_at
+                    ) VALUES (
+                        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
+                        $18, $19, $20, $21, $22, $23, $24, $25, $26, $27,
+                        CASE WHEN $28::text IS NULL THEN NULL ELSE NOW() + ($28::text)::interval END
+                    ) RETURNING *`,
+                    [
+                        userId, customer.email || null, customer.phone, name,
+                        status, paymentMethod, paymentStatus,
+                        fromCents(totals.subtotalCents), fromCents(totals.deliveryFeeCents),
+                        fromCents(totals.discountCents), fromCents(totals.totalCents), quote.currency,
+                        couponResult?.valid ? coupon.id : null, couponResult?.valid ? coupon.code : null,
+                        fulfillment.method, quote.pickupLocation?.id || null, quote.slot.id,
+                        shippingAddress ? JSON.stringify(shippingAddress) : null,
+                        zone?.id || null, zone?.name || null,
+                        fulfillment.lat ?? null, fulfillment.lng ?? null,
+                        quote.slot.date, quote.slot.label, notes || null,
+                        newTrackingToken(), idempotencyKey, expiresSql
+                    ]
                 );
-                if (zoneResult.rows.length > 0) {
-                    zoneId = zoneResult.rows[0].id;
-                    zoneFee = parseFloat(zoneResult.rows[0].fee);
-                    if (zoneResult.rows[0].free_threshold !== null) {
-                        zoneThreshold = parseFloat(zoneResult.rows[0].free_threshold);
-                    }
-                } else {
-                    // Unknown area — reject so we never undercharge silently
-                    throw {
-                        statusCode: 400,
-                        message: `Delivery area "${areaName}" is not covered. Please contact us via WhatsApp.`
-                    };
+                order = inserted.rows[0];
+
+                for (const line of lines) {
+                    await client.query(`
+                        INSERT INTO order_items (order_id, product_id, variant_id, product_name, product_sku,
+                                                 quantity, price, size, color, image_url)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+                        [order.id, line.productId, line.variantId, line.name, line.sku || '',
+                         line.quantity, fromCents(line.unitPriceCents), line.size, line.color, line.image]
+                    );
                 }
-            }
 
-            const deliveryFee = subtotal >= zoneThreshold ? 0 : zoneFee;
+                if (totals.deliveryFeeToConfirm) {
+                    await client.query(
+                        `UPDATE orders SET needs_review = true,
+                                admin_notes = 'Delivery zone unknown — confirm the fee with the customer on WhatsApp (DEC-001).'
+                         WHERE id = $1`, [order.id]);
+                }
 
-            // Apply coupon discount if provided (atomic with FOR UPDATE to prevent race conditions)
-            let discount = 0;
-            if (couponCode) {
-                const couponResult = await client.query(
-                    'SELECT * FROM coupons WHERE UPPER(code) = UPPER($1) AND is_active = true FOR UPDATE',
-                    [couponCode]
+                if (couponResult?.valid) {
+                    await client.query('UPDATE coupons SET times_used = times_used + 1 WHERE id = $1', [coupon.id]);
+                    await client.query(
+                        `INSERT INTO coupon_redemptions (coupon_id, order_id, user_id, guest_email, amount_saved)
+                         VALUES ($1, $2, $3, $4, $5)`,
+                        [coupon.id, order.id, userId, userId ? null : customer.email, fromCents(couponResult.discountCents)]
+                    );
+                }
+
+                await client.query(
+                    `INSERT INTO payments (order_id, method, provider, status, amount, currency)
+                     VALUES ($1, $2, $3, $4, $5, $6)`,
+                    [order.id, paymentMethod, paymentMethod === 'sentoo' ? 'sentoo' : 'manual',
+                     paymentStatus, fromCents(totals.totalCents), quote.currency]
                 );
-
-                if (couponResult.rows.length > 0) {
-                    const coupon = couponResult.rows[0];
-                    const now = new Date();
-                    const isValid = (!coupon.valid_from || new Date(coupon.valid_from) <= now) &&
-                                    (!coupon.valid_until || new Date(coupon.valid_until) >= now) &&
-                                    (!coupon.max_uses || coupon.times_used < coupon.max_uses) &&
-                                    (!coupon.min_order_amount || subtotal >= parseFloat(coupon.min_order_amount));
-
-                    if (isValid) {
-                        if (coupon.discount_type === 'percentage') {
-                            discount = subtotal * (parseFloat(coupon.discount_value) / 100);
-                            if (coupon.max_discount && discount > parseFloat(coupon.max_discount)) {
-                                discount = parseFloat(coupon.max_discount);
-                            }
-                        } else {
-                            discount = parseFloat(coupon.discount_value);
-                        }
-                        discount = Math.min(discount, subtotal);
-
-                        // Atomically increment usage (already locked by FOR UPDATE)
-                        await client.query(
-                            'UPDATE coupons SET times_used = times_used + 1 WHERE id = $1',
-                            [coupon.id]
-                        );
-                    }
-                }
             }
 
-            const total = subtotal + deliveryFee - discount;
-
-            // Create order
-            const orderResult = await client.query(`
-                INSERT INTO orders (
-                    user_id, guest_email, guest_phone, guest_name,
-                    payment_method, subtotal, delivery_fee, discount, total,
-                    shipping_address, delivery_date, delivery_time_slot, notes,
-                    delivery_zone_id, delivery_lat, delivery_lng
-                )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-                RETURNING *
-            `, [
-                req.user?.id || null,
-                guestEmail || null,
-                guestPhone || shippingAddress.phone,
-                guestName || shippingAddress.name,
-                paymentMethod,
-                subtotal,
-                deliveryFee,
-                discount,
-                total,
-                JSON.stringify(shippingAddress),
-                deliveryDate || null,
-                deliveryTimeSlot || null,
-                notes || null,
-                zoneId,
-                shippingAddress.lat || null,
-                shippingAddress.lng || null
-            ]);
-
-            order = orderResult.rows[0];
-
-            // Insert order items and deduct stock (inside same transaction)
-            for (const item of orderItems) {
-                await client.query(`
-                    INSERT INTO order_items (
-                        order_id, product_id, variant_id, product_name,
-                        product_sku, quantity, price, size, color, image_url
-                    )
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                `, [
-                    order.id,
-                    item.productId,
-                    item.variantId,
-                    item.productName,
-                    item.productSku,
-                    item.quantity,
-                    item.price,
-                    item.size,
-                    item.color,
-                    item.imageUrl
-                ]);
-
-                // Deduct stock and verify it doesn't go negative
-                const stockResult = await client.query(`
-                    UPDATE products
-                    SET stock_quantity = stock_quantity - $1,
-                        in_stock = CASE WHEN stock_quantity - $1 <= 0 THEN false ELSE in_stock END
-                    WHERE id = $2 AND (stock_quantity IS NULL OR stock_quantity >= $1)
-                    RETURNING stock_quantity
-                `, [item.quantity, item.productId]);
-
-                if (stockResult.rows.length === 0) {
-                    throw { statusCode: 400, message: `Not enough stock for ${item.productName}` };
-                }
-            }
-
-            // Create initial payment record
-            await client.query(`
-                INSERT INTO payments (order_id, method, amount)
-                VALUES ($1, $2, $3)
-            `, [order.id, paymentMethod, total]);
-
-            // All good — commit the transaction
             await client.query('COMMIT');
-
         } catch (err) {
-            // Something failed — roll back everything (order, items, stock changes)
-            await client.query('ROLLBACK');
-
-            if (err.statusCode) {
-                return res.status(err.statusCode).json({ error: err.message });
+            await client.query('ROLLBACK').catch(() => {});
+            if (err.statusCode) return res.status(err.statusCode).json({ error: err.message });
+            // Two identical submits racing: the unique index tells us the other one won.
+            if (err.code === '23505' && String(err.constraint || '').includes('idempotency')) {
+                const existing = await db.query('SELECT * FROM orders WHERE idempotency_key = $1', [idempotencyKey]);
+                if (existing.rowCount > 0) {
+                    order = existing.rows[0];
+                    replayed = true;
+                } else {
+                    throw err;
+                }
+            } else {
+                throw err;
             }
-            throw err; // Re-throw unexpected errors to asyncHandler
         } finally {
             client.release();
         }
 
-        // Send notifications (async, don't wait)
-        sendOrderConfirmation(order, orderItems).catch(console.error);
-        sendWhatsAppNotification(order, orderItems).catch(console.error);
+        const payload = await loadOrderBundle(order);
 
-        res.status(201).json({
-            message: 'Order created successfully',
-            order: {
-                id: order.id,
-                orderNumber: order.order_number,
-                status: order.status,
-                paymentMethod: order.payment_method,
-                paymentStatus: order.payment_status,
-                subtotal: parseFloat(order.subtotal),
-                deliveryFee: parseFloat(order.delivery_fee),
-                total: parseFloat(order.total),
-                items: orderItems,
-                shippingAddress: typeof order.shipping_address === 'string' ? JSON.parse(order.shipping_address) : order.shipping_address,
-                deliveryDate: order.delivery_date,
-                deliveryTimeSlot: order.delivery_time_slot,
-                createdAt: order.created_at
-            }
-        });
+        if (!replayed && paymentMethod !== 'sentoo') {
+            // Online payments notify after the payment is confirmed (services/paymentConfirm.js)
+            const itemsRes = await db.query('SELECT * FROM order_items WHERE order_id = $1', [order.id]);
+            sendOrderConfirmation(order, itemsRes.rows).catch(e => console.error('[orders] email failed:', e.message));
+            sendWhatsAppNotification(order, itemsRes.rows).catch(e => console.error('[orders] whatsapp failed:', e.message));
+        }
+
+        let next = { type: 'confirmation' };
+        if (order.payment_method === 'sentoo') next = { type: 'pay_online' };
+        if (order.payment_method === 'bank_transfer') {
+            next = { type: 'bank_transfer', reference: order.order_number, bankDetails: settings.bank_details, expiresAt: order.payment_expires_at };
+        }
+        if (order.payment_method === 'whatsapp') next = { type: 'whatsapp', supportWhatsapp: settings.support_whatsapp };
+
+        res.status(replayed ? 200 : 201).json({ message: replayed ? 'Order already placed' : 'Order created', replayed, order: payload, next });
     })
 );
 
 // ===========================================
-// GET /api/orders
-// Get user's orders
+// GET /api/orders  — the logged-in customer's orders
 // ===========================================
 router.get('/',
     authenticate,
@@ -300,242 +361,157 @@ router.get('/',
         query('limit').optional().isInt({ min: 1, max: 50 }).toInt()
     ],
     asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10 } = req.query;
-    const offset = (page - 1) * limit;
+        const page = req.query.page || 1;
+        const limit = req.query.limit || 10;
+        const offset = (page - 1) * limit;
 
-    const countResult = await db.query(
-        'SELECT COUNT(*) as total FROM orders WHERE user_id = $1',
-        [req.user.id]
-    );
+        const [countResult, result] = await Promise.all([
+            db.query('SELECT COUNT(*)::int AS total FROM orders WHERE user_id = $1', [req.user.id]),
+            db.query(`
+                SELECT o.*, COUNT(oi.id)::int AS item_count
+                FROM orders o LEFT JOIN order_items oi ON o.id = oi.order_id
+                WHERE o.user_id = $1
+                GROUP BY o.id ORDER BY o.created_at DESC LIMIT $2 OFFSET $3`,
+                [req.user.id, limit, offset])
+        ]);
 
-    // Single query with item count (no N+1)
-    const result = await db.query(`
-        SELECT o.*, COUNT(oi.id) as item_count
-        FROM orders o
-        LEFT JOIN order_items oi ON o.id = oi.order_id
-        WHERE o.user_id = $1
-        GROUP BY o.id
-        ORDER BY o.created_at DESC
-        LIMIT $2 OFFSET $3
-    `, [req.user.id, parseInt(limit), offset]);
-
-    const orders = result.rows.map(order => ({
-        id: order.id,
-        orderNumber: order.order_number,
-        status: order.status,
-        paymentMethod: order.payment_method,
-        paymentStatus: order.payment_status,
-        subtotal: parseFloat(order.subtotal),
-        deliveryFee: parseFloat(order.delivery_fee),
-        discount: parseFloat(order.discount || 0),
-        total: parseFloat(order.total),
-        itemCount: parseInt(order.item_count),
-        createdAt: order.created_at
-    }));
-
-    res.json({
-        orders,
-        pagination: {
-            page: parseInt(page),
-            limit: parseInt(limit),
-            total: parseInt(countResult.rows[0].total),
-            totalPages: Math.ceil(countResult.rows[0].total / limit)
-        }
-    });
-}));
+        res.json({
+            orders: result.rows.map(o => ({ ...serializeOrder(o), itemCount: o.item_count })),
+            pagination: {
+                page, limit,
+                total: countResult.rows[0].total,
+                totalPages: Math.ceil(countResult.rows[0].total / limit)
+            }
+        });
+    })
+);
 
 // ===========================================
-// GET /api/orders/:id
-// Get order details
+// GET /api/orders/track/:orderNumber?t=TOKEN | ?phone=LAST4
+// Public, privacy-safe: no address, email or names.
+// ===========================================
+router.get('/track/:orderNumber',
+    [
+        param('orderNumber').customSanitizer(v => String(v).trim().toUpperCase()).matches(ORDER_NUMBER_RE).withMessage('Order numbers look like UNI-261025-0001'),
+        query('t').optional().isString().isLength({ max: 64 }),
+        query('phone').optional().isString().isLength({ max: 20 })
+    ],
+    asyncHandler(async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
+
+        const result = await db.query('SELECT * FROM orders WHERE order_number = $1', [req.params.orderNumber]);
+        const order = result.rows[0];
+        const digits = String(req.query.phone || '').replace(/\D/g, '');
+        const phoneOk = order && digits.length >= 4 && String(order.guest_phone || '').replace(/\D/g, '').endsWith(digits.slice(-4));
+        const tokenOk = order && req.query.t && req.query.t === order.tracking_token;
+
+        // Same answer for "does not exist" and "wrong phone" so numbers cannot be probed.
+        if (!order || !(phoneOk || tokenOk)) {
+            return res.status(404).json({ error: 'We could not find an order with that number and phone.' });
+        }
+
+        const bundle = await loadOrderBundle(order, { includeContact: false });
+        res.json({ ...bundle, trackingToken: order.tracking_token });
+    })
+);
+
+// ===========================================
+// GET /api/orders/by-number/:orderNumber?t=TOKEN — confirmation page
+// ===========================================
+router.get('/by-number/:orderNumber',
+    optionalAuth,
+    [param('orderNumber').customSanitizer(v => String(v).trim().toUpperCase()).matches(ORDER_NUMBER_RE)],
+    asyncHandler(async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) return res.status(400).json({ error: 'Invalid order number' });
+
+        const result = await db.query('SELECT * FROM orders WHERE order_number = $1', [req.params.orderNumber]);
+        const order = result.rows[0];
+        if (!order || !(await canAccess(req, order))) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+        const settings = await getSettings();
+        const bundle = await loadOrderBundle(order);
+        res.json({
+            ...bundle,
+            bankDetails: order.payment_method === 'bank_transfer' ? settings.bank_details : undefined,
+            supportWhatsapp: settings.support_whatsapp,
+            canCancel: CUSTOMER_CANCELLABLE.has(order.status)
+        });
+    })
+);
+
+// ===========================================
+// GET /api/orders/:id — owner, admin or tracking token
 // ===========================================
 router.get('/:id',
     optionalAuth,
     [param('id').isUUID().withMessage('Valid order ID required')],
     asyncHandler(async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
-    const { id } = req.params;
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-    const result = await db.query(
-        'SELECT * FROM orders WHERE id = $1',
-        [id]
-    );
-
-    if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'Order not found' });
-    }
-
-    const order = result.rows[0];
-
-    // Check authorization — re-verify admin from DB (don't trust JWT claim)
-    if (req.user && order.user_id !== req.user.id) {
-        const adminCheck = await db.query('SELECT is_admin FROM users WHERE id = $1', [req.user.id]);
-        if (!adminCheck.rows[0]?.is_admin) {
-            return res.status(403).json({ error: 'Not authorized' });
+        const result = await db.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+        const order = result.rows[0];
+        if (!order || !(await canAccess(req, order))) {
+            return res.status(404).json({ error: 'Order not found' });
         }
-    }
-
-    // Get items
-    const items = await db.query(
-        'SELECT * FROM order_items WHERE order_id = $1',
-        [order.id]
-    );
-
-    // Get payment info
-    const payment = await db.query(
-        'SELECT * FROM payments WHERE order_id = $1 ORDER BY created_at DESC LIMIT 1',
-        [order.id]
-    );
-
-    res.json({
-        id: order.id,
-        orderNumber: order.order_number,
-        status: order.status,
-        paymentMethod: order.payment_method,
-        paymentStatus: order.payment_status,
-        subtotal: parseFloat(order.subtotal),
-        deliveryFee: parseFloat(order.delivery_fee),
-        total: parseFloat(order.total),
-        items: items.rows.map(item => ({
-            productId: item.product_id,
-            name: item.product_name,
-            sku: item.product_sku,
-            quantity: item.quantity,
-            price: parseFloat(item.price),
-            size: item.size,
-            color: item.color,
-            imageUrl: item.image_url
-        })),
-        shippingAddress: typeof order.shipping_address === 'string' ? JSON.parse(order.shipping_address) : order.shipping_address,
-        deliveryDate: order.delivery_date,
-        deliveryTimeSlot: order.delivery_time_slot,
-        notes: order.notes,
-        payment: payment.rows[0] ? {
-            method: payment.rows[0].method,
-            status: payment.rows[0].status,
-            transactionId: payment.rows[0].transaction_id
-        } : null,
-        createdAt: order.created_at,
-        updatedAt: order.updated_at
-    });
-}));
+        res.json(await loadOrderBundle(order));
+    })
+);
 
 // ===========================================
-// GET /api/orders/track/:orderNumber
-// Track order by order number (public)
-// ===========================================
-router.get('/track/:orderNumber',
-    [param('orderNumber').matches(/^UNI-\d{6}-\d{4}$/).withMessage('Invalid order number format')],
-    asyncHandler(async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
-    const { orderNumber } = req.params;
-
-    // Use exact match (=) NOT LIKE to prevent wildcard attacks
-    const result = await db.query(
-        'SELECT id, order_number, status, payment_status, delivery_date, delivery_time_slot, created_at FROM orders WHERE order_number = $1',
-        [orderNumber]
-    );
-
-    if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'Order not found' });
-    }
-
-    const order = result.rows[0];
-
-    res.json({
-        orderNumber: order.order_number,
-        status: order.status,
-        paymentStatus: order.payment_status,
-        deliveryDate: order.delivery_date,
-        deliveryTimeSlot: order.delivery_time_slot,
-        createdAt: order.created_at
-    });
-}));
-
-// ===========================================
-// PUT /api/orders/:id/cancel
-// Cancel an order and restore stock
+// PUT /api/orders/:id/cancel — customer cancellation before preparation
 // ===========================================
 router.put('/:id/cancel',
     optionalAuth,
     [param('id').isUUID().withMessage('Valid order ID required')],
     asyncHandler(async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
-    const { id } = req.params;
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-    // Get the order
-    const orderResult = await db.query('SELECT * FROM orders WHERE id = $1', [id]);
-    if (orderResult.rows.length === 0) {
-        return res.status(404).json({ error: 'Order not found' });
-    }
-
-    const order = orderResult.rows[0];
-
-    // Check authorization
-    if (req.user && order.user_id !== req.user.id && !req.user.isAdmin) {
-        return res.status(403).json({ error: 'Not authorized' });
-    }
-
-    // Only allow cancellation of pending/confirmed orders (not shipped/delivered)
-    const cancellableStatuses = ['pending', 'confirmed', 'awaiting_payment'];
-    if (!cancellableStatuses.includes(order.status)) {
-        return res.status(400).json({
-            error: `Cannot cancel order with status "${order.status}". Only pending, confirmed, or awaiting payment orders can be cancelled.`
-        });
-    }
-
-    // Use a transaction to cancel + restore stock atomically
-    const client = await db.getClient();
-    try {
-        await client.query('BEGIN');
-
-        // Update order status
-        await client.query(
-            'UPDATE orders SET status = $1, payment_status = $2, updated_at = NOW() WHERE id = $3',
-            ['cancelled', 'refunded', id]
-        );
-
-        // Update payment status
-        await client.query(
-            'UPDATE payments SET status = $1, updated_at = NOW() WHERE order_id = $2',
-            ['refunded', id]
-        );
-
-        // Restore stock for each order item
-        const items = await client.query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [id]);
-        for (const item of items.rows) {
-            await client.query(`
-                UPDATE products
-                SET stock_quantity = stock_quantity + $1,
-                    in_stock = true
-                WHERE id = $2
-            `, [item.quantity, item.product_id]);
+        const found = await db.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+        const order = found.rows[0];
+        if (!order || !(await canAccess(req, order))) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+        if (!CUSTOMER_CANCELLABLE.has(order.status)) {
+            return res.status(422).json({
+                error: `This order is "${LABELS[order.status]}" and can no longer be cancelled online. Contact us on WhatsApp.`
+            });
         }
 
-        await client.query('COMMIT');
-    } catch (err) {
-        await client.query('ROLLBACK');
-        throw err;
-    } finally {
-        client.release();
-    }
+        const client = await db.getClient();
+        let cancelled;
+        try {
+            await client.query('BEGIN');
+            cancelled = await cancelOrder(client, order.id, { userId: req.user?.id || null, note: 'Cancelled by customer' });
+            await client.query('COMMIT');
+        } catch (err) {
+            await client.query('ROLLBACK').catch(() => {});
+            if (err.statusCode) return res.status(err.statusCode).json({ error: err.message });
+            throw err;
+        } finally {
+            client.release();
+        }
 
-    // Send cancellation notification (non-blocking)
-    sendOrderStatusUpdate(order, 'cancelled').catch(console.error);
+        if (order.payment_method === 'sentoo') {
+            const p = await db.query("SELECT transaction_id FROM payments WHERE order_id = $1 AND transaction_id IS NOT NULL LIMIT 1", [order.id]);
+            if (p.rows[0] && sentoo.isConfigured()) sentoo.cancelTransaction(p.rows[0].transaction_id).catch(() => {});
+        }
+        sendOrderStatusUpdate(cancelled, 'cancelled').catch(e => console.error('[orders] notify failed:', e.message));
 
-    res.json({
-        message: 'Order cancelled successfully',
-        orderNumber: order.order_number,
-        status: 'cancelled'
-    });
-}));
+        res.json({
+            message: cancelled.needs_review
+                ? 'Order cancelled. Your payment will be refunded — we will contact you.'
+                : 'Order cancelled',
+            orderNumber: order.order_number,
+            status: 'cancelled'
+        });
+    })
+);
 
 module.exports = router;
+module.exports.loadOrderBundle = loadOrderBundle;
+module.exports.serializeOrder = serializeOrder;

@@ -6,7 +6,7 @@ import { cartStore } from '../stores/cartStore'
 import QuickViewModal from '../components/QuickViewModal'
 import { getCategoryHelpUrl } from '../utils/whatsapp'
 
-const API_URL = import.meta.env.VITE_API_URL || ''
+import { API_BASE as API_URL } from '../utils/api'
 
 // Professional brand options
 const brandOptions = ['All', 'Cyzone', 'Esika', "L'Bel", 'Yanbal', 'Avon']

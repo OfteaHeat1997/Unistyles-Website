@@ -281,6 +281,7 @@ router.get('/orders', asyncHandler(async (req, res) => {
         orders: result.rows.map(o => ({
             id: o.id,
             orderNumber: o.order_number,
+            trackingToken: o.tracking_token,
             status: o.status,
             paymentStatus: o.payment_status,
             total: parseFloat(o.total),

@@ -35,7 +35,7 @@ export const DELIVERY_FALLBACK_THRESHOLD = 80
 export const PAYMENT_METHODS = [
   { id: 'cod', name: 'Cash on Delivery', icon: 'money-bill-wave', description: 'Pay cash when your order arrives', iconClass: 'cod', enabled: true },
   { id: 'sentoo', name: 'Sentoo', icon: 'credit-card', description: 'Pay by bank, Visa/Mastercard, or iDEAL', iconClass: 'sentoo', enabled: true },
-  { id: 'bank', name: 'Bank Transfer', icon: 'university', description: 'Transfer to MCB or RBC account', iconClass: 'bank', enabled: true }
+  { id: 'bank_transfer', name: 'Bank Transfer', icon: 'university', description: 'Transfer to MCB or RBC account', iconClass: 'bank', enabled: true }
 ]
 
 // Categories

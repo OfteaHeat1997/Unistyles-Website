@@ -1,16 +1,11 @@
+import { apiUrl } from '../utils/api'
 import { useQuery } from '@tanstack/react-query'
 
-const FALLBACK = {
-  freeShippingThreshold: 80,
-  zones: [
-    { id: 1, slug: 'zone-1-centro', name: 'Zone 1 — Centro', fee: 5, freeThreshold: 75, color: '#27ae60', estimatedDays: '1-2 business days', sortOrder: 1, neighborhoods: [] },
-    { id: 2, slug: 'zone-2-east', name: 'Zone 2 — East', fee: 10, freeThreshold: 100, color: '#e67e22', estimatedDays: '1-2 business days', sortOrder: 2, neighborhoods: [] },
-    { id: 3, slug: 'zone-3-west-north', name: 'Zone 3 — West & North', fee: 25, freeThreshold: 150, color: '#c0392b', estimatedDays: '2-3 business days', sortOrder: 3, neighborhoods: [] }
-  ]
-}
+// No hardcoded fallback: invented fees are worse than an honest "unavailable".
+const EMPTY = { freeShippingThreshold: null, zones: [] }
 
 async function fetchZones() {
-  const res = await fetch('/api/delivery/zones')
+  const res = await fetch(apiUrl('/api/delivery/zones'))
   if (!res.ok) {
     throw new Error(`Delivery zones fetch failed: ${res.status}`)
   }
@@ -25,7 +20,7 @@ export function useDeliveryZones() {
     retry: 1
   })
 
-  const payload = data || FALLBACK
+  const payload = data || EMPTY
 
   const findZoneByArea = (area) => {
     if (!area) return null

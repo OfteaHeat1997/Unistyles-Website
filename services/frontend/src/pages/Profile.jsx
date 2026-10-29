@@ -4,6 +4,7 @@
  * Displays user information, order history, and account settings.
  */
 
+import { apiUrl } from '../utils/api'
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -51,7 +52,7 @@ function Profile() {
     setOrdersLoading(true)
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/users/orders', {
+      const response = await fetch(apiUrl('/api/users/orders'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -107,7 +108,7 @@ function Profile() {
 
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/users/password', {
+      const response = await fetch(apiUrl('/api/users/password'), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -433,7 +434,11 @@ function Profile() {
                         }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                             <div>
-                              <h4 style={{ marginBottom: '5px' }}>Order #{order.orderNumber}</h4>
+                              <h4 style={{ marginBottom: '5px' }}>
+                                <Link to={`/order/${order.orderNumber}${order.trackingToken ? `?t=${encodeURIComponent(order.trackingToken)}` : ''}`} style={{ color: 'inherit' }}>
+                                  Order #{order.orderNumber}
+                                </Link>
+                              </h4>
                               <p style={{ fontSize: '13px', color: 'var(--dark-warmth)' }}>
                                 {formatDate(order.createdAt)}
                               </p>

@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { cartStore } from '../stores/cartStore'
+import { cartStore, lineKey } from '../stores/cartStore'
 import { getCartOrderUrl } from '../utils/whatsapp'
+import { useCheckoutOptions, formatXCG } from '../hooks/useCheckoutOptions'
 
 function CartSidebar({ isOpen, onClose }) {
   const [cart, setCart] = useState(cartStore.getCart())
   const [itemCount, setItemCount] = useState(cartStore.getItemCount())
   const [total, setTotal] = useState(cartStore.getTotal())
+  const { data: options } = useCheckoutOptions()
+  const threshold = options?.freeDeliveryThreshold
+  const remainingForFree = threshold ? Math.max(0, threshold - total) : null
+  const progress = threshold ? Math.min(100, (total / threshold) * 100) : 0
 
   useEffect(() => {
     const unsubscribe = cartStore.subscribe((newCart) => {
@@ -17,12 +22,12 @@ function CartSidebar({ isOpen, onClose }) {
     return unsubscribe
   }, [])
 
-  const updateQuantity = (itemId, newQuantity) => {
-    cartStore.updateQuantity(itemId, newQuantity)
+  const updateQuantity = (key, newQuantity) => {
+    cartStore.updateQuantity(key, newQuantity)
   }
 
-  const removeItem = (itemId) => {
-    cartStore.removeItem(itemId)
+  const removeItem = (key) => {
+    cartStore.removeItem(key)
   }
 
   if (!isOpen) return null
@@ -99,7 +104,7 @@ function CartSidebar({ isOpen, onClose }) {
           ) : (
             cart.map((item) => (
               <div
-                key={`${item.id}-${item.size}-${item.color}`}
+                key={lineKey(item)}
                 style={{
                   display: 'flex',
                   gap: '15px',
@@ -128,13 +133,14 @@ function CartSidebar({ isOpen, onClose }) {
                     </p>
                   )}
                   <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--charcoal)' }}>
-                    XCG {item.price}
+                    {formatXCG(item.price)}
                   </p>
 
                   {/* Quantity Controls */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
                     <button
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      onClick={() => updateQuantity(lineKey(item), item.quantity - 1)}
+                      aria-label={`Decrease quantity of ${item.name}`}
                       style={{
                         width: '28px',
                         height: '28px',
@@ -150,7 +156,9 @@ function CartSidebar({ isOpen, onClose }) {
                       {item.quantity}
                     </span>
                     <button
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      onClick={() => updateQuantity(lineKey(item), item.quantity + 1)}
+                      disabled={item.stockQuantity !== undefined && item.stockQuantity !== null && item.quantity >= item.stockQuantity}
+                      aria-label={`Increase quantity of ${item.name}`}
                       style={{
                         width: '28px',
                         height: '28px',
@@ -163,7 +171,8 @@ function CartSidebar({ isOpen, onClose }) {
                       +
                     </button>
                     <button
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => removeItem(lineKey(item))}
+                      aria-label={`Remove ${item.name}`}
                       style={{
                         marginLeft: 'auto',
                         background: 'none',
@@ -189,9 +198,26 @@ function CartSidebar({ isOpen, onClose }) {
               <span style={{ fontSize: '16px', fontWeight: '500' }}>Subtotal:</span>
               <span style={{ fontSize: '18px', fontWeight: '600' }}>XCG {total.toFixed(2)}</span>
             </div>
-            <p style={{ fontSize: '12px', color: 'var(--dark-warmth)', marginBottom: '15px' }}>
-              Shipping calculated at checkout
-            </p>
+            {threshold ? (
+              <div style={{ marginBottom: '15px' }}>
+                <p style={{ fontSize: '12px', color: remainingForFree === 0 ? '#3D7A5F' : 'var(--dark-warmth)', marginBottom: '6px' }}>
+                  {remainingForFree === 0
+                    ? <><i className="fas fa-check-circle" style={{ marginRight: '5px' }}></i>You qualify for free delivery</>
+                    : <>Add {formatXCG(remainingForFree)} more for free delivery</>}
+                </p>
+                <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress)}
+                  style={{ height: '6px', background: 'var(--border-light)', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ width: `${progress}%`, height: '100%', background: remainingForFree === 0 ? '#3D7A5F' : 'var(--muted-gold)', transition: 'width .3s' }} />
+                </div>
+                <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '6px' }}>
+                  Free pickup available. Final delivery fee is calculated at checkout from your location.
+                </p>
+              </div>
+            ) : (
+              <p style={{ fontSize: '12px', color: 'var(--dark-warmth)', marginBottom: '15px' }}>
+                Delivery or free pickup — calculated at checkout
+              </p>
+            )}
             <Link
               to="/checkout"
               className="btn-shop"

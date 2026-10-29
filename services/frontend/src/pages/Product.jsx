@@ -1,9 +1,13 @@
+import { apiUrl, api } from '../utils/api'
 import { useParams, Link } from 'react-router-dom'
 import { useState, useEffect, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { SIZE_CHARTS } from '../config'
 import { useProduct, useProductsByCategory } from '../hooks/useProducts'
 import { cartStore } from '../stores/cartStore'
 import { getProductInquiryUrl } from '../utils/whatsapp'
 import { useAuth } from '../contexts/AuthContext'
+import FreeDeliveryAmount from '../components/FreeDeliveryAmount'
 
 function Product() {
   const { id } = useParams()
@@ -17,10 +21,26 @@ function Product() {
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [reviewForm, setReviewForm] = useState({ rating: 5, title: '', comment: '' })
   const [reviewSubmitting, setReviewSubmitting] = useState(false)
+  const [cartMessage, setCartMessage] = useState(null)
+  const [showSizeGuide, setShowSizeGuide] = useState(false)
   const { user, isAuthenticated, token } = useAuth()
 
   // Fetch product from Strapi (with fallback to local data)
   const { data: product, isLoading, error } = useProduct(id)
+
+  // Real sellable variants (size + colour = one SKU with its own stock)
+  const { data: variantData } = useQuery({
+    queryKey: ['variants', product?.id],
+    queryFn: () => api.get(`/api/variants/product/${product.id}`, { auth: false }),
+    enabled: !!product?.id && Number.isInteger(Number(product.id)),
+    staleTime: 60 * 1000,
+    retry: 1
+  })
+  const variants = useMemo(
+    () => (variantData?.variants || []).filter(v => v.isActive !== false),
+    [variantData]
+  )
+  const hasVariants = variants.length > 0
 
   // Get category slug for related products
   const categorySlug = product?.category?.slug || product?.categorySlug
@@ -70,7 +90,7 @@ function Product() {
   // Fetch reviews
   useEffect(() => {
     if (!product) return
-    fetch(`/api/reviews/product/${product.id}`)
+    fetch(apiUrl(`/api/reviews/product/${product.id}`))
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data) {
@@ -86,7 +106,7 @@ function Product() {
     if (!isAuthenticated || !product) return
     setReviewSubmitting(true)
     try {
-      const res = await fetch('/api/reviews', {
+      const res = await fetch(apiUrl('/api/reviews'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ productId: product.id, ...reviewForm })
@@ -123,21 +143,61 @@ function Product() {
 
   const whatsappUrl = getProductInquiryUrl({ name: product.name, ref: product.ref, size: selectedSize, color: selectedColor })
 
-  const handleAddToCart = () => {
-    cartStore.addItem(product, quantity, selectedSize, selectedColor)
+  const basePrice = Number(product.price)
+  const variantPrice = (v) => Math.round((basePrice + Number(v.priceAdjustment || 0)) * 100) / 100
+
+  // Sizes/colours come ONLY from real variants. Products without variants show
+  // their single size/colour (if any) as information, never invented options.
+  const sizes = hasVariants
+    ? [...new Set(variants.map(v => v.size).filter(Boolean))]
+    : (product.size ? [product.size] : [])
+  const colors = hasVariants
+    ? [...new Set(variants.filter(v => !selectedSize || v.size === selectedSize).map(v => v.color).filter(Boolean))]
+    : (product.color ? [product.color] : [])
+
+  const sizeHasStock = (size) => variants.some(v => v.size === size && v.stockQuantity > 0)
+  const colorHasStock = (color) => variants.some(v => v.color === color && (!selectedSize || v.size === selectedSize) && v.stockQuantity > 0)
+
+  const selectedVariant = hasVariants
+    ? variants.find(v =>
+        (sizes.length === 0 || v.size === selectedSize) &&
+        (v.color ? v.color === selectedColor : true))
+    : null
+
+  const available = hasVariants
+    ? (selectedVariant ? selectedVariant.stockQuantity : null)
+    : (product.inStock === false ? 0 : product.stockQuantity ?? null)
+  const outOfStock = hasVariants
+    ? variants.every(v => v.stockQuantity <= 0)
+    : product.inStock === false
+  const displayPrice = selectedVariant ? variantPrice(selectedVariant) : basePrice
+  const needsSelection = hasVariants && !selectedVariant
+  const selectionUnavailable = hasVariants && !!selectedVariant && selectedVariant.stockQuantity <= 0
+  const sizeChart = SIZE_CHARTS[product.categorySlug]
+
+  const handleAddToCart = async () => {
+    setCartMessage(null)
+    if (needsSelection) {
+      setCartMessage({ type: 'error', text: 'Please choose a size and colour.' })
+      return
+    }
+    if (available !== null && available !== undefined && quantity > available) {
+      setCartMessage({ type: 'error', text: `Only ${available} available.` })
+      return
+    }
+    const result = await cartStore.addItem(
+      { ...product, price: displayPrice },
+      quantity,
+      selectedVariant?.size || selectedSize,
+      selectedVariant?.color || selectedColor,
+      selectedVariant
+        ? { id: selectedVariant.id, size: selectedVariant.size, color: selectedVariant.color, sku: selectedVariant.sku, price: displayPrice }
+        : null
+    )
+    setCartMessage(result?.ok === false
+      ? { type: 'error', text: result.error || 'Could not add to cart' }
+      : { type: 'ok', text: 'Added to cart' })
   }
-
-  // Available sizes based on category
-  const sizes = product.size
-    ? [product.size]
-    : product.categorySlug === 'bras'
-      ? ['32B', '34B', '34C', '36B', '36C', '38B', '38C', '40B', '40C']
-      : product.categorySlug === 'panties' || product.categorySlug === 'shapewear'
-        ? ['S', 'M', 'L', 'XL', 'XXL']
-        : []
-
-  // Available colors
-  const colors = product.color ? [product.color] : ['Black', 'Beige', 'White']
 
   return (
     <>
@@ -210,8 +270,9 @@ function Product() {
               </h1>
               <p style={{ fontSize: '12px', color: 'var(--dark-warmth)', marginBottom: '20px' }}>
                 {product.ref}
-                {product.stockQuantity > 0 && product.stockQuantity <= 5 && (
-                  <span style={{ marginLeft: '15px', color: '#e67e22', fontWeight: '600' }}>Only {product.stockQuantity} left!</span>
+                {selectedVariant?.sku && <span style={{ marginLeft: '10px' }}>SKU {selectedVariant.sku}</span>}
+                {available > 0 && available <= 5 && (
+                  <span style={{ marginLeft: '15px', color: '#e67e22', fontWeight: '600' }}>Only {available} left!</span>
                 )}
               </p>
               {/* Price with sale/discount display */}
@@ -230,7 +291,7 @@ function Product() {
                   </div>
                 ) : (
                   <span style={{ fontSize: '28px', fontWeight: '600', color: 'var(--charcoal)' }}>
-                    XCG {product.price}
+                    XCG {displayPrice.toFixed(2)}
                   </span>
                 )}
               </div>
@@ -241,15 +302,32 @@ function Product() {
               {/* Size Selection */}
               {sizes.length > 0 && (
                 <div style={{ marginBottom: '25px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '10px' }}>
-                    Size
-                  </label>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: '600' }}>Size{selectedSize ? `: ${selectedSize}` : ''}</span>
+                    {sizeChart && (
+                      <button type="button" onClick={() => setShowSizeGuide(true)}
+                        style={{ background: 'none', border: 'none', color: 'var(--muted-gold)', cursor: 'pointer', fontSize: '13px', textDecoration: 'underline' }}>
+                        <i className="fas fa-ruler" style={{ marginRight: '5px' }}></i>Size guide
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }} role="radiogroup" aria-label="Size">
                     {sizes.map((size) => (
                       <button
                         key={size}
-                        onClick={() => setSelectedSize(size)}
+                        type="button"
+                        role="radio"
+                        aria-checked={selectedSize === size}
+                        disabled={hasVariants && !sizeHasStock(size)}
+                        title={hasVariants && !sizeHasStock(size) ? 'Out of stock' : undefined}
+                        onClick={() => {
+                          setSelectedSize(size)
+                          if (hasVariants && !variants.some(v => v.size === size && v.color === selectedColor)) setSelectedColor('')
+                          setCartMessage(null)
+                        }}
                         style={{
+                          opacity: hasVariants && !sizeHasStock(size) ? 0.4 : 1,
+                          textDecoration: hasVariants && !sizeHasStock(size) ? 'line-through' : 'none',
                           padding: '10px 18px',
                           border: selectedSize === size ? '2px solid var(--dark)' : '1px solid var(--border)',
                           borderRadius: '5px',
@@ -270,15 +348,22 @@ function Product() {
               {/* Color Selection */}
               {colors.length > 0 && (
                 <div style={{ marginBottom: '25px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '10px' }}>
-                    Color
-                  </label>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <span style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '10px' }}>
+                    Color{selectedColor ? `: ${selectedColor}` : ''}
+                  </span>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }} role="radiogroup" aria-label="Color">
                     {colors.map((color) => (
                       <button
                         key={color}
-                        onClick={() => setSelectedColor(color)}
+                        type="button"
+                        role="radio"
+                        aria-checked={selectedColor === color}
+                        disabled={hasVariants && !colorHasStock(color)}
+                        title={hasVariants && !colorHasStock(color) ? 'Out of stock in this size' : undefined}
+                        onClick={() => { setSelectedColor(color); setCartMessage(null) }}
                         style={{
+                          opacity: hasVariants && !colorHasStock(color) ? 0.4 : 1,
+                          textDecoration: hasVariants && !colorHasStock(color) ? 'line-through' : 'none',
                           padding: '10px 18px',
                           border: selectedColor === color ? '2px solid var(--dark)' : '1px solid var(--border)',
                           borderRadius: '5px',
@@ -310,7 +395,7 @@ function Product() {
                   </button>
                   <span style={{ padding: '0 20px', fontSize: '16px', fontWeight: '500' }}>{quantity}</span>
                   <button
-                    onClick={() => setQuantity(quantity + 1)}
+                    onClick={() => setQuantity(available ? Math.min(available, quantity + 1) : quantity + 1)}
                     style={{ width: '40px', height: '40px', border: '1px solid var(--border)', background: 'var(--white)', cursor: 'pointer', fontSize: '18px', borderRadius: '5px' }}
                   >
                     +
@@ -318,15 +403,25 @@ function Product() {
                 </div>
               </div>
 
+              {cartMessage && (
+                <p role="status" style={{ marginBottom: '15px', fontSize: '14px', color: cartMessage.type === 'error' ? '#c0392b' : '#3D7A5F' }}>
+                  <i className={`fas ${cartMessage.type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'}`} style={{ marginRight: '6px' }}></i>
+                  {cartMessage.text}
+                </p>
+              )}
+
               {/* Action Buttons */}
               <div style={{ display: 'flex', gap: '15px', marginBottom: '30px', flexWrap: 'wrap' }}>
                 <button
                   className="btn-shop"
-                  style={{ flex: '1 1 200px', opacity: product.inStock === false ? 0.5 : 1 }}
+                  style={{ flex: '1 1 200px', opacity: outOfStock || selectionUnavailable ? 0.5 : 1 }}
                   onClick={handleAddToCart}
-                  disabled={product.inStock === false}
+                  disabled={outOfStock || selectionUnavailable}
                 >
-                  {product.inStock === false ? 'Out of Stock' : 'Add to Cart'}
+                  {outOfStock ? 'Out of Stock'
+                    : selectionUnavailable ? 'This combination is sold out'
+                    : needsSelection ? 'Choose size & colour'
+                    : 'Add to Cart'}
                 </button>
                 <a
                   href={whatsappUrl}
@@ -391,11 +486,11 @@ function Product() {
               <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: '25px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
                   <i className="fas fa-truck" style={{ color: 'var(--muted-gold)' }}></i>
-                  <span style={{ fontSize: '13px' }}>Free delivery in Curacao on orders over XCG 80</span>
+                  <span style={{ fontSize: '13px' }}>Free delivery in Curaçao on orders from <FreeDeliveryAmount /> · usually next day</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
                   <i className="fas fa-undo" style={{ color: 'var(--muted-gold)' }}></i>
-                  <span style={{ fontSize: '13px' }}>Easy returns within 7 days</span>
+                  <span style={{ fontSize: '13px' }}>Defective or wrong items always accepted</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <i className="fas fa-shield-alt" style={{ color: 'var(--muted-gold)' }}></i>
@@ -554,6 +649,33 @@ function Product() {
           )}
         </div>
       </section>
+
+      {showSizeGuide && sizeChart && (
+        <div role="dialog" aria-modal="true" aria-label="Size guide" onClick={() => setShowSizeGuide(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--white)', borderRadius: '10px', padding: '25px', maxWidth: '480px', width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+              <h3 style={{ fontFamily: "'Playfair Display', serif", margin: 0 }}>Size guide</h3>
+              <button onClick={() => setShowSizeGuide(false)} aria-label="Close" style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+              <thead>
+                <tr>{sizeChart.headers.map(h => <th key={h} style={{ textAlign: 'left', padding: '8px', borderBottom: '2px solid var(--border)' }}>{h}</th>)}</tr>
+              </thead>
+              <tbody>
+                {sizeChart.rows.map(r => (
+                  <tr key={r[0]}>{r.map((c, i) => <td key={i} style={{ padding: '8px', borderBottom: '1px solid var(--border-light)' }}>{c}</td>)}</tr>
+                ))}
+              </tbody>
+            </table>
+            <p style={{ fontSize: '12px', color: 'var(--dark-warmth)', marginTop: '12px' }}>
+              Between sizes? Message us on WhatsApp and we will help you choose.
+            </p>
+          </div>
+        </div>
+      )}
     </>
   )
 }

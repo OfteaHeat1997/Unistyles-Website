@@ -4,6 +4,7 @@ import { useProductsByCategory } from '../hooks/useProducts'
 import { cartStore } from '../stores/cartStore'
 import QuickViewModal from '../components/QuickViewModal'
 import { getCategoryHelpUrl } from '../utils/whatsapp'
+import FreeDeliveryAmount from '../components/FreeDeliveryAmount'
 
 // Category tab config
 const typeConfig = {
@@ -265,7 +266,7 @@ function Accessories() {
       {/* Trust Banner */}
       <div className="acc-trust-banner">
         <div className="acc-trust-banner-inner">
-          <span>Free Shipping over XCG 80</span>
+          <span>Free delivery from <FreeDeliveryAmount /></span>
           <span className="acc-trust-banner-dot"></span>
           <span>7-Day Easy Returns</span>
           <span className="acc-trust-banner-dot"></span>
@@ -637,7 +638,7 @@ function Accessories() {
             </div>
             <div>
               <strong>Free Delivery</strong>
-              <span>On orders over XCG 80</span>
+              <span>On orders from <FreeDeliveryAmount /></span>
             </div>
           </div>
         </div>

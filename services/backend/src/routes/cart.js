@@ -68,11 +68,13 @@ router.post('/add',
         body('quantity').optional().isInt({ min: 1, max: 99 }).withMessage('Quantity must be between 1 and 99'),
         body('size').optional().trim().isLength({ max: 20 }).escape(),
         body('color').optional().trim().isLength({ max: 50 }).escape(),
-        body('variantId').optional().isInt({ min: 1 })
+        body('variantId').optional({ nullable: true }).isUUID()
     ],
     asyncHandler(async (req, res) => {
     if (handleValidationErrors(req, res)) return;
-    const { productId, variantId, quantity = 1, size, color } = req.body;
+    const { quantity = 1, size, color } = req.body;
+    const productId = Number(req.body.productId);
+    const variantId = req.body.variantId || null;
 
     const product = await db.query(
         'SELECT id, name, price, in_stock, stock_quantity, image, legacy_image FROM products WHERE id = $1',
@@ -85,12 +87,23 @@ router.post('/add',
 
     const productData = product.rows[0];
 
-    // Check stock availability before adding to cart
-    if (productData.in_stock === false) {
+    // Variant products: the variant owns the stock
+    if (variantId) {
+        const v = await db.query(
+            'SELECT stock_quantity FROM product_variants WHERE id = $1 AND product_id = $2 AND is_active = true',
+            [variantId, productId]
+        );
+        if (v.rows.length === 0) {
+            return res.status(404).json({ error: 'That size/colour is no longer available' });
+        }
+        if (v.rows[0].stock_quantity < parseInt(quantity)) {
+            return res.status(400).json({ error: `Not enough stock for ${productData.name}. Available: ${v.rows[0].stock_quantity}` });
+        }
+    } else if (productData.in_stock === false) {
         return res.status(400).json({ error: `${productData.name} is out of stock` });
     }
 
-    if (productData.stock_quantity !== null && productData.stock_quantity < parseInt(quantity)) {
+    if (!variantId && productData.stock_quantity !== null && productData.stock_quantity < parseInt(quantity)) {
         return res.status(400).json({
             error: `Not enough stock for ${productData.name}. Available: ${productData.stock_quantity}`
         });
@@ -117,10 +130,10 @@ router.post('/add',
 
         // Check if item already exists
         const existingIndex = cartItems.findIndex(item =>
-            item.productId === productId &&
-            item.variantId === variantId &&
-            item.size === size &&
-            item.color === color
+            Number(item.productId) === productId &&
+            (item.variantId || null) === variantId &&
+            (item.size || null) === (size || null) &&
+            (item.color || null) === (color || null)
         );
 
         if (existingIndex > -1) {
@@ -147,10 +160,10 @@ router.post('/add',
         cartItems = cart ? JSON.parse(cart) : [];
 
         const existingIndex = cartItems.findIndex(item =>
-            item.productId === productId &&
-            item.variantId === variantId &&
-            item.size === size &&
-            item.color === color
+            Number(item.productId) === productId &&
+            (item.variantId || null) === variantId &&
+            (item.size || null) === (size || null) &&
+            (item.color || null) === (color || null)
         );
 
         if (existingIndex > -1) {
@@ -185,11 +198,13 @@ router.put('/update',
         body('quantity').isInt({ min: 0, max: 99 }).withMessage('Quantity must be between 0 and 99'),
         body('size').optional().trim().isLength({ max: 20 }).escape(),
         body('color').optional().trim().isLength({ max: 50 }).escape(),
-        body('variantId').optional().isInt({ min: 1 })
+        body('variantId').optional({ nullable: true }).isUUID()
     ],
     asyncHandler(async (req, res) => {
     if (handleValidationErrors(req, res)) return;
-    const { productId, variantId, quantity, size, color } = req.body;
+    const { quantity, size, color } = req.body;
+    const productId = Number(req.body.productId);
+    const variantId = req.body.variantId || null;
 
     let cartItems = [];
 
@@ -208,8 +223,8 @@ router.put('/update',
     }
 
     const itemIndex = cartItems.findIndex(item =>
-        item.productId === productId &&
-        item.variantId === (variantId || null) &&
+        Number(item.productId) === productId &&
+        (item.variantId || null) === variantId &&
         item.size === (size || null) &&
         item.color === (color || null)
     );
@@ -251,7 +266,7 @@ router.put('/update',
 // Remove item from cart
 // ===========================================
 router.delete('/remove/:productId', optionalAuth, asyncHandler(async (req, res) => {
-    const { productId } = req.params;
+    const productId = Number(req.params.productId);
     const { variantId, size, color } = req.query;
 
     let cartItems = [];
@@ -271,8 +286,8 @@ router.delete('/remove/:productId', optionalAuth, asyncHandler(async (req, res) 
     }
 
     cartItems = cartItems.filter(item =>
-        !(item.productId === productId &&
-            item.variantId === (variantId || null) &&
+        !(Number(item.productId) === productId &&
+            (item.variantId || null) === (variantId || null) &&
             item.size === (size || null) &&
             item.color === (color || null))
     );
@@ -448,25 +463,37 @@ async function enrichCartItems(cartItems) {
         productMap[p.id] = p;
     });
 
+    const variantIds = [...new Set(cartItems.map(item => item.variantId).filter(Boolean))];
+    const variantMap = {};
+    if (variantIds.length) {
+        const variants = await db.query(
+            'SELECT id, size, color, sku, stock_quantity, price_adjustment FROM product_variants WHERE id = ANY($1::uuid[])',
+            [variantIds]
+        );
+        variants.rows.forEach(v => { variantMap[v.id] = v; });
+    }
+
     return cartItems
         .filter(item => productMap[item.productId])
         .map(item => {
             const product = productMap[item.productId];
+            const variant = item.variantId ? variantMap[item.variantId] : null;
+            const price = parseFloat(product.price) + (variant ? parseFloat(variant.price_adjustment || 0) : 0);
             return {
                 productId: item.productId,
-                variantId: item.variantId,
-                ref: product.ref,
+                variantId: item.variantId || null,
+                ref: variant?.sku || product.ref,
                 name: product.name,
                 slug: product.slug,
-                price: parseFloat(product.price),
+                price,
                 quantity: item.quantity,
-                size: item.size,
-                color: item.color,
+                size: variant?.size || item.size,
+                color: variant?.color || item.color,
                 image: uploadMap[item.productId]
                     || product.legacy_image || null,
-                inStock: product.in_stock,
-                stockQuantity: product.stock_quantity || 0,
-                subtotal: parseFloat(product.price) * item.quantity
+                inStock: variant ? variant.stock_quantity > 0 : product.in_stock,
+                stockQuantity: variant ? variant.stock_quantity : (product.stock_quantity || 0),
+                subtotal: price * item.quantity
             };
         });
 }

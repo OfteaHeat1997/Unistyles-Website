@@ -8,8 +8,8 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
-function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useAuth()
+function ProtectedRoute({ children, roles }) {
+  const { isAuthenticated, loading, user } = useAuth()
   const location = useLocation()
 
   // Show loading state while checking auth
@@ -51,6 +51,16 @@ function ProtectedRoute({ children }) {
   if (!isAuthenticated) {
     // Save the attempted location for redirect after login
     return <Navigate to="/login" state={{ from: location }} replace />
+  }
+
+  // Role-restricted areas (admin, driver). The API re-checks the role too.
+  if (roles && !roles.includes(user?.role)) {
+    return (
+      <div style={{ padding: '100px 20px', textAlign: 'center', minHeight: '60vh', background: 'var(--cream-bg)' }}>
+        <h2 style={{ fontFamily: "'Playfair Display', serif", marginBottom: '10px' }}>No access</h2>
+        <p>This area is only for {roles.join(' / ')} accounts.</p>
+      </div>
+    )
   }
 
   // Render protected content

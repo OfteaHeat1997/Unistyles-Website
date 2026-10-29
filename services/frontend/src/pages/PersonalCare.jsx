@@ -4,6 +4,7 @@ import { useProductsByCategory } from '../hooks/useProducts'
 import { cartStore } from '../stores/cartStore'
 import QuickViewModal from '../components/QuickViewModal'
 import { getCategoryHelpUrl } from '../utils/whatsapp'
+import FreeDeliveryAmount from '../components/FreeDeliveryAmount'
 
 // Brand options for personal care
 const brandOptions = ['All', 'Yanbal', 'Esika']
@@ -443,7 +444,7 @@ function PersonalCare() {
             </svg>
             <div>
               <strong>Free Delivery</strong>
-              <span>Orders over XCG 80</span>
+              <span>Orders from <FreeDeliveryAmount /></span>
             </div>
           </div>
           <div className="pc-feature-item">

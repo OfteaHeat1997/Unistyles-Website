@@ -29,6 +29,8 @@ const reviewRoutes = require('./routes/reviews');
 const couponRoutes = require('./routes/coupons');
 const variantRoutes = require('./routes/variants');
 const deliveryRoutes = require('./routes/delivery');
+const checkoutRoutes = require('./routes/checkout');
+const driverRoutes = require('./routes/driver');
 
 // Import middleware
 const { errorHandler } = require('./middleware/errorHandler');
@@ -87,7 +89,7 @@ app.use(cors({
     origin: corsAllowlist,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Cart-Id'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Cart-Id', 'Idempotency-Key'],
 }));
 
 // Rate limiting
@@ -128,6 +130,14 @@ const reviewLimiter = rateLimit({
     message: { error: 'Too many reviews submitted, please try again later.' },
 });
 app.use('/api/reviews', reviewLimiter);
+
+// Tracking lookups: slow down order-number / phone guessing
+const trackLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 30,
+    message: { error: 'Too many tracking attempts, please try again later.' },
+});
+app.use('/api/orders/track', trackLimiter);
 
 // ===========================================
 // GENERAL MIDDLEWARE
@@ -205,6 +215,8 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/variants', variantRoutes);
 app.use('/api/delivery', deliveryRoutes);
+app.use('/api/checkout', checkoutRoutes);
+app.use('/api/driver', driverRoutes);
 
 // ===========================================
 // 404 HANDLER
@@ -254,6 +266,19 @@ io.on('connection', (socket) => {
 
 // Make io accessible to routes
 app.set('io', io);
+
+// ===========================================
+// BACKGROUND JOB — close unpaid online orders and release their stock
+// ===========================================
+const { expireUnpaidOrders } = require('./services/paymentConfirm');
+const sentooService = require('./services/sentoo');
+if (process.env.NODE_ENV !== 'test') {
+    setInterval(() => {
+        expireUnpaidOrders({ sentoo: sentooService })
+            .then(ids => ids.length && logger.info('Expired unpaid orders', { count: ids.length }))
+            .catch(err => logger.error('Expiry job failed', { error: err.message }));
+    }, 5 * 60 * 1000).unref();
+}
 
 server.listen(PORT, () => {
     logger.info(`Unistyles API Server started`, { port: PORT, mode: process.env.NODE_ENV || 'development' });

@@ -31,6 +31,9 @@ const Wishlist = lazy(() => import('./pages/Wishlist'))
 const TrackOrder = lazy(() => import('./pages/TrackOrder'))
 const Admin = lazy(() => import('./pages/Admin'))
 const Brand = lazy(() => import('./pages/Brand'))
+const OrderDetail = lazy(() => import('./pages/OrderDetail'))
+const MockPayment = lazy(() => import('./pages/MockPayment'))
+const Driver = lazy(() => import('./pages/Driver'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 // Loading fallback for lazy-loaded pages
@@ -64,6 +67,8 @@ function App() {
           <Route path="contact" element={<Contact />} />
           <Route path="checkout" element={<Checkout />} />
           <Route path="payment/callback" element={<PaymentCallback />} />
+          <Route path="payment/mock" element={<MockPayment />} />
+          <Route path="order/:orderNumber" element={<OrderDetail />} />
           <Route path="search" element={<Search />} />
           <Route path="login" element={<Login />} />
           <Route path="forgot-password" element={<ForgotPassword />} />
@@ -75,7 +80,8 @@ function App() {
           <Route path="shipping" element={<Shipping />} />
           <Route path="wishlist" element={<Wishlist />} />
           <Route path="track-order" element={<TrackOrder />} />
-          <Route path="admin" element={<Admin />} />
+          <Route path="admin" element={<ProtectedRoute roles={['admin']}><Admin /></ProtectedRoute>} />
+          <Route path="driver" element={<ProtectedRoute roles={['driver', 'admin']}><Driver /></ProtectedRoute>} />
           <Route path="brand/:brandId" element={<Brand />} />
           <Route path="*" element={<NotFound />} />
         </Route>

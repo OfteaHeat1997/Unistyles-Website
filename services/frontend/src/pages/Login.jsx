@@ -1,3 +1,4 @@
+import { apiUrl } from '../utils/api'
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -68,7 +69,7 @@ function Login() {
               {error.includes('verify') && (
                 <button onClick={async () => {
                   try {
-                    await fetch('/api/auth/resend-verification', {
+                    await fetch(apiUrl('/api/auth/resend-verification'), {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ email: formData.email })

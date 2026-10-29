@@ -114,7 +114,7 @@ export const PAYMENT_METHODS = [
     enabled: true
   },
   {
-    id: 'bank',
+    id: 'bank_transfer',
     name: 'Bank Transfer',
     description: 'Transferencia bancaria directa',
     icon: 'fa-university',

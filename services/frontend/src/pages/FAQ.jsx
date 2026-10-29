@@ -1,22 +1,43 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getGeneralQuestionUrl } from '../utils/whatsapp'
+import { useCheckoutOptions, formatXCG } from '../hooks/useCheckoutOptions'
 
-const faqs = [
-  { q: 'How do I place an order?', a: 'Browse our products, add items to your cart, and proceed to checkout. You can also order directly via WhatsApp by clicking the WhatsApp button on any product.' },
-  { q: 'What payment methods do you accept?', a: 'We accept Cash on Delivery (COD), Sentoo (bank, Visa/Mastercard, iDEAL), and direct bank transfer to our MCB account.' },
-  { q: 'How much is delivery?', a: 'Delivery is FREE on orders over XCG 80. For smaller orders, delivery fees range from XCG 0-10 depending on your location in Curacao.' },
-  { q: 'How long does delivery take?', a: 'Most orders within Willemstad are delivered within 1-2 business days. Outer areas (Banda Abou, Banda Ariba) may take 2-3 business days.' },
-  { q: 'Can I return a product?', a: 'Yes, unused items in original packaging can be returned within 7 days. Perfumes and personal care items are non-returnable for hygiene reasons. Contact us via WhatsApp to arrange a return.' },
-  { q: 'Are the products authentic?', a: 'Yes! All our products are 100% authentic, sourced directly from Colombian brands like Leonisa, L\'Bel, Esika, Yanbal, and Cyzone.' },
-  { q: 'How do I track my order?', a: 'You\'ll receive order updates via WhatsApp. You can also check your order status in your account profile or contact us with your order number.' },
-  { q: 'Do you have a physical store?', a: 'We are an online-only store based in Curacao, offering home delivery across the island.' },
-  { q: 'How do I find my bra size?', a: 'Check our size guide on any bra product page. If you\'re unsure, contact us via WhatsApp and we\'ll help you find the perfect fit!' },
-  { q: 'Can I cancel my order?', a: 'Orders can be cancelled if they haven\'t been shipped yet. Contact us via WhatsApp as soon as possible to request a cancellation.' }
-]
+// Delivery, payment and returns answers are built from /api/checkout/options so the FAQ
+// always says exactly what the checkout charges (DEC-001, BUS-CAT-07).
+function buildFaqs(options) {
+  const threshold = options ? formatXCG(options.freeDeliveryThreshold) : null
+  const zones = options?.deliveryZones || []
+  const zoneFees = zones.map(z => `${z.name} ${formatXCG(z.fee)}${z.neighborhoods.length ? ` (${z.neighborhoods.join(', ')})` : ''}`).join('; ')
+  const payments = (options?.paymentMethods || []).map(m => m.name).join(', ')
+  const panties = options?.returnPolicy?.panties
+
+  return [
+    { q: 'How do I place an order?', a: 'Browse our products, choose your size and colour, add them to your cart and go to checkout. You can also order directly via WhatsApp by clicking the WhatsApp button on any product.' },
+    { q: 'What payment methods do you accept?', a: payments ? `We currently accept: ${payments}.` : 'Payment options are shown at checkout.' },
+    {
+      q: 'How much is delivery?',
+      a: threshold
+        ? `Delivery is FREE when your products add up to ${threshold} or more (exactly ${threshold} included). The amount is counted after discounts and before the delivery fee. Below ${threshold} the fee depends on your zone${zoneFees ? `: ${zoneFees}` : ''}. If your address is not on our list, we confirm the fee with you on WhatsApp — nothing is charged for delivery until then. If a discount brings your products below ${threshold}, the delivery fee applies again.`
+        : 'The delivery fee is shown at checkout before you pay.'
+    },
+    { q: 'How long does delivery take?', a: 'Delivery is usually the next day, according to our route. We send you a message about 30 minutes before we arrive.' },
+    {
+      q: 'Can I return a product?',
+      a: `${panties ? `${panties} ` : ''}For any other item, contact us on WhatsApp and we will help you.`
+    },
+    { q: 'Are the products authentic?', a: 'Yes! All our products are 100% authentic, sourced directly from the brands we sell.' },
+    { q: 'How do I track my order?', a: "You'll receive order updates via WhatsApp. You can also check your order status with your order number and phone on the Track Order page." },
+    { q: 'Do you have a physical store?', a: 'We sell online with home delivery across Curaçao.' },
+    { q: 'How do I find my bra size?', a: "Check our size guide on any bra product page. If you're unsure, contact us via WhatsApp and we'll help you find the perfect fit!" },
+    { q: 'Can I cancel my order?', a: 'Orders can be cancelled before they are being prepared. Contact us via WhatsApp as soon as possible to request a cancellation.' }
+  ]
+}
 
 function FAQ() {
   const [openIndex, setOpenIndex] = useState(null)
+  const { data: options } = useCheckoutOptions()
+  const faqs = buildFaqs(options)
 
   return (
     <>

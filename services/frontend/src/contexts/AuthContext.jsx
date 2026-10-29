@@ -4,6 +4,7 @@
  * Provides user authentication state and methods throughout the app.
  */
 
+import { apiUrl } from '../utils/api'
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { cartStore } from '../stores/cartStore'
 
@@ -23,7 +24,7 @@ export function AuthProvider({ children }) {
 
         if (token && savedUser) {
           // Validate token with backend
-          const response = await fetch('/api/auth/me', {
+          const response = await fetch(apiUrl('/api/auth/me'), {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -43,8 +44,9 @@ export function AuthProvider({ children }) {
         }
       } catch (err) {
         console.error('Auth initialization failed:', err)
-        // On error, try to use cached user data
-        const savedUser = localStorage.getItem('user')
+        // Only an offline network error keeps the cached session; anything else
+        // (HTML instead of JSON, 5xx) must not silently log the user in.
+        const savedUser = err instanceof TypeError ? localStorage.getItem('user') : null
         if (savedUser) {
           try {
             setUser(JSON.parse(savedUser))
@@ -65,7 +67,7 @@ export function AuthProvider({ children }) {
     setError(null)
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(apiUrl('/api/auth/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -85,6 +87,7 @@ export function AuthProvider({ children }) {
 
       // Store token and user
       localStorage.setItem('token', data.token)
+      if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken)
       localStorage.setItem('user', JSON.stringify(data.user))
       setUser(data.user)
 
@@ -103,7 +106,7 @@ export function AuthProvider({ children }) {
     setError(null)
 
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch(apiUrl('/api/auth/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData)
@@ -123,6 +126,7 @@ export function AuthProvider({ children }) {
 
       // Store token and user
       localStorage.setItem('token', data.token)
+      if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken)
       localStorage.setItem('user', JSON.stringify(data.user))
       setUser(data.user)
 
@@ -142,7 +146,7 @@ export function AuthProvider({ children }) {
       const token = localStorage.getItem('token')
       if (token) {
         // Call backend logout (optional, mainly for token blacklisting)
-        await fetch('/api/auth/logout', {
+        await fetch(apiUrl('/api/auth/logout'), {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -152,6 +156,7 @@ export function AuthProvider({ children }) {
     } finally {
       // Clear local storage
       localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
       localStorage.removeItem('user')
       setUser(null)
       setError(null)
@@ -167,7 +172,7 @@ export function AuthProvider({ children }) {
 
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/users/profile', {
+      const response = await fetch(apiUrl('/api/users/profile'), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -197,19 +202,19 @@ export function AuthProvider({ children }) {
   // Refresh token
   const refreshToken = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token')
-      if (!token) return false
+      const storedRefresh = localStorage.getItem('refreshToken')
+      if (!storedRefresh) return false
 
-      const response = await fetch('/api/auth/refresh', {
+      const response = await fetch(apiUrl('/api/auth/refresh'), {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: storedRefresh })
       })
 
       if (response.ok) {
         const data = await response.json()
         localStorage.setItem('token', data.token)
+        if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken)
         return true
       }
 
@@ -228,6 +233,7 @@ export function AuthProvider({ children }) {
     error,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin',
+    isDriver: user?.role === 'driver' || user?.role === 'admin',
     token: localStorage.getItem('token'),
     login,
     logout,

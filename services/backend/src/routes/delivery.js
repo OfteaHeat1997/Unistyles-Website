@@ -1,125 +1,126 @@
 // ===========================================
-// DELIVERY ROUTES — single source of truth for zones, fees, ETA.
+// DELIVERY ROUTES — single source of truth for zones, fees, slots, pickup.
 // ===========================================
 
 const express = require('express');
 const router = express.Router();
 const { query, validationResult } = require('express-validator');
 const { asyncHandler } = require('../middleware/errorHandler');
-const db = require('../utils/db');
+const { getSettings } = require('../services/settings');
+const { computeTotals, toCents } = require('../services/pricing');
+const fulfillment = require('../services/fulfillment');
 
-// Internal helpers ---------------------------------------------------------
-
-async function getFreeShippingThreshold() {
-    const result = await db.query(
-        "SELECT value FROM settings WHERE key = 'free_delivery_threshold'"
-    );
-    return parseFloat(result.rows[0]?.value ?? 80);
+function validate(req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.status(400).json({ error: errors.array()[0].msg, errors: errors.array() });
+        return false;
+    }
+    return true;
 }
 
-async function getZoneByArea(area) {
-    if (!area) return null;
-    const result = await db.query(
-        `SELECT id, slug, name, fee, free_threshold, estimated_days, color
-         FROM delivery_zones
-         WHERE is_active = true
-           AND EXISTS (
-             SELECT 1 FROM jsonb_array_elements(neighborhoods) n
-             WHERE LOWER(n->>'name') = LOWER($1)
-           )
-         LIMIT 1`,
-        [area]
-    );
-    return result.rows[0] || null;
+function zoneDto(z, threshold) {
+    return {
+        id: z.id,
+        slug: z.slug,
+        name: z.name,
+        fee: parseFloat(z.fee),
+        freeThreshold: z.free_threshold !== null ? parseFloat(z.free_threshold) : threshold,
+        estimatedDays: z.estimated_days,
+        color: z.color,
+        sortOrder: z.sort_order,
+        neighborhoods: z.neighborhoods || [],
+        polygon: z.polygon || null
+    };
 }
 
-// Exported for orders.js
-router.getZoneByArea = getZoneByArea;
-router.getFreeShippingThreshold = getFreeShippingThreshold;
-
-// ===========================================
 // GET /api/delivery/zones
-// Returns every active zone + the global free-shipping threshold.
-// ===========================================
 router.get('/zones', asyncHandler(async (req, res) => {
-    const [zonesResult, threshold] = await Promise.all([
-        db.query(
-            `SELECT id, slug, name, fee, free_threshold, estimated_days, color, sort_order, neighborhoods
-             FROM delivery_zones
-             WHERE is_active = true
-             ORDER BY sort_order ASC, id ASC`
-        ),
-        getFreeShippingThreshold()
-    ]);
-
+    const [zones, settings] = await Promise.all([fulfillment.loadZones(), getSettings()]);
     res.json({
-        freeShippingThreshold: threshold,
-        zones: zonesResult.rows.map(z => ({
-            id: z.id,
-            slug: z.slug,
-            name: z.name,
-            fee: parseFloat(z.fee),
-            freeThreshold: z.free_threshold !== null ? parseFloat(z.free_threshold) : threshold,
-            estimatedDays: z.estimated_days,
-            color: z.color,
-            sortOrder: z.sort_order,
-            neighborhoods: z.neighborhoods || []
-        }))
+        freeShippingThreshold: settings.free_delivery_threshold,
+        freeDeliveryRule: settings.free_delivery_rule,
+        zones: zones.map(z => zoneDto(z, settings.free_delivery_threshold))
     });
 }));
 
-// ===========================================
-// GET /api/delivery/calculate?area=Willemstad&subtotal=120
-// Returns the actual fee a customer would pay.
-// ===========================================
-router.get('/calculate',
+// GET /api/delivery/resolve?lat=&lng=  |  ?area=
+router.get('/resolve',
     [
-        query('area').isString().trim().notEmpty().withMessage('area is required'),
-        query('subtotal').isFloat({ min: 0 }).withMessage('subtotal must be a positive number')
+        query('lat').optional().isFloat({ min: -90, max: 90 }).toFloat(),
+        query('lng').optional().isFloat({ min: -180, max: 180 }).toFloat(),
+        query('area').optional().isString().trim().isLength({ max: 100 })
     ],
     asyncHandler(async (req, res) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-
-        const area = req.query.area;
-        const subtotal = parseFloat(req.query.subtotal);
-
-        const [zone, threshold] = await Promise.all([
-            getZoneByArea(area),
-            getFreeShippingThreshold()
-        ]);
-
-        if (!zone) {
-            return res.status(404).json({
-                error: `No delivery zone found for area "${area}"`,
-                area
-            });
-        }
-
-        const baseFee = parseFloat(zone.fee);
-        const effectiveThreshold = zone.free_threshold !== null
-            ? parseFloat(zone.free_threshold)
-            : threshold;
-        const qualifiesForFreeShipping = subtotal >= effectiveThreshold;
-        const fee = qualifiesForFreeShipping ? 0 : baseFee;
-
+        if (!validate(req, res)) return;
+        const zones = await fulfillment.loadZones();
+        const settings = await getSettings();
+        const hasPin = Number.isFinite(req.query.lat) && Number.isFinite(req.query.lng);
+        const zone = hasPin
+            ? fulfillment.findZoneByPoint(zones, req.query.lat, req.query.lng)
+            : fulfillment.findZoneByArea(zones, req.query.area);
         res.json({
-            area,
-            zone: {
-                id: zone.id,
-                slug: zone.slug,
-                name: zone.name,
-                color: zone.color,
-                estimatedDays: zone.estimated_days
-            },
-            baseFee,
-            fee,
-            freeShippingThreshold: effectiveThreshold,
-            qualifiesForFreeShipping
+            covered: !!zone,
+            source: hasPin ? 'pin' : 'area',
+            zone: zone ? zoneDto(zone, settings.free_delivery_threshold) : null
         });
     })
 );
+
+// GET /api/delivery/calculate?area=Willemstad&subtotal=120  (legacy helper, same math as checkout)
+router.get('/calculate',
+    [
+        query('area').optional().isString().trim(),
+        query('lat').optional().isFloat().toFloat(),
+        query('lng').optional().isFloat().toFloat(),
+        query('subtotal').isFloat({ min: 0 }).withMessage('subtotal must be a positive number').toFloat()
+    ],
+    asyncHandler(async (req, res) => {
+        if (!validate(req, res)) return;
+        const [zones, settings] = await Promise.all([fulfillment.loadZones(), getSettings()]);
+        const zone = Number.isFinite(req.query.lat) && Number.isFinite(req.query.lng)
+            ? fulfillment.findZoneByPoint(zones, req.query.lat, req.query.lng)
+            : fulfillment.findZoneByArea(zones, req.query.area);
+        if (!zone) return res.status(404).json({ error: 'This location is outside our delivery zones', covered: false });
+
+        const totals = computeTotals({
+            lines: [{ unitPriceCents: toCents(req.query.subtotal), quantity: 1 }],
+            method: 'delivery',
+            zone,
+            globalThreshold: settings.free_delivery_threshold,
+            rule: settings.free_delivery_rule
+        });
+        res.json({
+            zone: zoneDto(zone, settings.free_delivery_threshold),
+            baseFee: parseFloat(zone.fee),
+            fee: totals.deliveryFeeCents / 100,
+            freeShippingThreshold: totals.freeDelivery.threshold,
+            qualifiesForFreeShipping: totals.freeDelivery.qualifies,
+            remainingForFree: totals.freeDelivery.remaining
+        });
+    })
+);
+
+// GET /api/delivery/slots?method=pickup|delivery
+router.get('/slots', [query('method').isIn(['pickup', 'delivery']).withMessage('method must be pickup or delivery')],
+    asyncHandler(async (req, res) => {
+        if (!validate(req, res)) return;
+        const settings = await getSettings();
+        const calendar = await fulfillment.loadCalendar(req.query.method, {
+            days: settings.booking_days_ahead,
+            cutoffHour: settings.delivery_cutoff_hour
+        });
+        res.json({
+            method: req.query.method,
+            cutoffHour: settings.delivery_cutoff_hour,
+            days: calendar
+        });
+    })
+);
+
+// GET /api/delivery/pickup-locations
+router.get('/pickup-locations', asyncHandler(async (req, res) => {
+    res.json({ locations: await fulfillment.loadPickupLocations() });
+}));
 
 module.exports = router;

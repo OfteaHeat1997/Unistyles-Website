@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { getGeneralInquiryUrl } from '../utils/whatsapp'
+import FreeDeliveryAmount from '../components/FreeDeliveryAmount'
 
 function About() {
   return (
@@ -131,7 +132,7 @@ function About() {
                 </svg>
               </div>
               <h3>Island-Wide Delivery</h3>
-              <p>We deliver to your doorstep anywhere in Curacao, with free shipping on orders over XCG 80.</p>
+              <p>We deliver to your doorstep anywhere in Curacao, with free delivery on orders from <FreeDeliveryAmount />.</p>
             </div>
             <div className="value-card">
               <div className="value-icon">
@@ -142,7 +143,7 @@ function About() {
                 </svg>
               </div>
               <h3>Easy Returns</h3>
-              <p>Not the right fit? Return within 7 days for a full refund or exchange. No questions asked.</p>
+              <p>Not the right fit? Contact us on WhatsApp and we will help you. Defective or wrong items are always accepted.</p>
             </div>
           </div>
         </div>

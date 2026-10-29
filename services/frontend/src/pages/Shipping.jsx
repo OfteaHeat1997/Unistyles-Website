@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom'
 import { getGeneralQuestionUrl } from '../utils/whatsapp'
 import { useDeliveryZones } from '../hooks/useDeliveryZones'
-import DeliveryMap from '../components/DeliveryMap'
+import FreeDeliveryAmount from '../components/FreeDeliveryAmount'
 
 function Shipping() {
-  const { zones, freeShippingThreshold, isLoading } = useDeliveryZones()
+  const { zones, isLoading } = useDeliveryZones()
 
   return (
     <>
@@ -23,7 +23,7 @@ function Shipping() {
             Shipping & Delivery
           </h1>
           <p style={{ textAlign: 'center', color: 'var(--dark-warmth)', marginBottom: '40px', maxWidth: '600px', margin: '0 auto 40px' }}>
-            We deliver to every corner of Curacao. Check your zone, fee and delivery time below.
+            Check your zone and delivery fee below. Not on the list? We confirm the fee with you on WhatsApp — nothing is charged for delivery until then.
           </p>
 
           {/* Free delivery banner */}
@@ -33,21 +33,9 @@ function Shipping() {
           }}>
             <i className="fas fa-truck" style={{ fontSize: '36px', color: 'var(--muted-gold)', marginBottom: '12px' }}></i>
             <h2 style={{ fontSize: '24px', marginBottom: '5px' }}>
-              Free Delivery in Centro from <span style={{ color: 'var(--muted-gold)' }}>XCG {zones[0]?.freeThreshold ?? freeShippingThreshold}</span>
+              Free Delivery from <span style={{ color: 'var(--muted-gold)' }}><FreeDeliveryAmount /></span>
             </h2>
-            <p style={{ color: 'rgba(255,255,255,0.7)' }}>Each zone has its own free-shipping threshold — see below</p>
-          </div>
-
-          {/* Interactive delivery map with zone polygons + geolocation */}
-          <div style={{ marginBottom: '40px' }}>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: '24px', marginBottom: '20px' }}>
-              <i className="fas fa-map-marked-alt" style={{ color: 'var(--muted-gold)', marginRight: '10px' }}></i>
-              Delivery Coverage Map
-            </h2>
-            <DeliveryMap height={420} />
-            <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '8px' }}>
-              Hover a zone to see fees and ETA. Click <strong>Detect my zone</strong> to find your zone using GPS.
-            </p>
+            <p style={{ color: 'rgba(255,255,255,0.7)' }}>Counted on your products after discounts, before delivery · usually next day according to our route</p>
           </div>
 
           {/* Delivery Zones */}
@@ -77,9 +65,6 @@ function Shipping() {
                         <h3 style={{ fontSize: '16px', margin: 0 }}>{zone.name}</h3>
                         <p style={{ fontSize: '12px', color: 'var(--dark-warmth)', margin: 0 }}>
                           <i className="fas fa-clock" style={{ marginRight: '4px' }}></i>{zone.estimatedDays}
-                          {zone.freeThreshold && (
-                            <> • Free over XCG {zone.freeThreshold}</>
-                          )}
                         </p>
                       </div>
                     </div>
@@ -133,7 +118,7 @@ function Shipping() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '40px' }}>
             {[
               { icon: 'fa-shopping-bag', title: '1. Place Order', desc: 'Online or via WhatsApp' },
-              { icon: 'fa-check-circle', title: '2. Confirmation', desc: 'WhatsApp confirmation within 1 hour' },
+              { icon: 'fa-check-circle', title: '2. Confirmation', desc: 'We confirm your order on WhatsApp' },
               { icon: 'fa-box', title: '3. Preparation', desc: 'We prepare & pack your order' },
               { icon: 'fa-home', title: '4. Delivery', desc: 'Delivered to your door in Curacao' }
             ].map(step => (
@@ -163,11 +148,11 @@ function Shipping() {
               Important Information
             </h3>
             <ul style={{ fontSize: '14px', lineHeight: '2', paddingLeft: '20px', color: 'var(--charcoal)', margin: 0 }}>
-              <li>Delivery times are estimates and may vary during holidays or busy periods</li>
-              <li>You will receive a WhatsApp message when your order is on the way</li>
+              <li>Delivery is usually the next day according to our route; it is not a guaranteed date</li>
+              <li>We send you a WhatsApp message about 30 minutes before we arrive</li>
               <li>Someone must be available at the delivery address to receive the package</li>
               <li>For Cash on Delivery orders, please have the exact amount ready</li>
-              <li>Each zone has its own free-shipping threshold (shown above)</li>
+              <li>Free delivery from <FreeDeliveryAmount /> on your products after discounts; if a discount brings you below it, the zone fee applies</li>
             </ul>
           </div>
 

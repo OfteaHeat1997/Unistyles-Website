@@ -5,7 +5,9 @@
  * guest users (using X-Cart-Id header) and authenticated users.
  */
 
-const API_URL = '/api'
+import { API_BASE } from '../utils/api'
+
+const API_URL = `${API_BASE}/api`
 
 // Get or create cart ID for guest users
 function getCartId() {
@@ -67,15 +69,15 @@ export async function fetchCart() {
 
     return data
   } catch (error) {
-    console.warn('Cart fetch failed, using empty cart:', error.message)
-    return { items: [], itemCount: 0, subtotal: 0 }
+    console.warn('Cart fetch failed, keeping local cart:', error.message)
+    return { items: [], itemCount: 0, subtotal: 0, _failed: true }
   }
 }
 
 /**
  * Add an item to the cart
  */
-export async function addToCart(productId, quantity = 1, size = null, color = null) {
+export async function addToCart(productId, quantity = 1, size = null, color = null, variantId = null) {
   const response = await fetch(`${API_URL}/cart/add`, {
     method: 'POST',
     headers: getHeaders(),
@@ -83,7 +85,8 @@ export async function addToCart(productId, quantity = 1, size = null, color = nu
       productId,
       quantity,
       size,
-      color
+      color,
+      variantId
     })
   })
 
@@ -106,7 +109,7 @@ export async function addToCart(productId, quantity = 1, size = null, color = nu
 /**
  * Update item quantity in the cart
  */
-export async function updateCartItem(productId, quantity, size = null, color = null) {
+export async function updateCartItem(productId, quantity, size = null, color = null, variantId = null) {
   const response = await fetch(`${API_URL}/cart/update`, {
     method: 'PUT',
     headers: getHeaders(),
@@ -114,7 +117,8 @@ export async function updateCartItem(productId, quantity, size = null, color = n
       productId,
       quantity,
       size,
-      color
+      color,
+      variantId
     })
   })
 
@@ -129,8 +133,9 @@ export async function updateCartItem(productId, quantity, size = null, color = n
 /**
  * Remove an item from the cart
  */
-export async function removeFromCart(productId, size = null, color = null) {
+export async function removeFromCart(productId, size = null, color = null, variantId = null) {
   const params = new URLSearchParams()
+  if (variantId) params.append('variantId', variantId)
   if (size) params.append('size', size)
   if (color) params.append('color', color)
 

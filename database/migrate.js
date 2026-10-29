@@ -34,6 +34,20 @@ async function run() {
             )
         `);
 
+        // Baseline: a database created from init.v2.sql already contains what
+        // migrations 001–003 add (and 001's ON CONFLICT (code) fails against
+        // v2's UPPER(code) index), so record them as applied instead of running them.
+        const isV2 = await client.query("SELECT to_regclass('public.coupon_redemptions') IS NOT NULL AS v2");
+        if (isV2.rows[0].v2) {
+            for (const file of ['001_add_coupons_and_variants.sql', '001_add_whatsapp_messages.sql', '002_delivery_zones.sql', '003_address_geocoding.sql']) {
+                const r = await client.query(
+                    'INSERT INTO schema_migrations (filename) VALUES ($1) ON CONFLICT (filename) DO NOTHING RETURNING id',
+                    [file]
+                );
+                if (r.rowCount) console.log(`  BASE  ${file} (included in init.v2.sql)`);
+            }
+        }
+
         // Get already-applied migrations
         const applied = await client.query('SELECT filename FROM schema_migrations ORDER BY filename');
         const appliedSet = new Set(applied.rows.map(r => r.filename));

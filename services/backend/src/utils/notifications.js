@@ -312,15 +312,20 @@ async function sendOrderStatusUpdate(order, newStatus) {
         confirmed: 'order_confirmed',
         processing: 'order_processing',
         shipped: 'order_shipped',
+        out_for_delivery: 'order_shipped',
         delivered: 'order_delivered',
         cancelled: 'order_cancelled'
     };
 
-    const templateName = templateMap[newStatus];
-    if (!templateName) return null;
+    const trackUrl = order.tracking_token
+        ? `${(process.env.SITE_URL || 'https://unistylescuracao.com').replace(/\/+$/, '')}/order/${order.order_number}?t=${order.tracking_token}`
+        : null;
+    const trackLine = trackUrl ? `\n\nSigui bo order: ${trackUrl}` : '';
 
-    // Try template first
-    const templateSent = await whatsapp.sendTemplateMessage(customerPhone, templateName, [
+    const templateName = templateMap[newStatus];
+
+    // Try template first (only for statuses that have an approved template)
+    const templateSent = templateName && await whatsapp.sendTemplateMessage(customerPhone, templateName, [
         {
             type: 'body',
             parameters: [
@@ -336,11 +341,15 @@ async function sendOrderStatusUpdate(order, newStatus) {
             processing: `📦 *Unistyles Curacao*\n\nBo order *#${order.order_number}* ta wordo preparé. Nos lo avisabo ora e ta kla pa entrega!`,
             shipped: `🚚 *Unistyles Curacao*\n\nBo order *#${order.order_number}* ta kaminda! Nos ta bin entregá pronto.`,
             delivered: `🎉 *Unistyles Curacao*\n\nBo order *#${order.order_number}* a wordo entregá! Danki pa bo kompra. Nos ta spera bo ta disfrutá! 💛`,
-            cancelled: `❌ *Unistyles Curacao*\n\nBo order *#${order.order_number}* a wordo kanselá. Si bo tin pregunta, kontaktanos via WhatsApp.`
+            cancelled: `❌ *Unistyles Curacao*\n\nBo order *#${order.order_number}* a wordo kanselá. Si bo tin pregunta, kontaktanos via WhatsApp.`,
+            out_for_delivery: `🚚 *Unistyles Curacao*\n\nBo order *#${order.order_number}* ta kaminda! Nos ta bin entregá den bo bentana di tempu (${order.delivery_time_slot || ''}).`,
+            ready_for_pickup: `🛍️ *Unistyles Curacao*\n\nBo order *#${order.order_number}* ta kla pa bo bin buska! Trese bo number di order.`,
+            picked_up: `🎉 *Unistyles Curacao*\n\nDanki pa buska bo order *#${order.order_number}*! 💛`,
+            delivery_failed: `⚠️ *Unistyles Curacao*\n\nNos no por a entregá bo order *#${order.order_number}*. Nos ta kontaktabo pa piki un otro momentu.`
         };
 
         const message = statusMessages[newStatus];
-        if (message) return await whatsapp.sendTextMessage(customerPhone, message);
+        if (message) return await whatsapp.sendTextMessage(customerPhone, message + trackLine);
     }
 
     return templateSent;

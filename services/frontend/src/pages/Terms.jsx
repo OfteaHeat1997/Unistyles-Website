@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import FreeDeliveryAmount from '../components/FreeDeliveryAmount'
 
 function Terms() {
   return (
@@ -24,10 +25,10 @@ function Terms() {
         <p style={{ lineHeight: '1.8', marginBottom: '15px' }}>Orders are confirmed upon receipt of payment or confirmation of Cash on Delivery. We accept Sentoo, bank transfer, and cash on delivery. All transactions are processed securely.</p>
 
         <h3 style={{ marginTop: '30px', marginBottom: '10px' }}>4. Delivery</h3>
-        <p style={{ lineHeight: '1.8', marginBottom: '15px' }}>Delivery is available throughout Curacao. Free delivery on orders over XCG 80. Delivery times are estimates and not guaranteed. See our <Link to="/shipping" style={{ color: 'var(--muted-gold)' }}>Shipping Info</Link> page for details.</p>
+        <p style={{ lineHeight: '1.8', marginBottom: '15px' }}>Delivery is available throughout Curacao. Free delivery on orders from <FreeDeliveryAmount /> (product subtotal after discounts, before delivery). Delivery is usually the next day according to our route; it is not a guaranteed date. See our <Link to="/shipping" style={{ color: 'var(--muted-gold)' }}>Shipping Info</Link> page for details.</p>
 
         <h3 style={{ marginTop: '30px', marginBottom: '10px' }}>5. Returns & Exchanges</h3>
-        <p style={{ lineHeight: '1.8', marginBottom: '15px' }}>Returns are accepted within 7 days of delivery for unused items in original packaging. Contact us via WhatsApp to initiate a return. Perfumes and personal care items are non-returnable for hygiene reasons.</p>
+        <p style={{ lineHeight: '1.8', marginBottom: '15px' }}>For hygiene reasons panties cannot be exchanged voluntarily. Defective, damaged or wrongly delivered items are always accepted. For any other return, contact us via WhatsApp.</p>
 
         <h3 style={{ marginTop: '30px', marginBottom: '10px' }}>6. Privacy</h3>
         <p style={{ lineHeight: '1.8', marginBottom: '15px' }}>Your personal information is handled according to our <Link to="/privacy" style={{ color: 'var(--muted-gold)' }}>Privacy Policy</Link>.</p>

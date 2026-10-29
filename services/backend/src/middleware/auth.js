@@ -108,31 +108,34 @@ const optionalAuth = async (req, res, next) => {
 };
 
 /**
- * Admin only middleware.
- * Re-checks is_admin from database (not just JWT) for security.
+ * Role guard. Re-reads the role from the database (a JWT can be stale after
+ * an admin changes someone's role). Usage: requireRole('admin'), requireRole('driver', 'admin').
  */
-const adminOnly = async (req, res, next) => {
+const requireRole = (...roles) => async (req, res, next) => {
     if (!req.user) {
-        return res.status(403).json({ error: 'Admin access required' });
+        return res.status(401).json({ error: 'Authentication required' });
     }
-
-    // Re-verify admin status from DB (JWT could be stale)
     try {
         const result = await db.query(
-            'SELECT is_admin FROM users WHERE id = $1',
+            'SELECT role FROM users WHERE id = $1 AND deleted_at IS NULL',
             [req.user.id]
         );
-
-        if (result.rows.length === 0 || !result.rows[0].is_admin) {
-            return res.status(403).json({ error: 'Admin access required' });
+        const role = result.rows[0]?.role;
+        if (!role || !roles.includes(role)) {
+            return res.status(403).json({ error: 'You do not have access to this area' });
         }
-
+        req.user.role = role;
         next();
     } catch (err) {
-        console.error('Admin check DB error:', err.message);
+        console.error('Role check DB error:', err.message);
         return res.status(500).json({ error: 'Authorization check failed' });
     }
 };
+
+/**
+ * Admin only middleware.
+ */
+const adminOnly = requireRole('admin');
 
 /**
  * Generate JWT token
@@ -142,7 +145,8 @@ const generateToken = (user) => {
         {
             id: user.id,
             email: user.email,
-            isAdmin: user.is_admin || false
+            role: user.role || (user.is_admin ? 'admin' : 'customer'),
+            isAdmin: user.role === 'admin' || user.is_admin || false
         },
         JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
@@ -164,6 +168,7 @@ module.exports = {
     authenticate,
     optionalAuth,
     adminOnly,
+    requireRole,
     generateToken,
     generateRefreshToken,
     blacklistToken,
